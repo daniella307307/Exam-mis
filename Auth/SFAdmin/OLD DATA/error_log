@@ -1,0 +1,132 @@
+[19-Jul-2024 02:48:13 UTC] PHP Notice:  Undefined variable: setting_min_year in /home/blisglob/public_html/admin/Auth/SF/Add_New_Student.php on line 4
+[19-Jul-2024 02:48:17 UTC] PHP Notice:  Undefined variable: setting_min_year in /home/blisglob/public_html/admin/Auth/SF/Add_New_Student.php on line 4
+[19-Jul-2024 02:51:16 UTC] PHP Notice:  Undefined variable: setting_min_year in /home/blisglob/public_html/admin/Auth/SF/Add_New_Student.php on line 4
+[19-Jul-2024 02:51:20 UTC] PHP Notice:  Undefined variable: setting_min_year in /home/blisglob/public_html/admin/Auth/SF/Add_New_Student.php on line 4
+[19-Jul-2024 02:52:36 UTC] PHP Notice:  Undefined variable: setting_min_year in /home/blisglob/public_html/admin/Auth/SF/Add_New_Student.php on line 4
+[19-Jul-2024 02:52:43 UTC] PHP Notice:  Undefined variable: setting_min_year in /home/blisglob/public_html/admin/Auth/SF/Add_New_Student.php on line 4
+[19-Jul-2024 02:54:08 UTC] PHP Notice:  Undefined variable: setting_min_year in /home/blisglob/public_html/admin/Auth/SF/Add_New_Student.php on line 4
+[19-Jul-2024 02:54:10 UTC] PHP Notice:  Undefined variable: setting_min_year in /home/blisglob/public_html/admin/Auth/SF/Add_New_Student.php on line 4
+[19-Jul-2024 02:56:59 UTC] PHP Notice:  Undefined variable: setting_min_year in /home/blisglob/public_html/admin/Auth/SF/Add_New_Student.php on line 7
+[19-Jul-2024 02:56:59 UTC] PHP Notice:  Undefined variable: setting_min_year in /home/blisglob/public_html/admin/Auth/SF/Add_New_Student.php on line 32
+[19-Jul-2024 11:46:06 UTC] PHP Warning:  mysqli_query(): Couldn't fetch mysqli in /home/blisglob/public_html/admin/Auth/SF/upload_Students.php on line 110
+[19-Jul-2024 11:46:06 UTC] PHP Warning:  mysqli_fetch_array() expects parameter 1 to be mysqli_result, bool given in /home/blisglob/public_html/admin/Auth/SF/upload_Students.php on line 111
+[04-Aug-2024 22:11:18 UTC] PHP Notice:  Undefined variable: currency_usd in /home/blisglob/public_html/admin/Auth/SF/Add_new_Bank_sleep.php on line 39
+[04-Aug-2024 22:11:18 UTC] PHP Notice:  Undefined variable: sleep_bank in /home/blisglob/public_html/admin/Auth/SF/Add_new_Bank_sleep.php on line 59
+[04-Aug-2024 22:17:56 UTC] PHP Notice:  Undefined variable: currency_usd in /home/blisglob/public_html/admin/Auth/SF/Add_new_Bank_sleep.php on line 32
+[04-Aug-2024 22:22:17 UTC] PHP Notice:  Undefined variable: currency_usd in /home/blisglob/public_html/admin/Auth/SF/Add_new_Bank_sleep.php on line 32
+[04-Aug-2024 22:22:21 UTC] PHP Notice:  Undefined variable: currency_usd in /home/blisglob/public_html/admin/Auth/SF/Add_new_Bank_sleep.php on line 32
+[04-Aug-2024 22:22:25 UTC] PHP Notice:  Undefined variable: currency_usd in /home/blisglob/public_html/admin/Auth/SF/Add_new_Bank_sleep.php on line 32
+[04-Aug-2024 22:24:12 UTC] PHP Notice:  Undefined variable: currency_usd in /home/blisglob/public_html/admin/Auth/SF/Add_new_Bank_sleep.php on line 32
+[04-Aug-2024 22:24:15 UTC] PHP Notice:  Undefined variable: currency_usd in /home/blisglob/public_html/admin/Auth/SF/Add_new_Bank_sleep.php on line 32
+[04-Aug-2024 22:25:05 UTC] PHP Notice:  Undefined variable: currency_usd in /home/blisglob/public_html/admin/Auth/SF/Add_new_Bank_sleep.php on line 32
+[04-Aug-2024 22:30:58 UTC] PHP Notice:  Undefined variable: currency_usd in /home/blisglob/public_html/admin/Auth/SF/Add_new_Bank_sleep.php on line 32
+[04-Aug-2024 22:30:58 UTC] PHP Notice:  Undefined variable: sleep_bank in /home/blisglob/public_html/admin/Auth/SF/Add_new_Bank_sleep.php on line 62
+[04-Aug-2024 22:31:14 UTC] PHP Notice:  Undefined variable: currency_usd in /home/blisglob/public_html/admin/Auth/SF/Add_new_Bank_sleep.php on line 32
+[04-Aug-2024 22:31:28 UTC] PHP Notice:  Undefined variable: currency_usd in /home/blisglob/public_html/admin/Auth/SF/Add_new_Bank_sleep.php on line 32
+[07-Aug-2024 14:32:00 UTC] PHP Notice:  Undefined variable: student_class in /home/blisglob/public_html/admin/Auth/SF/Update_Student_details.php on line 75
+[07-Aug-2024 14:32:00 UTC] PHP Notice:  Undefined variable: student_country in /home/blisglob/public_html/admin/Auth/SF/Update_Student_details.php on line 78
+[07-Aug-2024 14:32:00 UTC] PHP Notice:  Undefined variable: student_region in /home/blisglob/public_html/admin/Auth/SF/Update_Student_details.php on line 79
+[07-Aug-2024 14:32:00 UTC] PHP Notice:  Undefined variable: student_promotion in /home/blisglob/public_html/admin/Auth/SF/Update_Student_details.php on line 82
+[07-Aug-2024 14:32:00 UTC] PHP Notice:  Undefined variable: student_regno in /home/blisglob/public_html/admin/Auth/SF/Update_Student_details.php on line 83
+[07-Aug-2024 14:40:50 UTC] PHP Notice:  Undefined index: Reset_password in /home/blisglob/public_html/admin/Auth/SF/Update_Student_details.php on line 53
+[07-Aug-2024 14:40:50 UTC] PHP Notice:  Undefined variable: student_class in /home/blisglob/public_html/admin/Auth/SF/Update_Student_details.php on line 75
+[07-Aug-2024 14:40:50 UTC] PHP Notice:  Undefined variable: student_promotion in /home/blisglob/public_html/admin/Auth/SF/Update_Student_details.php on line 82
+[07-Aug-2024 14:41:09 UTC] PHP Notice:  Trying to access array offset on value of type null in /home/blisglob/public_html/admin/Auth/SF/Update_Student_details.php on line 47
+[07-Aug-2024 14:41:09 UTC] PHP Notice:  Undefined variable: student_class in /home/blisglob/public_html/admin/Auth/SF/Update_Student_details.php on line 75
+[07-Aug-2024 14:41:09 UTC] PHP Notice:  Undefined variable: student_promotion in /home/blisglob/public_html/admin/Auth/SF/Update_Student_details.php on line 82
+[07-Aug-2024 14:42:45 UTC] PHP Notice:  Undefined index: Reset_password in /home/blisglob/public_html/admin/Auth/SF/Update_Student_details.php on line 53
+[07-Aug-2024 14:42:45 UTC] PHP Notice:  Undefined variable: student_class in /home/blisglob/public_html/admin/Auth/SF/Update_Student_details.php on line 75
+[07-Aug-2024 14:42:45 UTC] PHP Notice:  Undefined variable: student_promotion in /home/blisglob/public_html/admin/Auth/SF/Update_Student_details.php on line 82
+[07-Aug-2024 14:43:17 UTC] PHP Notice:  Undefined index: Reset_password in /home/blisglob/public_html/admin/Auth/SF/Update_Student_details.php on line 53
+[07-Aug-2024 14:43:17 UTC] PHP Notice:  Undefined variable: student_class in /home/blisglob/public_html/admin/Auth/SF/Update_Student_details.php on line 75
+[07-Aug-2024 14:43:17 UTC] PHP Notice:  Undefined variable: student_promotion in /home/blisglob/public_html/admin/Auth/SF/Update_Student_details.php on line 82
+[07-Aug-2024 14:43:41 UTC] PHP Warning:  unlink(../): Is a directory in /home/blisglob/public_html/admin/Auth/SF/Upload_student_profile.php on line 45
+[07-Aug-2024 14:59:36 UTC] PHP Notice:  Trying to access array offset on value of type null in /home/blisglob/public_html/admin/Auth/SF/Update_Student_details.php on line 47
+[07-Aug-2024 14:59:36 UTC] PHP Notice:  Undefined variable: student_class in /home/blisglob/public_html/admin/Auth/SF/Update_Student_details.php on line 75
+[07-Aug-2024 14:59:36 UTC] PHP Notice:  Undefined variable: student_promotion in /home/blisglob/public_html/admin/Auth/SF/Update_Student_details.php on line 82
+[07-Aug-2024 15:01:18 UTC] PHP Notice:  Undefined variable: student_class in /home/blisglob/public_html/admin/Auth/SF/Update_Student_details.php on line 75
+[07-Aug-2024 15:01:18 UTC] PHP Notice:  Undefined variable: student_promotion in /home/blisglob/public_html/admin/Auth/SF/Update_Student_details.php on line 82
+[08-Aug-2024 01:37:08 UTC] PHP Notice:  Undefined variable: users_details in /home/blisglob/public_html/admin/Auth/SF/Promotion_details.php on line 84
+[08-Aug-2024 01:37:08 UTC] PHP Notice:  Trying to access array offset on value of type null in /home/blisglob/public_html/admin/Auth/SF/Promotion_details.php on line 84
+[08-Aug-2024 01:37:08 UTC] PHP Notice:  Undefined variable: users_details in /home/blisglob/public_html/admin/Auth/SF/Promotion_details.php on line 85
+[08-Aug-2024 01:37:08 UTC] PHP Notice:  Trying to access array offset on value of type null in /home/blisglob/public_html/admin/Auth/SF/Promotion_details.php on line 85
+[08-Aug-2024 01:37:08 UTC] PHP Notice:  Undefined variable: users_details in /home/blisglob/public_html/admin/Auth/SF/Promotion_details.php on line 85
+[08-Aug-2024 01:37:08 UTC] PHP Notice:  Trying to access array offset on value of type null in /home/blisglob/public_html/admin/Auth/SF/Promotion_details.php on line 85
+[08-Aug-2024 09:11:58 UTC] PHP Fatal error:  Composer detected issues in your platform: Your Composer dependencies require a PHP version ">= 8.0.0". You are running 7.4.11. in /home/blisglob/public_html/admin/vendor/composer/platform_check.php on line 24
+[08-Aug-2024 09:12:42 UTC] PHP Fatal error:  Composer detected issues in your platform: Your Composer dependencies require a PHP version ">= 8.0.0". You are running 7.4.11. in /home/blisglob/public_html/admin/vendor/composer/platform_check.php on line 24
+[08-Aug-2024 09:30:54 UTC] PHP Warning:  unlink(../): Is a directory in /home/blisglob/public_html/admin/Auth/SF/Upload_student_profile.php on line 45
+[08-Aug-2024 09:31:11 UTC] PHP Fatal error:  Composer detected issues in your platform: Your Composer dependencies require a PHP version ">= 8.0.0". You are running 7.4.11. in /home/blisglob/public_html/admin/vendor/composer/platform_check.php on line 24
+[08-Aug-2024 09:31:21 UTC] PHP Fatal error:  Composer detected issues in your platform: Your Composer dependencies require a PHP version ">= 8.0.0". You are running 7.4.11. in /home/blisglob/public_html/admin/vendor/composer/platform_check.php on line 24
+[08-Aug-2024 09:31:42 UTC] PHP Notice:  Undefined index: Reset_password in /home/blisglob/public_html/admin/Auth/SF/Update_Student_details.php on line 53
+[08-Aug-2024 09:31:42 UTC] PHP Notice:  Undefined variable: student_class in /home/blisglob/public_html/admin/Auth/SF/Update_Student_details.php on line 75
+[08-Aug-2024 09:31:42 UTC] PHP Notice:  Undefined variable: student_promotion in /home/blisglob/public_html/admin/Auth/SF/Update_Student_details.php on line 82
+[08-Aug-2024 09:50:07 UTC] PHP Fatal error:  Composer detected issues in your platform: Your Composer dependencies require a PHP version ">= 8.0.0". You are running 7.4.11. in /home/blisglob/public_html/admin/vendor/composer/platform_check.php on line 24
+[08-Aug-2024 09:50:27 UTC] PHP Fatal error:  Composer detected issues in your platform: Your Composer dependencies require a PHP version ">= 8.0.0". You are running 7.4.11. in /home/blisglob/public_html/admin/vendor/composer/platform_check.php on line 24
+[08-Aug-2024 10:18:14 UTC] PHP Warning:  unlink(../): Is a directory in /home/blisglob/public_html/admin/Auth/SF/Upload_profile_picture.php on line 34
+[08-Aug-2024 19:50:15 UTC] PHP Fatal error:  Composer detected issues in your platform: Your Composer dependencies require a PHP version ">= 8.0.0". You are running 7.4.11. in /home/blisglob/public_html/admin/vendor/composer/platform_check.php on line 24
+[08-Aug-2024 19:51:15 UTC] PHP Fatal error:  Composer detected issues in your platform: Your Composer dependencies require a PHP version ">= 8.0.0". You are running 7.4.11. in /home/blisglob/public_html/admin/vendor/composer/platform_check.php on line 24
+[08-Aug-2024 20:20:33 UTC] PHP Fatal error:  Composer detected issues in your platform: Your Composer dependencies require a PHP version ">= 8.0.0". You are running 7.4.11. in /home/blisglob/public_html/admin/vendor/composer/platform_check.php on line 24
+[09-Aug-2024 05:18:59 UTC] PHP Warning:  Undefined variable $user_data in /home/blisglob/public_html/admin/Auth/SF/header.php on line 32
+[09-Aug-2024 05:18:59 UTC] PHP Warning:  Trying to access array offset on value of type null in /home/blisglob/public_html/admin/Auth/SF/header.php on line 32
+[09-Aug-2024 05:18:59 UTC] PHP Warning:  Undefined variable $user_data in /home/blisglob/public_html/admin/Auth/SF/header.php on line 35
+[09-Aug-2024 05:18:59 UTC] PHP Warning:  Trying to access array offset on value of type null in /home/blisglob/public_html/admin/Auth/SF/header.php on line 35
+[09-Aug-2024 05:18:59 UTC] PHP Warning:  Undefined variable $user_data in /home/blisglob/public_html/admin/Auth/SF/header.php on line 36
+[09-Aug-2024 05:18:59 UTC] PHP Warning:  Trying to access array offset on value of type null in /home/blisglob/public_html/admin/Auth/SF/header.php on line 36
+[09-Aug-2024 05:18:59 UTC] PHP Warning:  Undefined variable $user_data in /home/blisglob/public_html/admin/Auth/SF/header.php on line 36
+[09-Aug-2024 05:18:59 UTC] PHP Warning:  Trying to access array offset on value of type null in /home/blisglob/public_html/admin/Auth/SF/header.php on line 36
+[09-Aug-2024 05:18:59 UTC] PHP Warning:  Undefined variable $user_data in /home/blisglob/public_html/admin/Auth/SF/dynamic_side_bar.php on line 9
+[09-Aug-2024 05:18:59 UTC] PHP Warning:  Trying to access array offset on value of type null in /home/blisglob/public_html/admin/Auth/SF/dynamic_side_bar.php on line 9
+[09-Aug-2024 05:18:59 UTC] PHP Warning:  Undefined variable $user_data in /home/blisglob/public_html/admin/Auth/SF/dynamic_side_bar.php on line 11
+[09-Aug-2024 05:18:59 UTC] PHP Warning:  Trying to access array offset on value of type null in /home/blisglob/public_html/admin/Auth/SF/dynamic_side_bar.php on line 11
+[09-Aug-2024 05:21:14 UTC] PHP Warning:  Undefined variable $user_data in /home/blisglob/public_html/admin/Auth/SF/header.php on line 32
+[09-Aug-2024 05:21:14 UTC] PHP Warning:  Trying to access array offset on value of type null in /home/blisglob/public_html/admin/Auth/SF/header.php on line 32
+[09-Aug-2024 05:21:14 UTC] PHP Warning:  Undefined variable $user_data in /home/blisglob/public_html/admin/Auth/SF/header.php on line 35
+[09-Aug-2024 05:21:14 UTC] PHP Warning:  Trying to access array offset on value of type null in /home/blisglob/public_html/admin/Auth/SF/header.php on line 35
+[09-Aug-2024 05:21:14 UTC] PHP Warning:  Undefined variable $user_data in /home/blisglob/public_html/admin/Auth/SF/header.php on line 36
+[09-Aug-2024 05:21:14 UTC] PHP Warning:  Trying to access array offset on value of type null in /home/blisglob/public_html/admin/Auth/SF/header.php on line 36
+[09-Aug-2024 05:21:14 UTC] PHP Warning:  Undefined variable $user_data in /home/blisglob/public_html/admin/Auth/SF/header.php on line 36
+[09-Aug-2024 05:21:14 UTC] PHP Warning:  Trying to access array offset on value of type null in /home/blisglob/public_html/admin/Auth/SF/header.php on line 36
+[09-Aug-2024 05:21:14 UTC] PHP Warning:  Undefined variable $user_data in /home/blisglob/public_html/admin/Auth/SF/dynamic_side_bar.php on line 9
+[09-Aug-2024 05:21:14 UTC] PHP Warning:  Trying to access array offset on value of type null in /home/blisglob/public_html/admin/Auth/SF/dynamic_side_bar.php on line 9
+[09-Aug-2024 05:21:14 UTC] PHP Warning:  Undefined variable $user_data in /home/blisglob/public_html/admin/Auth/SF/dynamic_side_bar.php on line 11
+[09-Aug-2024 05:21:14 UTC] PHP Warning:  Trying to access array offset on value of type null in /home/blisglob/public_html/admin/Auth/SF/dynamic_side_bar.php on line 11
+[09-Aug-2024 05:23:55 UTC] PHP Warning:  Undefined variable $user_data in /home/blisglob/public_html/admin/Auth/SF/header.php on line 32
+[09-Aug-2024 05:23:55 UTC] PHP Warning:  Trying to access array offset on value of type null in /home/blisglob/public_html/admin/Auth/SF/header.php on line 32
+[09-Aug-2024 05:23:55 UTC] PHP Warning:  Undefined variable $user_data in /home/blisglob/public_html/admin/Auth/SF/header.php on line 35
+[09-Aug-2024 05:23:55 UTC] PHP Warning:  Trying to access array offset on value of type null in /home/blisglob/public_html/admin/Auth/SF/header.php on line 35
+[09-Aug-2024 05:23:55 UTC] PHP Warning:  Undefined variable $user_data in /home/blisglob/public_html/admin/Auth/SF/header.php on line 36
+[09-Aug-2024 05:23:55 UTC] PHP Warning:  Trying to access array offset on value of type null in /home/blisglob/public_html/admin/Auth/SF/header.php on line 36
+[09-Aug-2024 05:23:55 UTC] PHP Warning:  Undefined variable $user_data in /home/blisglob/public_html/admin/Auth/SF/header.php on line 36
+[09-Aug-2024 05:23:55 UTC] PHP Warning:  Trying to access array offset on value of type null in /home/blisglob/public_html/admin/Auth/SF/header.php on line 36
+[09-Aug-2024 05:23:55 UTC] PHP Warning:  Undefined variable $user_data in /home/blisglob/public_html/admin/Auth/SF/dynamic_side_bar.php on line 9
+[09-Aug-2024 05:23:55 UTC] PHP Warning:  Trying to access array offset on value of type null in /home/blisglob/public_html/admin/Auth/SF/dynamic_side_bar.php on line 9
+[09-Aug-2024 05:23:55 UTC] PHP Warning:  Undefined variable $user_data in /home/blisglob/public_html/admin/Auth/SF/dynamic_side_bar.php on line 11
+[09-Aug-2024 05:23:55 UTC] PHP Warning:  Trying to access array offset on value of type null in /home/blisglob/public_html/admin/Auth/SF/dynamic_side_bar.php on line 11
+[09-Aug-2024 05:23:55 UTC] PHP Warning:  Undefined variable $session_id in /home/blisglob/public_html/admin/Auth/SF/dynamic_side_bar.php on line 14
+[09-Aug-2024 05:26:02 UTC] PHP Warning:  Undefined variable $user_data in /home/blisglob/public_html/admin/Auth/SF/header.php on line 32
+[09-Aug-2024 05:26:02 UTC] PHP Warning:  Trying to access array offset on value of type null in /home/blisglob/public_html/admin/Auth/SF/header.php on line 32
+[09-Aug-2024 05:26:02 UTC] PHP Warning:  Undefined variable $user_data in /home/blisglob/public_html/admin/Auth/SF/header.php on line 35
+[09-Aug-2024 05:26:02 UTC] PHP Warning:  Trying to access array offset on value of type null in /home/blisglob/public_html/admin/Auth/SF/header.php on line 35
+[09-Aug-2024 05:26:02 UTC] PHP Warning:  Undefined variable $user_data in /home/blisglob/public_html/admin/Auth/SF/header.php on line 36
+[09-Aug-2024 05:26:02 UTC] PHP Warning:  Trying to access array offset on value of type null in /home/blisglob/public_html/admin/Auth/SF/header.php on line 36
+[09-Aug-2024 05:26:02 UTC] PHP Warning:  Undefined variable $user_data in /home/blisglob/public_html/admin/Auth/SF/header.php on line 36
+[09-Aug-2024 05:26:02 UTC] PHP Warning:  Trying to access array offset on value of type null in /home/blisglob/public_html/admin/Auth/SF/header.php on line 36
+[09-Aug-2024 05:26:02 UTC] PHP Warning:  Undefined variable $user_data in /home/blisglob/public_html/admin/Auth/SF/dynamic_side_bar.php on line 9
+[09-Aug-2024 05:26:02 UTC] PHP Warning:  Trying to access array offset on value of type null in /home/blisglob/public_html/admin/Auth/SF/dynamic_side_bar.php on line 9
+[09-Aug-2024 05:26:02 UTC] PHP Warning:  Undefined variable $user_data in /home/blisglob/public_html/admin/Auth/SF/dynamic_side_bar.php on line 11
+[09-Aug-2024 05:26:02 UTC] PHP Warning:  Trying to access array offset on value of type null in /home/blisglob/public_html/admin/Auth/SF/dynamic_side_bar.php on line 11
+[09-Aug-2024 05:26:02 UTC] PHP Warning:  Undefined variable $session_id in /home/blisglob/public_html/admin/Auth/SF/dynamic_side_bar.php on line 14
+[09-Aug-2024 05:26:14 UTC] PHP Warning:  Undefined variable $user_data in /home/blisglob/public_html/admin/Auth/SF/header.php on line 32
+[09-Aug-2024 05:26:14 UTC] PHP Warning:  Trying to access array offset on value of type null in /home/blisglob/public_html/admin/Auth/SF/header.php on line 32
+[09-Aug-2024 05:26:14 UTC] PHP Warning:  Undefined variable $user_data in /home/blisglob/public_html/admin/Auth/SF/header.php on line 35
+[09-Aug-2024 05:26:14 UTC] PHP Warning:  Trying to access array offset on value of type null in /home/blisglob/public_html/admin/Auth/SF/header.php on line 35
+[09-Aug-2024 05:26:14 UTC] PHP Warning:  Undefined variable $user_data in /home/blisglob/public_html/admin/Auth/SF/header.php on line 36
+[09-Aug-2024 05:26:14 UTC] PHP Warning:  Trying to access array offset on value of type null in /home/blisglob/public_html/admin/Auth/SF/header.php on line 36
+[09-Aug-2024 05:26:14 UTC] PHP Warning:  Undefined variable $user_data in /home/blisglob/public_html/admin/Auth/SF/header.php on line 36
+[09-Aug-2024 05:26:14 UTC] PHP Warning:  Trying to access array offset on value of type null in /home/blisglob/public_html/admin/Auth/SF/header.php on line 36
+[09-Aug-2024 05:26:14 UTC] PHP Warning:  Undefined variable $user_data in /home/blisglob/public_html/admin/Auth/SF/dynamic_side_bar.php on line 9
+[09-Aug-2024 05:26:14 UTC] PHP Warning:  Trying to access array offset on value of type null in /home/blisglob/public_html/admin/Auth/SF/dynamic_side_bar.php on line 9
+[09-Aug-2024 05:26:14 UTC] PHP Warning:  Undefined variable $user_data in /home/blisglob/public_html/admin/Auth/SF/dynamic_side_bar.php on line 11
+[09-Aug-2024 05:26:14 UTC] PHP Warning:  Trying to access array offset on value of type null in /home/blisglob/public_html/admin/Auth/SF/dynamic_side_bar.php on line 11
+[09-Aug-2024 05:26:14 UTC] PHP Warning:  Undefined variable $session_id in /home/blisglob/public_html/admin/Auth/SF/dynamic_side_bar.php on line 14
+[09-Aug-2024 05:52:58 UTC] PHP Warning:  ini_set(): Session ini settings cannot be changed when a session is active in /home/blisglob/public_html/admin/Auth/SF/session.php on line 4

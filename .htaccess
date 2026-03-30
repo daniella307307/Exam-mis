@@ -1,0 +1,48 @@
+RewriteEngine On
+
+# ==================== Security Fixes ====================
+# 1. Update authorization section for Apache 2.4+ compatibility
+<FilesMatch "\.pdf$">
+    # Replace deprecated 'Allow from all' with modern syntax
+    Require all granted
+    
+    # Force PDFs to display inline in browser
+    Header always set Content-Disposition "inline"
+    
+    # Required for proper PDF rendering
+    Header set Accept-Ranges bytes
+</FilesMatch>
+
+# 2. Hotlink protection with same-domain allowance
+<IfModule mod_rewrite.c>
+   RewriteCond %{HTTP_REFERER} !^$ 
+    RewriteCond %{HTTP_REFERER} !^https?://(www\.)?bluelackesadigital\.com/.* [NC] RewriteRule \.pdf$ - [F,L] 
+    RewriteRule \.pdf$ - [F,L]
+</IfModule>
+
+# 3. Download manager blocking (use cautiously)
+<IfModule mod_rewrite.c>
+    RewriteCond %{HTTP_USER_AGENT} (IDM|Internet\sDownload\sManager|Download\sAccelerator|FDM|Wget|Curl|HTTrack) [NC]
+    RewriteRule ^ - [F,L]
+</IfModule>
+
+# 4. Directory browsing prevention
+Options -Indexes
+
+# ==================== Core Fixes ====================
+# 5. PHP extension hiding
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME}\.php -f
+RewriteRule ^([^\.]+)$ $1.php [NC,L]
+
+# 6. Error documents
+ErrorDocument 403 /403.php
+ErrorDocument 404 /404.php
+
+# 7. Security headers
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-Frame-Options "SAMEORIGIN"
+    # Only enable CORS if absolutely necessary
+    # Header set Access-Control-Allow-Origin "*"
+</IfModule>

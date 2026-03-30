@@ -1,0 +1,6 @@
+[08-Aug-2024 01:24:45 UTC] PHP Notice:  Undefined variable: users_details in /home/blisglob/public_html/admin/Auth/BCM/Promotion_details.php on line 84
+[08-Aug-2024 01:24:45 UTC] PHP Notice:  Trying to access array offset on value of type null in /home/blisglob/public_html/admin/Auth/BCM/Promotion_details.php on line 84
+[08-Aug-2024 01:24:45 UTC] PHP Notice:  Undefined variable: users_details in /home/blisglob/public_html/admin/Auth/BCM/Promotion_details.php on line 85
+[08-Aug-2024 01:24:45 UTC] PHP Notice:  Trying to access array offset on value of type null in /home/blisglob/public_html/admin/Auth/BCM/Promotion_details.php on line 85
+[08-Aug-2024 01:24:45 UTC] PHP Notice:  Undefined variable: users_details in /home/blisglob/public_html/admin/Auth/BCM/Promotion_details.php on line 85
+[08-Aug-2024 01:24:45 UTC] PHP Notice:  Trying to access array offset on value of type null in /home/blisglob/public_html/admin/Auth/BCM/Promotion_details.php on line 85

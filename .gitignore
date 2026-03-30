@@ -1,0 +1,14 @@
+node_modules
+vendor
+.DS_Store
+*.log
+*.cache
+/Auth
+/Config
+/Console
+/BIBLE
+/CALCULATOR
+/dist
+/uploads
+/SAMUEL
+/pdfjs

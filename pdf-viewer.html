@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Secure PDF Viewer</title>
+    <style>
+        #pdfContainer {
+            width: 100vw;
+            height: 100vh;
+        }
+    </style>
+</head>
+<body>
+    <div id="pdfContainer"></div>
+
+    <script src="test.js"></script>
+    <script>
+        // Disable right-click
+        document.addEventListener('contextmenu', e => e.preventDefault());
+
+        // Disable keyboard shortcuts
+        document.addEventListener('keydown', e => {
+            if (e.ctrlKey || e.metaKey) e.preventDefault();
+        });
+
+        // Load PDF with restrictions
+        pdfjsLib.getDocument({
+            url: '/documents/your-file.pdf',
+            disableAutoFetch: true,
+            disableStream: true
+        }).promise.then(pdf => {
+            // Render first page
+            pdf.getPage(1).then(page => {
+                const canvas = document.createElement('canvas');
+                document.getElementById('pdfContainer').appendChild(canvas);
+                
+                const viewport = page.getViewport({scale: 1});
+                canvas.height = viewport.height;
+                canvas.width = viewport.width;
+
+                page.render({
+                    canvasContext: canvas.getContext('2d'),
+                    viewport: viewport
+                });
+            });
+        });
+    </script>
+</body>
+</html>

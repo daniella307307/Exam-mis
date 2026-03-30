@@ -1,0 +1,103 @@
+[19-Jul-2024 00:59:40 UTC] PHP Warning:  mysqli_connect(): (HY000/1045): Access denied for user 'root'@'localhost' (using password: NO) in /home/blisglob/public_html/admin/db.php on line 8
+[19-Jul-2024 09:13:13 UTC] PHP Notice:  Undefined index: password in /home/blisglob/public_html/admin/Reset_password.php on line 26
+[19-Jul-2024 09:13:48 UTC] PHP Notice:  Undefined index: password in /home/blisglob/public_html/admin/Reset_password.php on line 26
+[19-Jul-2024 09:15:16 UTC] PHP Notice:  Undefined index: password in /home/blisglob/public_html/admin/Reset_password.php on line 26
+[19-Jul-2024 09:15:37 UTC] PHP Notice:  Undefined index: password in /home/blisglob/public_html/admin/Reset_password.php on line 26
+[19-Jul-2024 09:15:54 UTC] PHP Notice:  Undefined index: password in /home/blisglob/public_html/admin/Reset_password.php on line 26
+[19-Jul-2024 11:43:10 UTC] PHP Notice:  Undefined index: password in /home/blisglob/public_html/admin/Reset_password.php on line 26
+[19-Jul-2024 11:45:18 UTC] PHP Notice:  Undefined index: password in /home/blisglob/public_html/admin/Reset_password.php on line 26
+[19-Jul-2024 11:45:38 UTC] PHP Notice:  Undefined index: password in /home/blisglob/public_html/admin/Reset_password.php on line 26
+[19-Jul-2024 18:52:23 UTC] PHP Notice:  Trying to access array offset on value of type null in /home/blisglob/public_html/admin/Register.php on line 12
+[19-Jul-2024 18:52:23 UTC] PHP Notice:  Trying to access array offset on value of type null in /home/blisglob/public_html/admin/Register.php on line 13
+[19-Jul-2024 18:52:23 UTC] PHP Notice:  Trying to access array offset on value of type null in /home/blisglob/public_html/admin/Register.php on line 14
+[19-Jul-2024 18:52:23 UTC] PHP Notice:  Trying to access array offset on value of type null in /home/blisglob/public_html/admin/Register.php on line 118
+[19-Jul-2024 18:52:23 UTC] PHP Notice:  Trying to access array offset on value of type null in /home/blisglob/public_html/admin/Register.php on line 123
+[19-Jul-2024 18:52:23 UTC] PHP Notice:  Trying to access array offset on value of type null in /home/blisglob/public_html/admin/Register.php on line 128
+[19-Jul-2024 18:52:23 UTC] PHP Notice:  Trying to access array offset on value of type null in /home/blisglob/public_html/admin/Register.php on line 133
+[19-Jul-2024 18:52:23 UTC] PHP Notice:  Trying to access array offset on value of type null in /home/blisglob/public_html/admin/Register.php on line 138
+[19-Jul-2024 18:52:23 UTC] PHP Notice:  Trying to access array offset on value of type null in /home/blisglob/public_html/admin/Register.php on line 159
+[19-Jul-2024 18:52:23 UTC] PHP Notice:  Trying to access array offset on value of type null in /home/blisglob/public_html/admin/Register.php on line 159
+[19-Jul-2024 18:52:23 UTC] PHP Notice:  Trying to access array offset on value of type null in /home/blisglob/public_html/admin/Register.php on line 209
+[19-Jul-2024 18:52:23 UTC] PHP Notice:  Trying to access array offset on value of type null in /home/blisglob/public_html/admin/Register.php on line 210
+[19-Jul-2024 18:52:23 UTC] PHP Notice:  Trying to access array offset on value of type null in /home/blisglob/public_html/admin/Register.php on line 211
+[19-Jul-2024 18:58:12 UTC] PHP Notice:  Trying to access array offset on value of type null in /home/blisglob/public_html/admin/Register.php on line 12
+[19-Jul-2024 18:58:12 UTC] PHP Notice:  Trying to access array offset on value of type null in /home/blisglob/public_html/admin/Register.php on line 13
+[19-Jul-2024 18:58:12 UTC] PHP Notice:  Trying to access array offset on value of type null in /home/blisglob/public_html/admin/Register.php on line 14
+[19-Jul-2024 18:58:12 UTC] PHP Notice:  Trying to access array offset on value of type null in /home/blisglob/public_html/admin/Register.php on line 118
+[19-Jul-2024 18:58:12 UTC] PHP Notice:  Trying to access array offset on value of type null in /home/blisglob/public_html/admin/Register.php on line 123
+[19-Jul-2024 18:58:12 UTC] PHP Notice:  Trying to access array offset on value of type null in /home/blisglob/public_html/admin/Register.php on line 128
+[19-Jul-2024 18:58:12 UTC] PHP Notice:  Trying to access array offset on value of type null in /home/blisglob/public_html/admin/Register.php on line 133
+[19-Jul-2024 18:58:12 UTC] PHP Notice:  Trying to access array offset on value of type null in /home/blisglob/public_html/admin/Register.php on line 138
+[19-Jul-2024 18:58:12 UTC] PHP Notice:  Trying to access array offset on value of type null in /home/blisglob/public_html/admin/Register.php on line 159
+[19-Jul-2024 18:58:12 UTC] PHP Notice:  Trying to access array offset on value of type null in /home/blisglob/public_html/admin/Register.php on line 159
+[19-Jul-2024 18:58:12 UTC] PHP Notice:  Trying to access array offset on value of type null in /home/blisglob/public_html/admin/Register.php on line 209
+[19-Jul-2024 18:58:12 UTC] PHP Notice:  Trying to access array offset on value of type null in /home/blisglob/public_html/admin/Register.php on line 210
+[19-Jul-2024 18:58:12 UTC] PHP Notice:  Trying to access array offset on value of type null in /home/blisglob/public_html/admin/Register.php on line 211
+[19-Jul-2024 18:58:12 UTC] PHP Notice:  Trying to access array offset on value of type null in /home/blisglob/public_html/admin/Register.php on line 239
+[19-Jul-2024 19:02:29 UTC] PHP Notice:  Trying to access array offset on value of type null in /home/blisglob/public_html/admin/Register.php on line 12
+[19-Jul-2024 19:02:29 UTC] PHP Notice:  Trying to access array offset on value of type null in /home/blisglob/public_html/admin/Register.php on line 13
+[19-Jul-2024 19:02:29 UTC] PHP Notice:  Trying to access array offset on value of type null in /home/blisglob/public_html/admin/Register.php on line 14
+[19-Jul-2024 19:02:29 UTC] PHP Notice:  Trying to access array offset on value of type null in /home/blisglob/public_html/admin/Register.php on line 118
+[19-Jul-2024 19:02:29 UTC] PHP Notice:  Trying to access array offset on value of type null in /home/blisglob/public_html/admin/Register.php on line 123
+[19-Jul-2024 19:02:29 UTC] PHP Notice:  Trying to access array offset on value of type null in /home/blisglob/public_html/admin/Register.php on line 128
+[19-Jul-2024 19:02:29 UTC] PHP Notice:  Trying to access array offset on value of type null in /home/blisglob/public_html/admin/Register.php on line 133
+[19-Jul-2024 19:02:29 UTC] PHP Notice:  Trying to access array offset on value of type null in /home/blisglob/public_html/admin/Register.php on line 138
+[19-Jul-2024 19:02:29 UTC] PHP Notice:  Trying to access array offset on value of type null in /home/blisglob/public_html/admin/Register.php on line 159
+[19-Jul-2024 19:02:29 UTC] PHP Notice:  Trying to access array offset on value of type null in /home/blisglob/public_html/admin/Register.php on line 159
+[19-Jul-2024 19:02:29 UTC] PHP Notice:  Trying to access array offset on value of type null in /home/blisglob/public_html/admin/Register.php on line 209
+[19-Jul-2024 19:02:29 UTC] PHP Notice:  Trying to access array offset on value of type null in /home/blisglob/public_html/admin/Register.php on line 210
+[19-Jul-2024 19:02:29 UTC] PHP Notice:  Trying to access array offset on value of type null in /home/blisglob/public_html/admin/Register.php on line 211
+[19-Jul-2024 19:03:37 UTC] PHP Notice:  Trying to access array offset on value of type null in /home/blisglob/public_html/admin/Register.php on line 12
+[19-Jul-2024 19:03:37 UTC] PHP Notice:  Trying to access array offset on value of type null in /home/blisglob/public_html/admin/Register.php on line 13
+[19-Jul-2024 19:03:37 UTC] PHP Notice:  Trying to access array offset on value of type null in /home/blisglob/public_html/admin/Register.php on line 14
+[19-Jul-2024 19:03:37 UTC] PHP Notice:  Trying to access array offset on value of type null in /home/blisglob/public_html/admin/Register.php on line 118
+[19-Jul-2024 19:03:37 UTC] PHP Notice:  Trying to access array offset on value of type null in /home/blisglob/public_html/admin/Register.php on line 123
+[19-Jul-2024 19:03:37 UTC] PHP Notice:  Trying to access array offset on value of type null in /home/blisglob/public_html/admin/Register.php on line 128
+[19-Jul-2024 19:03:37 UTC] PHP Notice:  Trying to access array offset on value of type null in /home/blisglob/public_html/admin/Register.php on line 133
+[19-Jul-2024 19:03:37 UTC] PHP Notice:  Trying to access array offset on value of type null in /home/blisglob/public_html/admin/Register.php on line 138
+[19-Jul-2024 19:03:37 UTC] PHP Notice:  Trying to access array offset on value of type null in /home/blisglob/public_html/admin/Register.php on line 159
+[19-Jul-2024 19:03:37 UTC] PHP Notice:  Trying to access array offset on value of type null in /home/blisglob/public_html/admin/Register.php on line 159
+[19-Jul-2024 19:03:37 UTC] PHP Notice:  Trying to access array offset on value of type null in /home/blisglob/public_html/admin/Register.php on line 209
+[19-Jul-2024 19:03:37 UTC] PHP Notice:  Trying to access array offset on value of type null in /home/blisglob/public_html/admin/Register.php on line 210
+[19-Jul-2024 19:03:37 UTC] PHP Notice:  Trying to access array offset on value of type null in /home/blisglob/public_html/admin/Register.php on line 211
+[04-Aug-2024 05:31:07 UTC] PHP Notice:  Undefined index: access_level in /home/blisglob/public_html/admin/Register.php on line 59
+[04-Aug-2024 17:33:36 UTC] PHP Notice:  Undefined index: access_level in /home/blisglob/public_html/admin/Register.php on line 59
+[08-Aug-2024 20:14:31 UTC] PHP Warning:  session_start(): Session cannot be started after headers have already been sent in /home/blisglob/public_html/admin/Administrator_login.php on line 21
+[08-Aug-2024 20:14:39 UTC] PHP Warning:  session_start(): Session cannot be started after headers have already been sent in /home/blisglob/public_html/admin/Administrator_login.php on line 21
+[08-Aug-2024 20:14:44 UTC] PHP Warning:  session_start(): Session cannot be started after headers have already been sent in /home/blisglob/public_html/admin/Administrator_login.php on line 21
+[08-Aug-2024 20:14:51 UTC] PHP Warning:  session_start(): Session cannot be started after headers have already been sent in /home/blisglob/public_html/admin/Administrator_login.php on line 21
+[08-Aug-2024 20:14:57 UTC] PHP Warning:  session_start(): Session cannot be started after headers have already been sent in /home/blisglob/public_html/admin/Administrator_login.php on line 21
+[08-Aug-2024 20:15:04 UTC] PHP Warning:  session_start(): Session cannot be started after headers have already been sent in /home/blisglob/public_html/admin/Administrator_login.php on line 21
+[09-Aug-2024 05:12:24 UTC] PHP Warning:  session_start(): Session cannot be started after headers have already been sent in /home/blisglob/public_html/admin/Administrator_login.php on line 21
+[09-Aug-2024 05:12:24 UTC] PHP Warning:  session_start(): Session cannot be started after headers have already been sent in /home/blisglob/public_html/admin/Administrator_login.php on line 21
+[09-Aug-2024 05:12:31 UTC] PHP Warning:  session_start(): Session cannot be started after headers have already been sent in /home/blisglob/public_html/admin/Administrator_login.php on line 21
+[09-Aug-2024 05:12:35 UTC] PHP Warning:  session_start(): Session cannot be started after headers have already been sent in /home/blisglob/public_html/admin/Administrator_login.php on line 21
+[09-Aug-2024 05:12:42 UTC] PHP Warning:  session_start(): Session cannot be started after headers have already been sent in /home/blisglob/public_html/admin/Administrator_login.php on line 21
+[09-Aug-2024 05:12:52 UTC] PHP Warning:  session_start(): Session cannot be started after headers have already been sent in /home/blisglob/public_html/admin/Administrator_login.php on line 21
+[09-Aug-2024 05:12:59 UTC] PHP Warning:  session_start(): Session cannot be started after headers have already been sent in /home/blisglob/public_html/admin/Administrator_login.php on line 21
+[09-Aug-2024 05:13:01 UTC] PHP Warning:  session_start(): Session cannot be started after headers have already been sent in /home/blisglob/public_html/admin/Administrator_login.php on line 21
+[09-Aug-2024 05:13:08 UTC] PHP Warning:  session_start(): Session cannot be started after headers have already been sent in /home/blisglob/public_html/admin/Administrator_login.php on line 21
+[09-Aug-2024 05:14:28 UTC] PHP Warning:  session_start(): Session cannot be started after headers have already been sent in /home/blisglob/public_html/admin/Administrator_login.php on line 21
+[09-Aug-2024 05:14:34 UTC] PHP Warning:  session_start(): Session cannot be started after headers have already been sent in /home/blisglob/public_html/admin/Administrator_login.php on line 21
+[09-Aug-2024 05:16:36 UTC] PHP Parse error:  syntax error, unexpected token ";" in /home/blisglob/public_html/admin/Administrator_login.php on line 58
+[09-Aug-2024 05:16:41 UTC] PHP Parse error:  syntax error, unexpected token ";" in /home/blisglob/public_html/admin/Administrator_login.php on line 58
+[09-Aug-2024 05:16:52 UTC] PHP Warning:  session_start(): Session cannot be started after headers have already been sent in /home/blisglob/public_html/admin/Administrator_login.php on line 21
+[09-Aug-2024 05:16:59 UTC] PHP Warning:  session_start(): Session cannot be started after headers have already been sent in /home/blisglob/public_html/admin/Administrator_login.php on line 21
+[09-Aug-2024 05:17:39 UTC] PHP Warning:  session_start(): Session cannot be started after headers have already been sent in /home/blisglob/public_html/admin/Administrator_login.php on line 21
+[09-Aug-2024 05:18:59 UTC] PHP Warning:  session_start(): Session cannot be started after headers have already been sent in /home/blisglob/public_html/admin/Administrator_login.php on line 21
+[09-Aug-2024 05:26:14 UTC] PHP Warning:  session_start(): Session cannot be started after headers have already been sent in /home/blisglob/public_html/admin/Administrator_login.php on line 44
+[09-Aug-2024 05:27:33 UTC] PHP Warning:  session_start(): Session cannot be started after headers have already been sent in /home/blisglob/public_html/admin/Administrator_login.php on line 44
+[09-Aug-2024 05:29:08 UTC] PHP Warning:  session_start(): Session cannot be started after headers have already been sent in /home/blisglob/public_html/admin/Administrator_login.php on line 44
+[09-Aug-2024 05:34:53 UTC] PHP Warning:  session_start(): Session cannot be started after headers have already been sent in /home/blisglob/public_html/admin/Administrator_login.php on line 44
+[09-Aug-2024 05:36:09 UTC] PHP Warning:  ini_set(): Session ini settings cannot be changed after headers have already been sent in /home/blisglob/public_html/admin/Administrator_login.php on line 44
+[09-Aug-2024 05:36:09 UTC] PHP Warning:  session_start(): Session cannot be started after headers have already been sent in /home/blisglob/public_html/admin/Administrator_login.php on line 45
+[09-Aug-2024 05:38:16 UTC] PHP Warning:  ini_set(): Session ini settings cannot be changed after headers have already been sent in /home/blisglob/public_html/admin/Administrator_login.php on line 44
+[09-Aug-2024 05:38:16 UTC] PHP Warning:  session_start(): Session cannot be started after headers have already been sent in /home/blisglob/public_html/admin/Administrator_login.php on line 45
+[09-Aug-2024 05:41:56 UTC] PHP Warning:  ini_set(): Session ini settings cannot be changed after headers have already been sent in /home/blisglob/public_html/admin/Administrator_login.php on line 44
+[09-Aug-2024 05:41:56 UTC] PHP Warning:  session_start(): Session cannot be started after headers have already been sent in /home/blisglob/public_html/admin/Administrator_login.php on line 45
+[09-Aug-2024 05:41:56 UTC] PHP Warning:  Cannot modify header information - headers already sent by (output started at /home/blisglob/public_html/admin/Administrator_login.php:1) in /home/blisglob/public_html/admin/Administrator_login.php on line 56
+[09-Aug-2024 05:43:31 UTC] PHP Warning:  ini_set(): Session ini settings cannot be changed after headers have already been sent in /home/blisglob/public_html/admin/Administrator_login.php on line 44
+[09-Aug-2024 05:43:31 UTC] PHP Warning:  session_start(): Session cannot be started after headers have already been sent in /home/blisglob/public_html/admin/Administrator_login.php on line 45
+[09-Aug-2024 05:43:43 UTC] PHP Warning:  ini_set(): Session ini settings cannot be changed after headers have already been sent in /home/blisglob/public_html/admin/Administrator_login.php on line 44
+[09-Aug-2024 05:43:43 UTC] PHP Warning:  session_start(): Session cannot be started after headers have already been sent in /home/blisglob/public_html/admin/Administrator_login.php on line 45
+[09-Aug-2024 05:52:57 UTC] PHP Warning:  ini_set(): Session ini settings cannot be changed when a session is active in /home/blisglob/public_html/admin/Administrator_login.php on line 47

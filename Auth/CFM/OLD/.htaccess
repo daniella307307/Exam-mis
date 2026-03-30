@@ -1,0 +1,9 @@
+RewriteEngine On
+
+# Remove file extension from all pages
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME}\.php -f
+RewriteRule ^([^\.]+)$ $1.php [NC,L]
+
+# Custom 404 error page
+ErrorDocument 404 /404.php
