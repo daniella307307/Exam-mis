@@ -73,7 +73,7 @@ $questions = $qstmt->get_result();
 Edit Exam
 </h1>
 
-<a href="exam_details.php"
+<a href="exams_library.php"
 class="text-sm text-purple-600 font-semibold">
 ← Back
 </a>

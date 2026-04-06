@@ -1,6 +1,5 @@
 <?php
 include('../db.php');
-
 $stmt = $conn->prepare("SELECT exam_id, title, topic, grade, status FROM exams ORDER BY created_at DESC LIMIT 1");
 $stmt->execute();
 $exam = $stmt->get_result()->fetch_assoc();
@@ -32,6 +31,7 @@ $exam_status = htmlspecialchars($exam['status']);
 <body class="bg-gray-50 min-h-screen flex flex-col items-center p-6">
 
 <!-- Top Bar -->
+ 
 
 <div class="w-full max-w-xl flex justify-between items-center mb-6">
 

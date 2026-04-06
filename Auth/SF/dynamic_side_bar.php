@@ -3,14 +3,14 @@
 
                 </div>
                 <ul class="list-reset flex flex-col">
-                    <li class=" w-full h-full py-3 px-2 border-b border-light-border ">
+                    <!-- <li class=" w-full h-full py-3 px-2 border-b border-light-border ">
                         <a href="index"
                            class="font-sans font-hairline hover:font-normal text-sm text-nav-item no-underline">
                              <img class="inline-block h-12 w-12 rounded-full" src="../<?php echo $user_data['Country_flag'];?>" alt="">
                            
                             <?php echo $user_data['Country_name'];?> 
                         </a>
-                    </li>
+                    </li> -->
                     <li class="w-full h-full py-3 px-2 border-b border-light-border">
                         <a href="Laboratory_Equipments"
                            class="font-sans font-hairline hover:font-normal text-sm text-nav-item no-underline">
@@ -36,13 +36,23 @@
                             <span><i class="fa fa-angle-right float-right"></i></span>
                         </a> 
                     </li>
-				 
-					  
+
                     <li class="w-full h-full py-3 px-2 border-b border-light-border">
                         <a href="Students_perschool"
                            class="font-sans font-hairline hover:font-normal text-sm text-nav-item no-underline">
                             <i class="fa fa-users float-left mx-2"></i>
                             Students List
+                            <span><i class="fa fa-angle-right float-right"></i></span>
+                        </a>
+                    </li>
+                    <?php
+$base_url = "/_bluelackesadigital.com/public_html";
+?>
+                      <li class="w-full h-full py-3 px-2 border-b border-light-border">
+                        <a href="<?php echo $base_url; ?>/Exams/exams_library.php"
+                           class="font-sans font-hairline hover:font-normal text-sm text-nav-item no-underline">
+                            <i class="fa fa-users float-left mx-2"></i>
+                            Exams Library
                             <span><i class="fa fa-angle-right float-right"></i></span>
                         </a>
                     </li>

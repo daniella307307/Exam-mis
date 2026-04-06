@@ -33,7 +33,7 @@ $mode= $_POST['mode'] ?? 'ai';
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   body {
-    font-family: 'DM Sans', sans-serif;
+    font-family:  sans-serif;
     background: var(--bg);
     color: var(--text);
     min-height: 100vh;
@@ -41,7 +41,7 @@ $mode= $_POST['mode'] ?? 'ai';
   }
 
   /* GRID BACKGROUND */
-  body::before {
+  /* body::before {
     content: '';
     position: fixed;
     inset: 0;
@@ -51,7 +51,7 @@ $mode= $_POST['mode'] ?? 'ai';
     background-size: 48px 48px;
     pointer-events: none;
     z-index: 0;
-  }
+  } */
 
   .wrap {
     position: relative;
