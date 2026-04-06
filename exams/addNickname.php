@@ -5,31 +5,17 @@ include("../db.php");
 $error = "";
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $pin      = trim($_POST['pin']      ?? '');
+    $nickname      = trim($_POST['nickname']      ?? '');
 
-    if (!$pin) {
-        $error = "Please enter a game PIN.";
+    if (!$nickname) {
+        $error = "Please enter a nickname.";
     } else {
-        $stmt = $conn->prepare("SELECT * FROM exams WHERE exam_code = ? AND status != 'finished'");
-        $stmt->bind_param("i", $pin);
+        $stmt = $conn->prepare("UPDATE players SET nickname = ? WHERE player_id = ?");
+        $stmt->bind_param("si", $nickname, $_SESSION['player_id']);
         $stmt->execute();
-        $exam = $stmt->get_result()->fetch_assoc();
-
-        if (!$exam) {
-            $error = "Game not found or already finished. Check your PIN.";
-        } else {
-            //nickname can be optional 
-            $ins = $conn->prepare("INSERT INTO players (exam_id, nickname) VALUES (?, ?)");
-            $ins->bind_param("is", $exam['exam_id'], $nickname);
-            $ins->execute();
-            
-            $_SESSION['exam_id']   = $exam['exam_id'];
-            $_SESSION['player_id'] = $conn->insert_id;
-            
-
-            header("Location: select_mode.php");
-            exit();
-        }
+        $_SESSION['nickname'] = $nickname;
+        header("Location: waiting.php");
+        exit();
     }
 }
 ?>
@@ -244,16 +230,12 @@ input::placeholder{
     <div class="error"><?= htmlspecialchars($error) ?></div>
   <?php endif; ?>
   <form method="POST">
+    
     <div class="field">
-      <label>Game PIN</label>
-      <input type="number" name="pin" placeholder="000000"
-             value="<?= htmlspecialchars($_POST['pin'] ?? '') ?>" autofocus autocomplete="off">
-    </div>
-    <!-- <div class="field">
       <label>Your Nickname</label>
       <input type="text" name="nickname" placeholder="e.g. StarPlayer"
              value="<?= htmlspecialchars($_POST['nickname'] ?? '') ?>" maxlength="30" autocomplete="off">
-    </div> -->
+    </div> 
     <button type="submit" class="btn">JOIN GAME &rarr;</button>
   </form>
 </div>

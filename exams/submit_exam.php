@@ -48,7 +48,7 @@ $upd = $conn->prepare("UPDATE players SET score = ? WHERE player_id = ?");
 $upd->bind_param("ii", $total_score, $player_id);
 $upd->execute();
  
-header("Location: results.php");
+header("Location: leaderboard.php");
 exit();
 ?>
 */

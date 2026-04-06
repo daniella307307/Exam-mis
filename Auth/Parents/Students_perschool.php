@@ -44,7 +44,7 @@ if (isset($_GET['search']) && !empty($_GET['search_term'])) {
 }
  
 // Count total records
-$count_query = "SELECT COUNT(*) FROM student_list WHERE ((student_mather='$session_id' OR student_father='$session_id') AND student_school='$school_ref') AND $action $search_query";
+$count_query = "SELECT COUNT(*) FROM student_list WHERE ((parent_id='$session_id' OR parent_id='$session_id') AND student_school='$school_ref') AND $action $search_query";
 
  
 $count_result = mysqli_query($conn, $count_query);
@@ -52,7 +52,7 @@ $total_records = mysqli_fetch_array($count_result)[0];
 
 // Fetch records with limit and offset
 $select_user = mysqli_query($conn, "SELECT * FROM student_list 
-                                   WHERE ((student_mather='$session_id' OR student_father='$session_id') AND student_school='$school_ref') AND $action $search_query 
+                                   WHERE ((parent_id='$session_id' OR parent_id='$session_id') AND student_school='$school_ref') AND $action $search_query 
                                    ORDER BY student_regno DESC 
                                    LIMIT $offset, $records_per_page");
 ?>

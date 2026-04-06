@@ -61,8 +61,15 @@ $timePerQ     = intval($totalSeconds / count($questions));
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{--bg:#0d0d2b;--card:#16163a;--accent:#7c3aed;--accent2:#a855f7;--text:#f1f5f9;--muted:#94a3b8;--radius:16px}
-
+:root{
+  --bg:#f4f6fb;
+  --card:#ffffff;
+  --accent:#7c3aed;
+  --accent2:#a855f7;
+  --text:#0f172a;
+  --muted:#64748b;
+  --radius:16px;
+}
 body{
   font-family:'Nunito',sans-serif;
   background:var(--bg);
@@ -81,8 +88,8 @@ body::before,body::after{
   filter:blur(80px);opacity:.15;pointer-events:none;
   animation:drift 8s ease-in-out infinite alternate;
 }
-body::before{width:400px;height:400px;background:var(--accent);top:-120px;left:-100px}
-body::after{width:350px;height:350px;background:#06b6d4;bottom:-100px;right:-80px;animation-delay:-4s}
+body::before{width:400px;height:400px;background:#c4b5fd;top:-120px;left:-100px}
+body::after{width:350px;height:350px;background:#67e8f9;bottom:-100px;right:-80px;animation-delay:-4s}
 @keyframes drift{to{transform:translate(40px,30px)}}
 
 /* ── Top bar ── */
@@ -102,7 +109,9 @@ body::after{width:350px;height:350px;background:#06b6d4;bottom:-100px;right:-80p
 /* ── Timer ── */
 .timer-wrap{
   display:flex;align-items:center;gap:8px;
-  background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);
+ background:#ffffff;
+  border:1px solid #e2e8f0;
+  border-radius:30px;padding:6px 14px;
   border-radius:30px;padding:8px 16px;
 }
 .timer-icon{font-size:16px}
@@ -112,7 +121,7 @@ body::after{width:350px;height:350px;background:#06b6d4;bottom:-100px;right:-80p
 /* ── Progress bar ── */
 .progress-bar{
   width:100%;max-width:760px;height:6px;
-  background:rgba(255,255,255,.08);border-radius:99px;
+  background:#e2e8f0;border-radius:99px;
   margin-bottom:24px;overflow:hidden;position:relative;z-index:1;
 }
 .progress-fill{
@@ -160,8 +169,8 @@ body::after{width:350px;height:350px;background:#06b6d4;bottom:-100px;right:-80p
   display:flex;align-items:center;gap:12px;
   transition:transform .15s,box-shadow .15s,border-color .15s;
   text-align:left;
+  background:#f8fafc;
   color:var(--text);
-  background:rgba(255,255,255,.06);
 }
 .option:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(0,0,0,.3)}
 .option:active{transform:translateY(0)}

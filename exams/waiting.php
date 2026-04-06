@@ -224,69 +224,61 @@ textarea{
   </div>
 
   <div class="exam-title"><?= htmlspecialchars($exam['title']) ?></div>
- 
-  <div class="divider"></div>
-
-  <?php if ($groupSaved): ?>
-    <div class="success">✓ Your details have been saved!</div>
-  <?php endif; ?>
-
- <form method="POST">
-
-  <div class="field">
-    <label class="lbl">Number of Group Members</label>
-    <select id="memberCount" onchange="generateFields()">
-      <option value="">Select</option>
-      <option value="1">1</option>
-      <option value="2">2</option>
-      <option value="3">3</option>
-      <option value="4">4</option>
-      <option value="5">5</option>
-      <option value="6">6</option>
-      <option value="7">7</option>
-    </select>
+  <div class="player-name">
+    Playing as <span><?= htmlspecialchars($_SESSION['nickname']) ?></span>
   </div>
 
-  <!-- Dynamic fields -->
-  <div id="membersContainer"></div>
+  <div class="countdown-wrap">
+    <div class="countdown-label">Game starts in</div>
+    <div class="countdown" id="timer">--:--</div>
+  </div>
 
-  <button type="submit" name="save_group" class="btn-save">
-    Add Members & Save
-  </button>
-
-</form>
-
+  <div class="divider"></div>
+  
+  <div class="players-online">
+    🎮 Players joined: <strong id="playerCount">–</strong>
+  </div>
 
 </div>
-<script id="js-members">
-function generateFields() {
-  const count = document.getElementById("memberCount").value;
-  const container = document.getElementById("membersContainer");
-
-  container.innerHTML = "";
-
-  for (let i = 1; i <= count; i++) {
-    container.innerHTML += `
-      <div class="field">
-        <label>Member ${i}</label>
-        <input type="text" name="members[]" placeholder="Enter name" required>
-      </div>
-    `;
-  }
-}
-</script>
 
 <script>
-// ── Mode toggle ──────────────────────────────────────────────────
-function setMode(mode) {
-  document.getElementById('modeInput').value = mode;
-  document.getElementById('groupFields').classList.toggle('visible', mode === 'group');
-  document.getElementById('btnInd').classList.toggle('active', mode === 'individual');
-  document.getElementById('btnGrp').classList.toggle('active', mode === 'group');
+
+// ── Countdown timer ──────────────────────────────────────────────
+const startTime =  1000000; // convert to milliseconds
+
+function updateTimer() {
+  const diff = startTime - Date.now();
+  if (diff <= 0) {
+    return;
+  }
+  const m = Math.floor(diff / 60000);
+  const s = Math.floor((diff % 60000) / 1000);
+  document.getElementById('timer').textContent =
+    String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
 }
+setInterval(updateTimer, 1000);
+updateTimer();
 
+// ── Poll live player count ───────────────────────────────────────
+function pollPlayers() {
+  fetch('getplayercount.php')
+    .then(r => r.json())
+    .then(d => { document.getElementById('playerCount').textContent = d.count ?? '–'; })
+    .catch(() => {});
+}
+setInterval(pollPlayers, 3000);
+pollPlayers();
 
-
+// ── Poll for host pressing Start (status = 'active') ─────────────
+function pollStatus() {
+  fetch('checkexamstatus.php')
+    .then(r => r.json())
+    .then(d => {
+      if (d.status === 'active') window.location.href = "start_exam.php";
+    })
+    .catch(() => {});
+}
+setInterval(pollStatus, 2000);
 </script>
 
 </body>

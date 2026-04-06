@@ -257,14 +257,24 @@ $minDate = date('Y-m-d', strtotime("-$setting_min_year years"));
                         <div class="relative">
                             <select name="student_class" class="block appearance-none w-full bg-grey-200 border border-grey-200 text-grey-darker py-3 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-grey" id="student_class">
                                 <?php
-                                $select_school = mysqli_query($conn, "SELECT * FROM school_classes
-                                LEFT JOIN school_levels ON school_classes.class_level = school_levels.level_id 
-                                LEFT JOIN schools ON school_classes.class_school = schools.school_id
-                                WHERE class_school='$school_ref'");
-                                while ($find_school = mysqli_fetch_array($select_school)) {
-                                    echo '<option value="' . $find_school['class_id'] . '">' . $find_school['level_name'] . ' - ' . $find_school['class_name'] . '</option>';
-                                }
-                                ?>
+                                $stmt = $conn->prepare("
+    SELECT sc.class_id, sc.class_name, sl.level_name 
+    FROM school_classes sc
+    INNER JOIN school_levels sl ON sc.class_level = sl.level_id
+    INNER JOIN schools s ON sc.class_school = s.school_id
+    WHERE sc.class_school = ?
+");
+
+$stmt->bind_param("i", $school_ref);
+$stmt->execute();
+$result = $stmt->get_result();
+
+while ($row = $result->fetch_assoc()) {
+    echo '<option value="' . $row['class_id'] . '">'
+        . $row['level_name'] . ' - ' . $row['class_name'] .
+        '</option>';
+}
+                               ?>
                             </select>
                         </div>
                     </div>

@@ -5,31 +5,29 @@ include("../db.php");
 $error = "";
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $pin      = trim($_POST['pin']      ?? '');
+    $mode    = trim($_POST['mode']      ?? 'individual');
 
-    if (!$pin) {
-        $error = "Please enter a game PIN.";
+    if (!$mode) {
+        $error = "Please select mode.";
     } else {
-        $stmt = $conn->prepare("SELECT * FROM exams WHERE exam_code = ? AND status != 'finished'");
-        $stmt->bind_param("i", $pin);
-        $stmt->execute();
-        $exam = $stmt->get_result()->fetch_assoc();
-
-        if (!$exam) {
-            $error = "Game not found or already finished. Check your PIN.";
-        } else {
+        
+       
             //nickname can be optional 
-            $ins = $conn->prepare("INSERT INTO players (exam_id, nickname) VALUES (?, ?)");
-            $ins->bind_param("is", $exam['exam_id'], $nickname);
-            $ins->execute();
+            $upd = $conn->prepare("UPDATE players SET mode = ? WHERE player_id = ?");
+            $upd->bind_param("si", $mode, $_SESSION['player_id']);
+            $upd->execute();
             
-            $_SESSION['exam_id']   = $exam['exam_id'];
-            $_SESSION['player_id'] = $conn->insert_id;
-            
-
-            header("Location: select_mode.php");
+            $_SESSION['mode']   = $mode;
+            if($mode === 'group') {
+                $_SESSION['nickname'] = null; // Clear nickname for group mode
+                header("Location: waiting_room.php");
+                exit();
+            }else{
+                header("Location: addNickname.php");
+                exit();
+            }
             exit();
-        }
+        
     }
 }
 ?>
@@ -66,6 +64,42 @@ body{
   padding:24px;
   overflow:hidden;
   position:relative
+}
+/* MODE SELECT CARDS */
+.mode-select{
+  display:flex;
+  gap:12px;
+}
+
+.mode-card{
+  flex:1;
+  cursor:pointer;
+}
+
+.mode-card input{
+  display:none;
+}
+
+.mode-content{
+  padding:16px;
+  border-radius:12px;
+  text-align:center;
+  font-weight:800;
+  background:#f1f5f9;
+  border:2px solid transparent;
+  transition:all .2s;
+}
+
+/* hover */
+.mode-content:hover{
+  transform:translateY(-2px);
+}
+
+/* selected */
+.mode-card input:checked + .mode-content{
+  background:rgba(124,58,237,.1);
+  border-color:var(--accent);
+  color:var(--accent);
 }
 
 /* softer background glow */
@@ -216,7 +250,13 @@ input::placeholder{
 }
 
 .btn:active{transform:translateY(0)}
-
+.checkbox-group{
+  display:flex;
+  flex-direction:row;
+  justify-content:flex-start;
+  gap:8px;
+  
+}
 .error{
   background:rgba(239,68,68,.1);
   border:1px solid rgba(239,68,68,.3);
@@ -239,22 +279,34 @@ input::placeholder{
   <div class="icon-box">■</div>
 </div>
 <div class="card">
-  <h2>Enter Game</h2>
   <?php if ($error): ?>
     <div class="error"><?= htmlspecialchars($error) ?></div>
   <?php endif; ?>
   <form method="POST">
     <div class="field">
-      <label>Game PIN</label>
-      <input type="number" name="pin" placeholder="000000"
-             value="<?= htmlspecialchars($_POST['pin'] ?? '') ?>" autofocus autocomplete="off">
+         <!-- MODE -->
+    <div class="field">
+      <label>Playing As</label>
+
+      <div class="mode-select">
+        <label class="mode-card">
+          <input type="radio" name="mode" value="group" required>
+          <div class="mode-content">
+            👥 Group
+          </div>
+        </label>
+
+        <label class="mode-card">
+          <input type="radio" name="mode" value="individual">
+          <div class="mode-content">
+            🧍 Individual
+          </div>
+        </label>
+      </div>
     </div>
-    <!-- <div class="field">
-      <label>Your Nickname</label>
-      <input type="text" name="nickname" placeholder="e.g. StarPlayer"
-             value="<?= htmlspecialchars($_POST['nickname'] ?? '') ?>" maxlength="30" autocomplete="off">
-    </div> -->
-    <button type="submit" class="btn">JOIN GAME &rarr;</button>
+
+    <button type="submit" class="btn">🚀 JOIN GAME</button>
+  </div>
   </form>
 </div>
 </body>
