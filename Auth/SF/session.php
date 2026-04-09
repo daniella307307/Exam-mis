@@ -1,7 +1,7 @@
 <?php
 session_start(); 
-include('../../db.php');
- 
+//if in exams folder, use this path
+require_once $_SERVER['DOCUMENT_ROOT'] . '/_bluelackesadigital.com/public_html/db.php';
 $directory = __DIR__;
 $current_folder = basename($directory);
 $this_year =DATE("Y");

@@ -72,7 +72,7 @@ $total_marks = $total['total_marks'] ?? 0;
 <!-- SIDEBAR -->
 <!-- ========================= -->
 <div class="flex flex-1">
-    <?php include('../Auth/SF/dynamic_side_bar.php'); ?>
+    <?php include('./dynamic_side_bar.php'); ?>
 </div>
 
 <!-- ========================= -->
