@@ -6,15 +6,16 @@ $error = "";
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $mode    = trim($_POST['mode']      ?? 'individual');
-
-    if (!$mode) {
-        $error = "Please select mode.";
+    $grade = trim($_POST['grade'] ?? '');
+    $stream = trim($_POST['stream'] ?? '');
+    if (!$mode || !$grade || !$stream) {
+        $error = "Please select all options.";
     } else {
         
        
             //nickname can be optional 
-            $upd = $conn->prepare("UPDATE players SET mode = ? WHERE player_id = ?");
-            $upd->bind_param("si", $mode, $_SESSION['player_id']);
+            $upd = $conn->prepare("UPDATE players SET mode = ?, grade = ?, stream = ? WHERE player_id = ?");
+            $upd->bind_param("sssi", $mode, $grade, $stream, $_SESSION['player_id']);
             $upd->execute();
             
             $_SESSION['mode']   = $mode;
@@ -23,7 +24,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 header("Location: waiting_room.php");
                 exit();
             }else{
-                header("Location: stream.php");
+                header("Location: add_name.php");
                 exit();
             }
             exit();
@@ -304,7 +305,7 @@ input::placeholder{
     </div>
     <div class="field">
       <label class="block mb-2 font-semibold">Grade</label>
-      <Select name="grade" class="w-full p-2 border rounded mb-4" required>
+       <select name="grade" class="w-full p-2 border rounded mb-4" required>
           <option value="">Select Grade</option>
           <option value="Nursery 1">Nursery 1</option>
           <option value="Nursery 2">Nursery 2</option>
@@ -325,7 +326,7 @@ input::placeholder{
     </div>
     <div class="field">
       <label class="block mb-2 font-semibold">Stream</label>
-      <Select name="stream" class="w-full p-2 border rounded mb-4" required>
+       <select name="stream" class="w-full p-2 border rounded mb-4" required>
           <option value="">Select Stream</option>
           <option value="">A</option>
           <option value="Science">B</option>
