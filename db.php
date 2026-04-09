@@ -1,5 +1,6 @@
 <?php
-$servername = "localhost";
+$servername = "193.203.168.143";
+$port = "3306";
 $username = "u664421868_blisdatabase";
 $password = "Blisdata@1234";
 $dbname = "u664421868_blisdatabase";
