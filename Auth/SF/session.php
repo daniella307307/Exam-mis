@@ -1,5 +1,5 @@
 <?php
-session_start(); 
+session_start();
 //if in exams folder, use this path
 require_once $_SERVER['DOCUMENT_ROOT'] . '/_bluelackesadigital.com/public_html/db.php';
 $directory = __DIR__;
