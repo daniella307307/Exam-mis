@@ -1,8 +1,8 @@
 <?php
 $servername = "localhost";
-$username = "root";
-$password = "root";
-$dbname = "blisdb";
+$username = "u664421868_blisdatabase";
+$password = "Blisdata@1234";
+$dbname = "u664421868_blisdatabase";
 
 $conn = new mysqli($servername, $username, $password, $dbname);
 
