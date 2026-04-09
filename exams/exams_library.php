@@ -1,100 +1,108 @@
 <?php
 include('../db.php');
+
 $stmt = $conn->prepare("SELECT exam_id, title, topic, grade, status FROM exams ORDER BY created_at DESC LIMIT 1");
 $stmt->execute();
 $exam = $stmt->get_result()->fetch_assoc();
 
 if (!$exam) {
-    echo "No exam found. Please create an exam first.";
+    echo "<div class='p-6 text-center text-gray-600'>
+            No exam found.<br>
+            <a href='examscreator.php' class='text-blue-600 underline'>Create one now</a>
+          </div>";
     exit();
 }
 
 $exam_id = $exam['exam_id'];
-$exam_title = htmlspecialchars($exam['title']);
-$exam_topic = htmlspecialchars($exam['topic']);
-$exam_grade = htmlspecialchars($exam['grade']);
-$exam_status = htmlspecialchars($exam['status']);
+$exam_title = htmlspecialchars($exam['title'], ENT_QUOTES, 'UTF-8');
+$exam_topic = htmlspecialchars($exam['topic'], ENT_QUOTES, 'UTF-8');
+$exam_grade = htmlspecialchars($exam['grade'], ENT_QUOTES, 'UTF-8');
+$exam_status = htmlspecialchars($exam['status'], ENT_QUOTES, 'UTF-8');
 ?>
+
 
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>Exam Details</title>
-
 <link rel="stylesheet" href="../dist/styles.css">
-
 </head>
 
-<body class="bg-gray-50 min-h-screen flex flex-col items-center p-6">
+<body class="bg-gray-100 min-h-screen flex w-full">
+<?php include('../Auth/SF/header.php'); ?>
 
-<!-- Top Bar -->
- 
-
-<div class="w-full max-w-xl flex justify-between items-center mb-6">
-
-<h1 class="text-lg font-bold text-gray-700">
-Latest Exam
-</h1>
-
-<a href="examscreator.php"
-class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm rounded-lg shadow-sm">
-Create Exam
-</a>
-
+<!-- SIDEBAR -->
+<div class="bg-white border-r border-gray-200 min-h-screen">
+    <?php include('../Auth/SF/dynamic_side_bar.php'); ?>
 </div>
 
+<!-- MAIN CONTENT -->
+<div class="flex-1 p-8 flex justify-center">
 
-<!-- Exam Card -->
+    <div class="max-w-3xl">
 
-<div class="w-full max-w-xl bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <!-- Header -->
+        <div class="flex justify-between items-center mb-8">
+            <h1 class="text-xl font-semibold text-gray-800">
+                Latest Exam
+            </h1>
 
-<h2 class="text-2xl font-bold text-gray-800 mb-4">
-<?= $exam_title ?>
-</h2>
+            <a href="examscreator.php"
+               class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm rounded-lg shadow-sm transition">
+               Create Exam
+            </a>
+        </div>
 
-<div class="space-y-2 text-gray-600">
+        <!-- Exam Card -->
+        <div class="bg-white rounded-2xl shadow-md border border-gray-200 p-8 hover:shadow-lg transition">
 
-<p>
-<span class="font-semibold text-gray-700">Topic:</span>
-<?= $exam_topic ?>
-</p>
+            <h2 class="text-3xl font-semibold text-gray-800 mb-6">
+                <?= $exam_title ?>
+            </h2>
 
-<p>
-<span class="font-semibold text-gray-700">Grade:</span>
-<?= $exam_grade ?>
-</p>
+            <div class="space-y-4 text-gray-600 text-sm">
+                <p>
+                    <span class="font-semibold text-gray-700">Topic:</span>
+                    <?= $exam_topic ?>
+                </p>
 
-<p>
-<span class="font-semibold text-gray-700">Status:</span>
+                <p>
+                    <span class="font-semibold text-gray-700">Grade:</span>
+                    <?= $exam_grade ?>
+                </p>
 
-<span class="px-2 py-1 text-sm rounded
-<?= $exam_status === 'active'
-? 'bg-green-100 text-green-700'
-: 'bg-gray-100 text-gray-600'
-?>">
-<?= ucfirst($exam_status) ?>
-</span>
+                <p>
+                    <span class="font-semibold text-gray-700">Status:</span>
+                    <span class="ml-2 px-2 py-1 text-xs rounded 
+                    <?= $exam_status === 'active'
+                        ? 'bg-green-100 text-green-700'
+                        : 'bg-gray-100 text-gray-600' ?>">
+                        <?= ucfirst($exam_status) ?>
+                    </span>
+                </p>
+            </div>
 
-</p>
+            <!-- Actions -->
+            <div class="mt-8 flex justify-end gap-3">
+                <a href="edit_exam.php?exam_id=<?= $exam_id ?>"
+                   class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg shadow-sm transition">
+                   Edit Exam
+                </a>
+
+                <a href="exam_report.php?exam_id=<?= $exam_id ?>"
+                   class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm rounded-lg shadow-sm transition">
+                   View Report
+                </a>
+            </div>
+
+        </div>
+
+    </div>
 
 </div>
-
-
-<!-- Action Buttons -->
-
-<div class="mt-6 flex gap-3">
-
-<a href="edit_exam.php?exam_id=<?= $exam_id ?>"
-class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm shadow-sm">
-Edit Exam
-</a>
-
-</div>
-
-</div>
-
+<?php include('../Auth/SF/footer.php'); ?>
 </body>
 </html>
+

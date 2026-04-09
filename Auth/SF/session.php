@@ -1,6 +1,6 @@
 <?php
 session_start(); 
-include('../../db.php');
+include('../db.php');
  
 $directory = __DIR__;
 $current_folder = basename($directory);
