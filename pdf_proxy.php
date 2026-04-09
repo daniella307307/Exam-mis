@@ -2,8 +2,13 @@
 require_once('Auth/SF/TCPDF/tcpdf.php');
 
 // 1. Verify the request is coming from your server
-$allowed_referer = 'https://bluelackesadigital.com';
-if (!isset($_SERVER['HTTP_REFERER']) || strpos($_SERVER['HTTP_REFERER'], $allowed_referer) === false) {
+$allowed_referers = [
+    'https://bluelackesadigital.com',
+    'http://localhost',
+    'http://127.0.0.1'
+];
+// $allowed_referer = 'https://bluelackesadigital.com';
+if (!isset($_SERVER['HTTP_REFERER']) || !in_array($_SERVER['HTTP_REFERER'], $allowed_referers)) {
     header('HTTP/1.1 403 Forbidden');
     die('Direct access not allowed');
 }

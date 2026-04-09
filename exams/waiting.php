@@ -214,8 +214,6 @@ textarea{
 </head>
 <body>
 
-<div class="logo">QuizBlast</div>
-<p class="tagline">You're in! Just hang tight…</p>
 
 <div class="card">
 
@@ -234,7 +232,7 @@ textarea{
   </div>
 
   <div class="divider"></div>
-  
+
   <div class="players-online">
     🎮 Players joined: <strong id="playerCount">–</strong>
   </div>

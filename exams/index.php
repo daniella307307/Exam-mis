@@ -230,8 +230,6 @@ input::placeholder{
 </style>
 </head>
 <body>
-<div class="logo">QuizBlast</div>
-<p class="tagline">Join the fun — enter your game PIN</p>
 <div class="icons">
   <div class="icon-box">▲</div>
   <div class="icon-box">◆</div>

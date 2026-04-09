@@ -23,7 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 header("Location: waiting_room.php");
                 exit();
             }else{
-                header("Location: addNickname.php");
+                header("Location: stream.php");
                 exit();
             }
             exit();
@@ -270,8 +270,6 @@ input::placeholder{
 </style>
 </head>
 <body>
-<div class="logo">QuizBlast</div>
-<p class="tagline">Join the fun — enter your game PIN</p>
 <div class="icons">
   <div class="icon-box">▲</div>
   <div class="icon-box">◆</div>
@@ -303,6 +301,36 @@ input::placeholder{
           </div>
         </label>
       </div>
+    </div>
+    <div class="field">
+      <label class="block mb-2 font-semibold">Grade</label>
+      <Select name="grade" class="w-full p-2 border rounded mb-4" required>
+          <option value="">Select Grade</option>
+          <option value="Nursery 1">Nursery 1</option>
+          <option value="Nursery 2">Nursery 2</option>
+          <option value="Nursery 3">Nursery 3</option>
+          <option value="Grade 1">Grade 1</option>
+          <option value="Grade 2">Grade 2</option>
+          <option value="Grade 3">Grade 3</option>
+          <option value="Grade 4">Grade 4</option>
+          <option value="Grade 5">Grade 5</option>
+          <option value="Grade 6">Grade 6</option>
+          <option value="Grade 7">Grade 7</option>
+          <option value="Grade 8">Grade 8</option>
+          <option value="Grade 9">Grade 9</option>
+          <option value="Grade 10">Grade 10</option>
+          <option value="Grade 11">Grade 11</option>
+          <option value="Grade 12">Grade 12</option>
+      </Select>
+    </div>
+    <div class="field">
+      <label class="block mb-2 font-semibold">Stream</label>
+      <Select name="stream" class="w-full p-2 border rounded mb-4" required>
+          <option value="">Select Stream</option>
+          <option value="">A</option>
+          <option value="Science">B</option>
+          <option value="Arts">C</option>
+      </Select>
     </div>
 
     <button type="submit" class="btn">🚀 JOIN GAME</button>
