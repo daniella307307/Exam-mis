@@ -9,8 +9,9 @@ if (!isset($_SESSION['exam_id'])) {
 
 
 $exam_id   = $_SESSION['exam_id'];
-$player_id = $_SESSION['player_id'];
-
+$player_id = $_SESSION['player_id'] ?? null;
+$grade = $_SESSION['grade'] ?? null;
+$stream = $_SESSION['stream'] ?? null;
 // Fetch exam details
 $stmt = $conn->prepare("SELECT title, start_time, status FROM exams WHERE exam_id = ?");
 $stmt->bind_param("i", $exam_id);
@@ -22,20 +23,40 @@ $groupSaved = false;
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_group'])) {
     $mode    = $_SESSION['mode']    ?? 'individual';
     $school  = trim($_POST['school']  ?? '');
-    $grade   = trim($_POST['grade']   ?? '');
-   $membersArray = $_POST['members'] ?? [];
-$membersArray = array_map('trim', $membersArray); // clean each name
-$membersArray = array_filter($membersArray); // remove empty ones
+    $membersArray = $_POST['members'] ?? [];
+    $membersArray = array_map('trim', $membersArray); // clean each name
+    $membersArray = array_filter($membersArray); // remove empty ones
 
 $members = implode(", ", $membersArray); // convert to string
     // Make sure your players table has: mode VARCHAR(20), school VARCHAR(255),
-    // grade VARCHAR(100), group_members TEXT
-    $upd = $conn->prepare(
-        "UPDATE players SET mode=?, school=?, grade=?, group_members=? WHERE player_id=?"
-    );
-    $upd->bind_param("ssssi", $mode, $school, $grade, $members, $player_id);
-    $upd->execute();
+    // grade VARCHAR(100), group_nbr int
+    //generate a unique group number
+    $group_nbr = mt_rand(1000,9999);
+   //save each group memeber as a separate player with the same group number
+   foreach($membersArray as $m){
+    $stmt = $conn->prepare("
+        INSERT INTO players 
+        (nickname, mode, school, group_nbr, exam_id, grade, stream) 
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+    ");
+
+    $stmt->bind_param(
+    "ssssiss",
+    $m,
+    $mode,
+    $school,
+    $group_nbr,
+    $exam_id,
+    $grade,
+    $stream
+);
+
+    $stmt->execute();
+}
     $groupSaved = true;
+    if($groupSaved){
+      header("Location: waiting.php");
+    }
 }
 
 $start_time = strtotime($exam['start_time']);
@@ -214,8 +235,6 @@ textarea{
 </head>
 <body>
 
-<div class="logo">QuizBlast</div>
-<p class="tagline">You're in! Just hang tight…</p>
 
 <div class="card">
 
@@ -237,13 +256,13 @@ textarea{
     <label class="lbl">Number of Group Members</label>
     <select id="memberCount" onchange="generateFields()">
       <option value="">Select</option>
-      <option value="1">1</option>
       <option value="2">2</option>
       <option value="3">3</option>
       <option value="4">4</option>
       <option value="5">5</option>
       <option value="6">6</option>
       <option value="7">7</option>
+      <option value="8">8</option>
     </select>
   </div>
 

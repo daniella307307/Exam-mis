@@ -14,19 +14,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
        
             //nickname can be optional 
-            $upd = $conn->prepare("UPDATE players SET mode = ?, grade = ?, stream = ? WHERE player_id = ?");
-            $upd->bind_param("sssi", $mode, $grade, $stream, $_SESSION['player_id']);
-            $upd->execute();
-            
-            $_SESSION['mode']   = $mode;
-            if($mode === 'group') {
-                $_SESSION['nickname'] = null; // Clear nickname for group mode
-                header("Location: waiting_room.php");
-                exit();
-            }else{
-                header("Location: add_name.php");
-                exit();
-            }
+            $upd = $conn->prepare("UPDATE players SET mode = ? WHERE player_id = ?");
+$upd->bind_param("si", $mode, $_SESSION['player_id']);
+$upd->execute();
+
+$_SESSION['mode'] = $mode;
+
+if ($mode === 'group') {
+    $_SESSION['nickname'] = null;
+    $_SESSION['grade'] = $grade;
+    $_SESSION['stream'] = $stream;
+
+    header("Location: waiting_room.php");
+    exit();
+} else {
+    $stmt = $conn->prepare("UPDATE players SET grade=?, stream=? WHERE player_id=?");
+    $stmt->bind_param("ssi", $grade, $stream, $_SESSION['player_id']);
+    $stmt->execute();
+
+    header("Location: add_name.php");
+    exit();
+}
             exit();
         
     }
@@ -268,6 +276,22 @@ input::placeholder{
   margin-bottom:20px;
   text-align:center
 }
+select{
+  width:100%;
+  padding:12px;
+  border-radius:10px;
+  border:1px solid rgba(0,0,0,.1);
+  background:#f1f5f9;
+  font-weight:700;
+}
+
+textarea{
+  width:100%;
+  padding:12px;
+  border-radius:10px;
+  border:1px solid rgba(0,0,0,.1);
+  background:#f1f5f9;
+}
 </style>
 </head>
 <body>
@@ -328,13 +352,13 @@ input::placeholder{
       <label class="block mb-2 font-semibold">Stream</label>
        <select name="stream" class="w-full p-2 border rounded mb-4" required>
           <option value="">Select Stream</option>
-          <option value="">A</option>
-          <option value="Science">B</option>
-          <option value="Arts">C</option>
+          <option value="A">A</option>
+          <option value="B">B</option>
+          <option value="C">C</option>
       </Select>
     </div>
 
-    <button type="submit" class="btn">🚀 JOIN GAME</button>
+    <button type="submit" class="btn">JOIN GAME</button>
   </div>
   </form>
 </div>

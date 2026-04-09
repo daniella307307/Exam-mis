@@ -223,7 +223,6 @@ body::after{width:350px;height:350px;background:#67e8f9;bottom:-100px;right:-80p
 
 <!-- Top bar -->
 <div class="topbar">
-  <div class="logo">QuizBlast</div>
   <div class="q-counter">Question <span id="qNum">1</span> of <span><?= count($questions) ?></span></div>
   <div class="timer-wrap">
     <span class="timer-icon">⏱</span>
