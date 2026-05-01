@@ -2,12 +2,24 @@
 session_start();
 include("../db.php");
 
-if (!isset($_SESSION['exam_id'], $_SESSION['player_id'])) {
-    header("Location: join_exam.php"); exit();
+$exam_id   = (int)($_SESSION['exam_id']   ?? $_GET['eid'] ?? 0);
+$player_id = (int)($_SESSION['player_id'] ?? $_GET['pid'] ?? 0);
+
+if (!$exam_id || !$player_id) {
+    header("Location: join_exam.php");
+    exit();
 }
 
-$exam_id   = (int)$_SESSION['exam_id'];
-$player_id = (int)$_SESSION['player_id'];
+$vchk = $conn->prepare("SELECT 1 FROM players WHERE player_id = ? AND exam_id = ?");
+$vchk->bind_param("ii", $player_id, $exam_id);
+$vchk->execute();
+if (!$vchk->get_result()->fetch_row()) {
+    header("Location: join_exam.php");
+    exit();
+}
+
+$_SESSION['exam_id']   = $exam_id;
+$_SESSION['player_id'] = $player_id;
 
 $exam = $conn->query("SELECT title FROM exams WHERE exam_id=$exam_id")->fetch_assoc();
 
@@ -18,11 +30,30 @@ $res = $conn->query(
 $players = [];
 while ($row = $res->fetch_assoc()) { $players[] = $row; }
 
+// Determine player rank and score FIRST
 $myRank = 0; $myScore = 0;
 foreach ($players as $i => $p) {
     if ((int)$p['player_id'] === $player_id) {
         $myRank = $i + 1; $myScore = (int)$p['score'];
     }
+}
+
+// Now calculate percentage after $myScore is known
+$mstmt = $conn->prepare("SELECT SUM(marks) AS total_marks FROM questions WHERE exam_id = ?");
+$mstmt->bind_param("i", $exam_id);
+$mstmt->execute();
+$total_marks = (int)($mstmt->get_result()->fetch_assoc()['total_marks'] ?? 0);
+$percentage = $total_marks > 0 ? round(($myScore / $total_marks) * 100) : 0;
+
+// Check if this player has a certificate (only if table exists)
+$cert_code = null;
+$ct_chk = $conn->query("SHOW TABLES LIKE 'student_certificates'");
+if ($ct_chk && $ct_chk->num_rows > 0) {
+    $cert_stmt = $conn->prepare("SELECT cert_code FROM student_certificates WHERE player_id = ? AND exam_id = ?");
+    $cert_stmt->bind_param("ii", $player_id, $exam_id);
+    $cert_stmt->execute();
+    $cert_row = $cert_stmt->get_result()->fetch_assoc();
+    $cert_code = $cert_row['cert_code'] ?? null;
 }
 
 $medals = ['🥇','🥈','🥉'];
@@ -81,11 +112,14 @@ h1.page-title{font-size:clamp(20px,4vw,28px);font-weight:900;text-align:center;m
 .ans-pts{font-size:13px;font-weight:900;color:var(--yellow)}
 .play-again{display:block;width:100%;margin-top:32px;padding:16px;background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;border-radius:12px;color:#fff;font-family:'Nunito',sans-serif;font-size:18px;font-weight:900;cursor:pointer;text-align:center;text-decoration:none;transition:transform .15s,box-shadow .15s;box-shadow:0 8px 24px rgba(124,58,237,.4)}
 .play-again:hover{transform:translateY(-2px)}
+.cert-btn{display:block;width:100%;margin-top:16px;padding:16px;background:linear-gradient(135deg,#d97706,#f59e0b);border-radius:12px;color:#fff;font-family:'Nunito',sans-serif;font-size:17px;font-weight:900;text-align:center;text-decoration:none;transition:transform .15s,box-shadow .15s;box-shadow:0 8px 24px rgba(245,158,11,.4)}
+.cert-btn:hover{transform:translateY(-2px)}
 .confetti-piece{position:fixed;top:-10px;border-radius:2px;opacity:0;animation:fall linear forwards}
 @keyframes fall{0%{opacity:1;transform:translateY(0) rotate(0deg)}100%{opacity:0;transform:translateY(110vh) rotate(720deg)}}
 </style>
 </head>
 <body>
+  <?php $back_to = 'index.php'; $back_label = 'Home'; include('nav_back.php'); ?>
 
 <?php if ($myRank > 0 && $myRank <= 3): ?>
 <script>
@@ -108,8 +142,8 @@ h1.page-title{font-size:clamp(20px,4vw,28px);font-weight:900;text-align:center;m
 <div class="hero">
   <div class="hero-rank"><?= ($myRank <= 3 && $myRank > 0) ? $medals[$myRank-1] : ($myRank > 0 ? "#$myRank" : '–') ?></div>
   <div class="hero-label">Your ranking</div>
-  <div class="hero-score"><?= number_format($myScore) ?></div>
-  <div class="hero-score-label">Total points</div>
+  <div class="hero-score"><?= number_format($myScore) ?> / <?= $total_marks ?></div>
+  <div class="hero-score-label">Score &nbsp;·&nbsp; <?= $percentage ?>%</div>
   <div class="hero-accuracy">
     <?= $total_q > 0 ? round(($correct_count/$total_q)*100) : 0 ?>% accuracy &nbsp;·&nbsp; <?= $correct_count ?>/<?= $total_q ?> correct
   </div>
@@ -118,8 +152,14 @@ h1.page-title{font-size:clamp(20px,4vw,28px);font-weight:900;text-align:center;m
 <div class="stats">
   <div class="stat-card"><div class="stat-val"><?= $myRank > 0 ? "#$myRank" : '–' ?></div><div class="stat-lbl">Rank</div></div>
   <div class="stat-card"><div class="stat-val"><?= $correct_count ?></div><div class="stat-lbl">Correct</div></div>
-  <div class="stat-card"><div class="stat-val"><?= number_format($myScore) ?></div><div class="stat-lbl">Points</div></div>
+  <div class="stat-card"><div class="stat-val"><?= $percentage ?>%</div><div class="stat-lbl">Score</div></div>
 </div>
+
+<?php if ($cert_code): ?>
+<a href="certificate.php?code=<?= urlencode($cert_code) ?>" class="cert-btn">
+  🏅 View &amp; Print Your Certificate
+</a>
+<?php endif; ?>
 
 <div class="section-title">Leaderboard</div>
 <div class="lb-list">
@@ -156,3 +196,4 @@ h1.page-title{font-size:clamp(20px,4vw,28px);font-weight:900;text-align:center;m
 
 </body>
 </html>
+<?php $conn->close(); ?>

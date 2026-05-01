@@ -11,4 +11,5 @@ $stmt->execute();
 $row = $stmt->get_result()->fetch_assoc();
  
 echo json_encode(['status' => $row['status'] ?? 'waiting']);
+if (isset($conn) && $conn instanceof mysqli) { $conn->close(); }
 ?>

@@ -1,16 +1,52 @@
 <?php
-session_start();
-//if in exams folder, use this path
-require_once $_SERVER['DOCUMENT_ROOT'] . '/_bluelackesadigital.com/public_html/db.php';
+if (session_status() !== PHP_SESSION_ACTIVE) { session_start(); }
+require_once(__DIR__ . '/../../db.php');
 $directory = __DIR__;
 $current_folder = basename($directory);
-$this_year =DATE("Y");
-if (!isset($_SESSION['user_id'])) {
-   header("Location:../../index.php");
-   exit;
+$this_year = DATE("Y");
+
+/**
+ * Session-guard helpers used by every authenticated page.
+ *
+ * - If no user_id in session → redirect to login (was: blank exit, which
+ *   is what produced the "blank page when idle" report).
+ * - If last_activity is older than the idle limit → destroy session and
+ *   bounce to login with ?expired=1 so the form can show a friendly
+ *   "you were signed out for inactivity" message.
+ * - Otherwise refresh last_activity so an active user never gets kicked.
+ */
+$IDLE_LIMIT_SECONDS = 30 * 60; // 30 minutes
+
+function session_redirect_login(string $reason = ''): void {
+    // Pick a path that works whether we're in /Auth/SF, /exams, or root.
+    $depth = substr_count($_SERVER['SCRIPT_NAME'] ?? '', '/');
+    // /Exam-mis/Auth/SF/foo.php has 4 slashes; /Exam-mis/foo.php has 2.
+    $base = '/Exam-mis/';
+    $url  = $base . 'Administrator_login.php' . ($reason ? '?reason=' . urlencode($reason) : '');
+    if (!headers_sent()) {
+        header('Location: ' . $url);
+        exit;
+    }
+    echo '<meta http-equiv="refresh" content="0;url=' . htmlspecialchars($url, ENT_QUOTES, 'UTF-8') . '">';
+    exit;
 }
-	
-else{
+
+if (!isset($_SESSION['user_id'])) {
+    session_redirect_login();
+}
+
+if (isset($_SESSION['last_activity']) && (time() - (int)$_SESSION['last_activity']) > $IDLE_LIMIT_SECONDS) {
+    $_SESSION = [];
+    if (ini_get('session.use_cookies')) {
+        $params = session_get_cookie_params();
+        setcookie(session_name(), '', time() - 42000,
+            $params['path'], $params['domain'], $params['secure'], $params['httponly']);
+    }
+    session_destroy();
+    session_redirect_login('idle');
+}
+$_SESSION['last_activity'] = time();
+{
 	$session_id = $_SESSION['user_id'];
 	$user_details= mysqli_query($conn, "SELECT * FROM users
 LEFT JOIN  user_permission ON users.access_level = user_permission.permissio_id

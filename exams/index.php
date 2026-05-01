@@ -19,8 +19,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $error = "Game not found or already finished. Check your PIN.";
         } else {
             //nickname can be optional 
-            $ins = $conn->prepare("INSERT INTO players (exam_id, nickname) VALUES (?, ?)");
-            $ins->bind_param("is", $exam['exam_id'], $nickname);
+            $session_id_val = $_SESSION['session_id'] ?? null;
+            $exam_id_val = $exam['exam_id'];
+            $ins = $conn->prepare("INSERT INTO players (exam_id, nickname, session_id) VALUES (?, ?, ?)");
+            $ins->bind_param("isi", $exam_id_val, $nickname, $session_id_val);
             $ins->execute();
             
             $_SESSION['exam_id']   = $exam['exam_id'];
@@ -43,14 +45,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 
-/* LIGHT THEME COLORS */
+/* DARK GLASS THEME COLORS */
 :root{
-  --bg:#f8fafc;
-  --card:#ffffff;
+  --bg:linear-gradient(135deg,#0d0d2b,#1e1b4b);
+  --card:rgba(255,255,255,.05);
   --accent:#7c3aed;
   --accent2:#a855f7;
-  --text:#0f172a;
-  --muted:#64748b;
+  --text:#f1f5f9;
+  --muted:#94a3b8;
   --radius:16px
 }
 
@@ -169,14 +171,14 @@ label{
 /* FIXED INPUTS */
 input{
   width:100%;
-  background:#f1f5f9;
-  border:1.5px solid rgba(0,0,0,.1);
+  background:rgba(15,15,40,.6);
+  border:1.5px solid rgba(168,85,247,.25);
   border-radius:12px;
   padding:14px 18px;
   font-size:18px;
   font-family:'Nunito',sans-serif;
   font-weight:700;
-  color:var(--text);
+  color:#f1f5f9;
   outline:none;
   transition:border-color .2s,background .2s
 }
@@ -185,7 +187,8 @@ input[type=number]{letter-spacing:4px}
 
 input:focus{
   border-color:var(--accent);
-  background:#fff
+  background:rgba(15,15,40,.85);
+  color:#f1f5f9
 }
 
 input::placeholder{
@@ -228,8 +231,9 @@ input::placeholder{
   text-align:center
 }
 </style>
+    <link rel="stylesheet" href="/Exam-mis/exams/assets/exam-theme.css">
 </head>
-<body>
+<body class="exam-dark">
 <div class="icons">
   <div class="icon-box">▲</div>
   <div class="icon-box">◆</div>
@@ -257,3 +261,4 @@ input::placeholder{
 </div>
 </body>
 </html>
+<?php $conn->close(); ?>

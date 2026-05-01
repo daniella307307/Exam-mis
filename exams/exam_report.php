@@ -1,5 +1,5 @@
 <?php
-include('../db.php');
+require_once('../db_connection.php');
 
 // ==============================
 // FETCH EXAM (optionally by ?exam_id=X, else latest)
@@ -28,8 +28,10 @@ $exam_code   = $exam['exam_code'] ?? '';
 // FILTERS
 // ==============================
 $filter_grade  = $_GET['grade']  ?? '';
+$filter_stream = $_GET['stream'] ?? '';
 $filter_school = $_GET['school'] ?? '';
 $filter_result = $_GET['result'] ?? '';
+$filter_session = isset($_GET['session_id']) ? (int)$_GET['session_id'] : 0;
 $filter_search = $_GET['search'] ?? '';
 
 // ==============================
@@ -51,8 +53,14 @@ $all_exams = $conn->query("SELECT exam_id, title FROM exams ORDER BY created_at 
 $sql = "SELECT * FROM players WHERE exam_id = ?";
 $params = [$exam_id];
 $types  = "i";
+if ($filter_session > 0) {
+    $sql .= " AND session_id = ?";
+    $types .= "i";
+    $params[] = $filter_session;
+}
 
 if ($filter_grade)  { $sql .= " AND grade = ?";   $types .= "s"; $params[] = $filter_grade; }
+if ($filter_stream) { $sql .= " AND stream = ?";  $types .= "s"; $params[] = $filter_stream; }
 if ($filter_school) { $sql .= " AND school = ?";  $types .= "s"; $params[] = $filter_school; }
 if ($filter_search) { $sql .= " AND nickname LIKE ?"; $types .= "s"; $params[] = "%$filter_search%"; }
 
@@ -79,6 +87,11 @@ $schools_stmt = $conn->prepare("SELECT DISTINCT school FROM players WHERE exam_i
 $schools_stmt->bind_param("i", $exam_id);
 $schools_stmt->execute();
 $distinct_schools = $schools_stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+
+$streams_stmt = $conn->prepare("SELECT DISTINCT stream FROM players WHERE exam_id = ? AND stream IS NOT NULL AND stream <> '' ORDER BY stream");
+$streams_stmt->bind_param("i", $exam_id);
+$streams_stmt->execute();
+$distinct_streams = $streams_stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -87,8 +100,9 @@ $distinct_schools = $schools_stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Exam Reports</title>
 <link rel="stylesheet" href="../dist/styles.css">
+    <link rel="stylesheet" href="/Exam-mis/exams/assets/exam-theme.css">
 </head>
-<body class="bg-gray-100 min-h-screen">
+<body class="bg-gray-100 min-h-screen exam-dark">
 <?php include('../Auth/SF/header.php'); ?>
 
 <div class="flex flex-1 overflow-hidden">
@@ -104,11 +118,15 @@ $distinct_schools = $schools_stmt->get_result()->fetch_all(MYSQLI_ASSOC);
         <!-- Header -->
         <div class="flex justify-between items-center mb-6">
             <div>
-                <h1 class="text-xl font-semibold text-gray-800">Exam Reports</h1>
-                <p class="text-sm text-gray-500">Scores and performance overview</p>
+                <h1 class="text-xl font-semibold" style="color:#fff">Exam Reports</h1>
+                <p class="text-sm" style="color:#cbd5e1">Scores and performance overview</p>
             </div>
             <div class="flex gap-3">
-                <a href="examscreator.php"
+                <a href="grade_practical.php?exam_id=<?= $exam_id ?>"
+                class="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white text-sm rounded-lg shadow">
+               🎓 Grade Practicals
+               </a>
+                <a href="exam_creator_working.php"
                    class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm rounded-lg shadow">
                     + Create Exam
                 </a>
@@ -157,13 +175,20 @@ $distinct_schools = $schools_stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 
         <!-- Status + Exam Code -->
         <div class="flex items-center gap-4 mb-6">
-            <span class="px-3 py-1 text-sm rounded-full font-medium
-                <?= $exam_status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-600' ?>">
-                <?= ucfirst($exam_status) ?>
-            </span>
+            <?php if ($exam_status === 'active'): ?>
+                <span class="px-3 py-1 text-sm rounded-full font-bold"
+                      style="background:rgba(34,197,94,.18);color:#86efac;border:1px solid rgba(34,197,94,.4);text-transform:uppercase;letter-spacing:1px">
+                    <?= ucfirst($exam_status) ?>
+                </span>
+            <?php else: ?>
+                <span class="px-3 py-1 text-sm rounded-full font-bold"
+                      style="background:rgba(148,163,184,.18);color:#cbd5e1;border:1px solid rgba(148,163,184,.3);text-transform:uppercase;letter-spacing:1px">
+                    <?= ucfirst($exam_status) ?>
+                </span>
+            <?php endif; ?>
             <?php if ($exam_code): ?>
-                <span class="text-sm text-gray-500">
-                    Exam code: <strong class="text-gray-800"><?= htmlspecialchars($exam_code) ?></strong>
+                <span class="text-sm" style="color:#cbd5e1">
+                    Exam code: <strong style="color:#fff;font-family:'Courier New',monospace;background:rgba(168,85,247,.18);padding:3px 8px;border-radius:6px"><?= htmlspecialchars($exam_code) ?></strong>
                 </span>
             <?php endif; ?>
         </div>
@@ -171,13 +196,40 @@ $distinct_schools = $schools_stmt->get_result()->fetch_all(MYSQLI_ASSOC);
         <!-- Filters -->
         <form method="GET" class="flex flex-wrap gap-3 items-center mb-5">
             <input type="hidden" name="exam_id" value="<?= $exam_id ?>">
-
+           <!-- ⬇️ PASTE SESSION DROPDOWN HERE ⬇️ -->
+    <?php
+    $sess_stmt = $conn->prepare("SELECT session_id, session_code, session_label, created_at FROM exam_sessions WHERE exam_id = ? ORDER BY created_at DESC");
+    $sess_stmt->bind_param("i", $exam_id);
+    $sess_stmt->execute();
+    $sessions = $sess_stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    ?>
+    <?php if (count($sessions) > 0): ?>
+    <select name="session_id" class="border border-gray-300 rounded px-3 py-1.5 text-sm bg-white">
+        <option value="0">All Sessions / Classes</option>
+        <?php foreach ($sessions as $s): ?>
+            <option value="<?= $s['session_id'] ?>" <?= $filter_session == $s['session_id'] ? 'selected' : '' ?>>
+                <?= htmlspecialchars($s['session_label']) ?> (Code: <?= $s['session_code'] ?>)
+            </option>
+        <?php endforeach; ?>
+    </select>
+    <?php endif; ?>
+    <!-- ⬆️ END SESSION DROPDOWN ⬆️ -->
             <select name="grade" class="border border-gray-300 rounded px-3 py-1.5 text-sm bg-white">
                 <option value="">All grades</option>
                 <?php foreach ($distinct_grades as $g): ?>
                     <option value="<?= htmlspecialchars($g['grade']) ?>"
                         <?= $filter_grade === $g['grade'] ? 'selected' : '' ?>>
                         <?= htmlspecialchars($g['grade']) ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+
+            <select name="stream" class="border border-gray-300 rounded px-3 py-1.5 text-sm bg-white">
+                <option value="">All streams</option>
+                <?php foreach ($distinct_streams as $s): ?>
+                    <option value="<?= htmlspecialchars($s['stream']) ?>"
+                        <?= $filter_stream === $s['stream'] ? 'selected' : '' ?>>
+                        <?= htmlspecialchars($s['stream']) ?>
                     </option>
                 <?php endforeach; ?>
             </select>
@@ -207,7 +259,7 @@ $distinct_schools = $schools_stmt->get_result()->fetch_all(MYSQLI_ASSOC);
                 Filter
             </button>
 
-            <?php if ($filter_grade || $filter_school || $filter_result || $filter_search): ?>
+            <?php if ($filter_grade || $filter_stream || $filter_school || $filter_result || $filter_search): ?>
                 <a href="?exam_id=<?= $exam_id ?>"
                    class="text-sm text-gray-500 hover:text-red-500">Clear filters</a>
             <?php endif; ?>
@@ -216,8 +268,8 @@ $distinct_schools = $schools_stmt->get_result()->fetch_all(MYSQLI_ASSOC);
         <!-- Leaderboard Table -->
         <div class="bg-white rounded-xl border">
             <div class="flex justify-between items-center px-6 py-4 border-b">
-                <h2 class="font-semibold text-gray-800">Leaderboard &amp; reports</h2>
-                <span class="text-sm text-gray-500"><?= count($all_players) ?> player(s)</span>
+                <h2 class="font-semibold" style="color:#fff">Leaderboard &amp; reports</h2>
+                <span class="text-sm" style="color:#cbd5e1"><?= count($all_players) ?> player(s)</span>
             </div>
 
             <?php if (count($all_players) > 0): ?>
@@ -231,6 +283,7 @@ $distinct_schools = $schools_stmt->get_result()->fetch_all(MYSQLI_ASSOC);
                             <th class="px-6 py-3">%</th>
                             <th class="px-6 py-3">Progress</th>
                             <th class="px-6 py-3">Grade</th>
+                            <th class="px-6 py-3">Stream</th>
                             <th class="px-6 py-3">School</th>
                             <th class="px-6 py-3">Result</th>
                         </tr>
@@ -256,12 +309,20 @@ $distinct_schools = $schools_stmt->get_result()->fetch_all(MYSQLI_ASSOC);
                                 </div>
                             </td>
                             <td class="px-6 py-3"><?= htmlspecialchars($row['grade']) ?></td>
+                            <td class="px-6 py-3"><?= htmlspecialchars($row['stream'] ?? '') ?></td>
                             <td class="px-6 py-3"><?= htmlspecialchars($row['school']) ?></td>
                             <td class="px-6 py-3">
-                                <span class="px-2 py-1 rounded text-xs font-medium
-                                    <?= $pass ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600' ?>">
-                                    <?= $pass ? 'Pass' : 'Fail' ?>
-                                </span>
+                                <?php if ($pass): ?>
+                                    <span class="px-3 py-1 rounded-full text-xs font-bold"
+                                          style="background:rgba(34,197,94,.18);color:#86efac;border:1px solid rgba(34,197,94,.45);text-transform:uppercase;letter-spacing:1px">
+                                        ✓ Pass
+                                    </span>
+                                <?php else: ?>
+                                    <span class="px-3 py-1 rounded-full text-xs font-bold"
+                                          style="background:rgba(239,68,68,.18);color:#fca5a5;border:1px solid rgba(239,68,68,.45);text-transform:uppercase;letter-spacing:1px">
+                                        ✗ Fail
+                                    </span>
+                                <?php endif; ?>
                             </td>
                         </tr>
                     <?php endforeach; ?>
@@ -281,3 +342,4 @@ $distinct_schools = $schools_stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 <?php include('../Auth/SF/footer.php'); ?>
 </body>
 </html>
+<?php // Connection closed by db_connection.php shutdown handler ?>

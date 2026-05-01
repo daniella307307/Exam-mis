@@ -11,3 +11,4 @@ if ($question_id) {
 
 header("Location: edit_exam.php?exam_id=$exam_id");
 exit();
+<?php $conn->close(); ?>

@@ -60,9 +60,10 @@ $exam_status = $exam['status'];
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Exam Details</title>
 <link rel="stylesheet" href="../dist/styles.css">
+    <link rel="stylesheet" href="/Exam-mis/exams/assets/exam-theme.css">
 </head>
 
-<body class="bg-gray-100 min-h-screen">
+<body class="bg-gray-100 min-h-screen exam-dark">
 <?php include('../Auth/SF/header.php'); ?>
 
 <!-- LAYOUT WRAPPER: sidebar + content side by side -->
@@ -80,7 +81,7 @@ $exam_status = $exam['status'];
 
             <!-- Header -->
             <div class="flex justify-between items-center mb-8">
-                <h1 class="text-xl font-semibold text-gray-800">
+                <h1 class="text-xl font-semibold" style="color:#fff">
                     Edit Exam
                 </h1>
 
@@ -131,7 +132,7 @@ w-full border p-2 rounded" required>
             </form>
             <!-- Questions List -->
             <div class="bg-white p-6 rounded shadow-md">
-                <h2 class="text-lg font-semibold mb-4">Questions</h2>
+                <h2 class="text-lg font-semibold mb-4" style="color:#fff">Questions</h2>
                 <?php if ($questions->num_rows > 0): ?>
                     <ul class="space-y-4">
                         <?php while ($question = $questions->fetch_assoc()): ?>
@@ -160,3 +161,4 @@ w-full border p-2 rounded" required>
 <?php include('../Auth/SF/footer.php'); ?>
 </body>
 </html>
+<?php $conn->close(); ?>

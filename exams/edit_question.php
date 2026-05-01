@@ -60,10 +60,11 @@ function addOptionField() {
     container.appendChild(div);
 }
 </script>
+    <link rel="stylesheet" href="/Exam-mis/exams/assets/exam-theme.css">
 </head>
-<body class="bg-gray-100 min-h-screen p-6">
+<body class="bg-gray-100 min-h-screen p-6 exam-dark">
 <div class="max-w-2xl mx-auto bg-white p-6 rounded shadow-md">
-    <h1 class="text-xl font-bold mb-4">Add Question</h1>
+    <h1 class="text-xl font-bold mb-4" style="color:#fff">Add Question</h1>
 
     <form method="POST">
         <div class="mb-2">
@@ -96,3 +97,4 @@ function addOptionField() {
 </div>
 </body>
 </html>
+<?php $conn->close(); ?>

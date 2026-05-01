@@ -14,10 +14,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->bind_param("si", $nickname, $_SESSION['player_id']);
         $stmt->execute();
         $_SESSION['nickname'] = $nickname;
+        $conn->close();
         header("Location: waiting.php");
         exit();
     }
 }
+
+// Close connection for GET requests
+if (isset($conn) && $conn instanceof mysqli) { $conn->close(); }
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -29,20 +33,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 
-/* LIGHT THEME COLORS */
 :root{
-  --bg:#f8fafc;
-  --card:#ffffff;
   --accent:#7c3aed;
   --accent2:#a855f7;
-  --text:#0f172a;
-  --muted:#64748b;
-  --radius:16px
+  --text:#f1f5f9;
+  --muted:#94a3b8;
+  --radius:20px
 }
 
 body{
   font-family:'Nunito',sans-serif;
-  background:var(--bg);
+  background:linear-gradient(135deg,#0d0d2b,#1e1b4b);
   color:var(--text);
   min-height:100vh;
   display:flex;
@@ -54,27 +55,26 @@ body{
   position:relative
 }
 
-/* softer background glow */
 body::before,body::after{
   content:'';
   position:fixed;
   border-radius:50%;
-  filter:blur(80px);
-  opacity:.12;
+  filter:blur(100px);
+  opacity:.25;
   pointer-events:none;
   animation:drift 8s ease-in-out infinite alternate
 }
 
 body::before{
-  width:400px;height:400px;
+  width:500px;height:500px;
   background:var(--accent);
-  top:-120px;left:-100px
+  top:-150px;left:-120px
 }
 
 body::after{
-  width:350px;height:350px;
+  width:420px;height:420px;
   background:#06b6d4;
-  bottom:-100px;right:-80px;
+  bottom:-150px;right:-120px;
   animation-delay:-4s
 }
 
@@ -122,22 +122,26 @@ body::after{
 .icon-box:nth-child(4){background:#facc15}
 
 .card{
-  background:var(--card);
-  border:1px solid rgba(0,0,0,.06);
+  background:rgba(255,255,255,.05);
+  border:1px solid rgba(168,85,247,.3);
+  backdrop-filter:blur(20px);
+  -webkit-backdrop-filter:blur(20px);
   border-radius:var(--radius);
-  padding:40px 36px;
+  padding:44px 36px;
   width:100%;
-  max-width:420px;
-  box-shadow:0 20px 50px rgba(0,0,0,.08);
+  max-width:440px;
+  box-shadow:0 25px 80px rgba(0,0,0,.5);
   position:relative;
   z-index:1
 }
 
 .card h2{
-  font-size:22px;
+  font-size:26px;
   font-weight:900;
-  margin-bottom:28px;
-  text-align:center
+  margin-bottom:30px;
+  text-align:center;
+  background:linear-gradient(135deg,#facc15,#f97316);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
 }
 
 .field{margin-bottom:20px}
@@ -152,11 +156,10 @@ label{
   margin-bottom:8px
 }
 
-/* FIXED INPUTS */
 input{
   width:100%;
-  background:#f1f5f9;
-  border:1.5px solid rgba(0,0,0,.1);
+  background:rgba(15,15,40,.6);
+  border:1.5px solid rgba(168,85,247,.25);
   border-radius:12px;
   padding:14px 18px;
   font-size:18px;
@@ -164,18 +167,19 @@ input{
   font-weight:700;
   color:var(--text);
   outline:none;
-  transition:border-color .2s,background .2s
+  transition:border-color .2s,background .2s,box-shadow .2s
 }
 
 input[type=number]{letter-spacing:4px}
 
 input:focus{
-  border-color:var(--accent);
-  background:#fff
+  border-color:var(--accent2);
+  background:rgba(15,15,40,.85);
+  box-shadow:0 0 0 4px rgba(168,85,247,.18);
 }
 
 input::placeholder{
-  color:var(--muted);
+  color:#64748b;
   font-weight:400;
   letter-spacing:0
 }
@@ -204,15 +208,17 @@ input::placeholder{
 .btn:active{transform:translateY(0)}
 
 .error{
-  background:rgba(239,68,68,.1);
-  border:1px solid rgba(239,68,68,.3);
+  background:rgba(239,68,68,.12);
+  border:1px solid rgba(239,68,68,.4);
   border-radius:10px;
   padding:12px 16px;
   font-size:14px;
-  color:#dc2626;
+  color:#fca5a5;
   margin-bottom:20px;
   text-align:center
 }
+
+label{color:#cbd5e1 !important}
 </style>
 </head>
 <body>

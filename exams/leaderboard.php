@@ -2,13 +2,16 @@
 session_start();
 include("../db.php");
 
-if (!isset($_SESSION['exam_id'])) {
+$exam_id   = (int) ($_SESSION['exam_id']   ?? $_GET['eid'] ?? 0);
+$player_id = (int) ($_SESSION['player_id'] ?? $_GET['pid'] ?? 0);
+
+if (!$exam_id) {
     header("Location: join_exam.php");
     exit();
 }
 
-$exam_id   = (int) $_SESSION['exam_id'];
-$player_id = (int) ($_SESSION['player_id'] ?? 0);
+$_SESSION['exam_id']   = $exam_id;
+if ($player_id) { $_SESSION['player_id'] = $player_id; }
 
 /* Fetch exam */
 $stmt = $conn->prepare("SELECT title, status FROM exams WHERE exam_id = ?");
@@ -38,6 +41,9 @@ if ($player_id) {
 }
 
 $is_finished = ($exam['status'] ?? '') === 'finished';
+
+// Close connection - all data fetched
+if (isset($conn) && $conn instanceof mysqli) { $conn->close(); }
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -55,175 +61,159 @@ $is_finished = ($exam['status'] ?? '') === 'finished';
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
 
 <style>
-
-*{
-box-sizing:border-box;
-margin:0;
-padding:0;
-}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 
 body{
-font-family:'Nunito',sans-serif;
-background:#f7f9fc;
-color:#1e293b;
-padding:20px;
-display:flex;
-flex-direction:column;
-align-items:center;
+  font-family:'Nunito',sans-serif;
+  background:linear-gradient(135deg,#0d0d2b,#1e1b4b);
+  color:#f1f5f9;
+  min-height:100vh;
+  padding:24px 20px 60px;
+  display:flex;flex-direction:column;align-items:center;
+  position:relative;overflow-x:hidden;
 }
+body::before,body::after{
+  content:'';position:fixed;border-radius:50%;
+  filter:blur(100px);opacity:.18;pointer-events:none;z-index:0;
+}
+body::before{width:500px;height:500px;background:#7c3aed;top:-150px;right:-150px}
+body::after{width:400px;height:400px;background:#06b6d4;bottom:-150px;left:-150px}
+body > *{position:relative;z-index:1}
 
 /* Header */
-
 .header{
-width:100%;
-max-width:600px;
-display:flex;
-justify-content:space-between;
-align-items:center;
-margin-bottom:20px;
+  width:100%;max-width:600px;
+  display:flex;justify-content:space-between;align-items:center;
+  margin-bottom:20px;
 }
-
 .title{
-font-weight:900;
-font-size:18px;
+  font-weight:900;font-size:18px;
+  background:linear-gradient(135deg,#a855f7,#06b6d4);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
 }
-
 .badge{
-font-size:12px;
-padding:4px 10px;
-border-radius:20px;
-font-weight:700;
+  font-size:11px;padding:5px 12px;border-radius:99px;
+  font-weight:800;letter-spacing:1px;text-transform:uppercase;
 }
-
 .live{
-background:#fee2e2;
-color:#dc2626;
+  background:rgba(239,68,68,.15);
+  color:#fca5a5;
+  border:1px solid rgba(239,68,68,.4);
 }
-
+.live::before{
+  content:'';display:inline-block;width:7px;height:7px;border-radius:50%;
+  background:#ef4444;margin-right:6px;vertical-align:middle;
+  animation:pulse 1.4s ease-in-out infinite;
+}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)}}
 .finished{
-background:#dcfce7;
-color:#15803d;
+  background:rgba(34,197,94,.15);
+  color:#86efac;
+  border:1px solid rgba(34,197,94,.4);
 }
 
 /* Hero */
-
-.hero{
-text-align:center;
-margin-bottom:20px;
-}
-
+.hero{text-align:center;margin-bottom:24px}
 .hero h1{
-font-size:32px;
-font-weight:900;
+  font-size:clamp(28px,5vw,40px);font-weight:900;
+  background:linear-gradient(135deg,#facc15,#f97316);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  margin-bottom:6px;
+}
+.hero p{font-size:14px;color:#94a3b8}
+
+/* Winner banner */
+.winner{
+  width:100%;max-width:600px;
+  background:linear-gradient(135deg,rgba(250,204,21,.18),rgba(249,115,22,.12));
+  border:1px solid rgba(250,204,21,.4);
+  border-radius:14px;padding:18px;text-align:center;
+  margin-bottom:20px;font-weight:800;font-size:15px;color:#fde68a;
+  box-shadow:0 12px 30px rgba(250,204,21,.12);
 }
 
-.hero p{
-font-size:14px;
-color:#64748b;
-}
-
-/* My score */
-
+/* My score (current player) */
 .my-score{
-width:100%;
-max-width:600px;
-background:white;
-border:1px solid #e2e8f0;
-border-radius:12px;
-padding:15px;
-display:flex;
-justify-content:space-between;
-margin-bottom:20px;
+  width:100%;max-width:600px;
+  background:linear-gradient(135deg,rgba(124,58,237,.35),rgba(168,85,247,.18));
+  border:1px solid rgba(168,85,247,.45);
+  backdrop-filter:blur(20px);
+  border-radius:14px;padding:18px 20px;
+  display:flex;justify-content:space-between;align-items:center;
+  margin-bottom:24px;
+  box-shadow:0 16px 40px rgba(124,58,237,.25);
 }
-
-.nickname{
-font-weight:800;
+.my-score > div:first-child > div:first-child{
+  font-size:11px;color:#cbd5e1;letter-spacing:1.5px;
+  text-transform:uppercase;font-weight:700;margin-bottom:4px;
 }
-
+.nickname{font-weight:800;font-size:17px;color:#f1f5f9}
 .points{
-font-size:26px;
-font-weight:900;
-color:#7c3aed;
+  font-size:30px;font-weight:900;
+  background:linear-gradient(135deg,#facc15,#f97316);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
 }
 
 /* Board */
-
 .board{
-width:100%;
-max-width:600px;
-display:flex;
-flex-direction:column;
-gap:10px;
+  width:100%;max-width:600px;
+  display:flex;flex-direction:column;gap:10px;
 }
-
 .row{
-background:white;
-border:1px solid #e2e8f0;
-border-radius:10px;
-padding:12px;
-display:flex;
-align-items:center;
-gap:10px;
+  background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.08);
+  backdrop-filter:blur(20px);
+  border-radius:12px;padding:14px 16px;
+  display:flex;align-items:center;gap:14px;
+  transition:transform .15s,border-color .15s;
 }
-
+.row:hover{transform:translateX(4px);border-color:rgba(168,85,247,.3)}
+.row:nth-child(1){
+  background:linear-gradient(135deg,rgba(250,204,21,.12),rgba(255,255,255,.05));
+  border-color:rgba(250,204,21,.3);
+}
+.row:nth-child(2){
+  background:linear-gradient(135deg,rgba(148,163,184,.12),rgba(255,255,255,.05));
+  border-color:rgba(148,163,184,.3);
+}
+.row:nth-child(3){
+  background:linear-gradient(135deg,rgba(251,146,60,.12),rgba(255,255,255,.05));
+  border-color:rgba(251,146,60,.3);
+}
 .rank{
-font-weight:900;
-width:30px;
-text-align:center;
+  font-weight:900;font-size:18px;width:36px;text-align:center;color:#f1f5f9;
 }
-
 .avatar{
-width:36px;
-height:36px;
-border-radius:50%;
-background:#ede9fe;
-display:flex;
-align-items:center;
-justify-content:center;
-font-weight:900;
+  width:40px;height:40px;border-radius:50%;
+  background:linear-gradient(135deg,#7c3aed,#06b6d4);
+  display:flex;align-items:center;justify-content:center;
+  font-weight:900;font-size:14px;color:#fff;
 }
+.name{flex:1;font-weight:700;font-size:15px;color:#e2e8f0}
+.score{font-weight:900;font-size:16px;color:#facc15}
 
-.name{
-flex:1;
-font-weight:700;
-}
-
-.score{
-font-weight:900;
-}
-
-/* Winner */
-
-.winner{
-width:100%;
-max-width:600px;
-background:#ecfdf5;
-border:1px solid #bbf7d0;
-border-radius:12px;
-padding:15px;
-text-align:center;
-margin-bottom:20px;
-font-weight:700;
+.empty-state{
+  text-align:center;color:#94a3b8;padding:30px;
+  background:rgba(255,255,255,.03);
+  border:1px dashed rgba(255,255,255,.1);
+  border-radius:12px;
 }
 
 /* Footer */
-
 .footer{
-margin-top:20px;
-font-size:13px;
-color:#64748b;
+  margin-top:28px;font-size:13px;color:#94a3b8;
+  text-align:center;
 }
-
 a{
-text-decoration:none;
-font-weight:700;
-color:#7c3aed;
+  text-decoration:none;font-weight:800;color:#a855f7;
+  transition:color .15s;
 }
-
+a:hover{color:#c084fc;text-decoration:underline}
 </style>
 </head>
 
 <body>
+    <?php $back_to = 'index.php'; $back_label = 'Home'; include('nav_back.php'); ?>
 
 <div class="header">
 <div class="title"><?= htmlspecialchars($exam['title']) ?></div>
@@ -249,7 +239,7 @@ color:#7c3aed;
 <?php if($me): ?>
 <div class="my-score">
 <div>
-<div style="font-size:12px;color:#64748b;">Your score</div>
+<div>Your score</div>
 <div class="nickname"><?= htmlspecialchars($me['nickname']) ?></div>
 </div>
 
@@ -263,8 +253,8 @@ color:#7c3aed;
 
 <?php if(empty($leaders)): ?>
 
-<div style="text-align:center;color:#64748b;padding:20px;">
-Waiting for players...
+<div class="empty-state">
+⏳ Waiting for players...
 </div>
 
 <?php else: ?>
@@ -305,12 +295,26 @@ $initial = strtoupper(substr($row['nickname'],0,2));
 <div class="footer">
 
 <?php if(!$is_finished): ?>
-Refreshing every 5 seconds
+Refreshing every 5 seconds &nbsp;·&nbsp; <a href="results.php">View My Results</a>
 <?php else: ?>
-<a href="join_exam.php">Play another game</a>
+<a href="results.php">View My Results &amp; Certificate</a>
 <?php endif; ?>
 
 </div>
 
+<script>
+// Stop the browser back button from taking the player back to the
+// game-pin entry / running game once they've reached the leaderboard.
+// We rewrite the current history entry and intercept any popstate.
+(function blockBackNavigation() {
+    try {
+        history.replaceState({ leaderboard: true }, '', window.location.href);
+        window.addEventListener('popstate', () => {
+            history.pushState({ leaderboard: true }, '', window.location.href);
+        });
+        history.pushState({ leaderboard: true }, '', window.location.href);
+    } catch (e) { /* best effort */ }
+})();
+</script>
 </body>
 </html>

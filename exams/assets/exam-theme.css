@@ -1,0 +1,520 @@
+/* Exam-mis shared dark glass-morphism theme.
+   Include with: <link rel="stylesheet" href="/Exam-mis/exams/assets/exam-theme.css">
+   Then add class="exam-dark" to <body>. */
+
+:root {
+  --xm-bg-start: #0d0d2b;
+  --xm-bg-end: #1e1b4b;
+  --xm-text: #f1f5f9;
+  --xm-muted: #94a3b8;
+  --xm-label: #cbd5e1;
+  --xm-accent: #7c3aed;
+  --xm-accent2: #a855f7;
+  --xm-cyan: #06b6d4;
+  --xm-gold: #facc15;
+  --xm-orange: #f97316;
+  --xm-green: #22c55e;
+  --xm-red: #ef4444;
+  --xm-card-bg: rgba(255,255,255,.05);
+  --xm-card-border: rgba(168,85,247,.3);
+  --xm-input-bg: rgba(15,15,40,.6);
+  --xm-input-border: rgba(168,85,247,.25);
+  --xm-radius: 20px;
+  --xm-shadow: 0 25px 80px rgba(0,0,0,.5);
+}
+
+@font-face { font-family: 'Nunito'; }
+
+body.exam-dark {
+  font-family: 'Nunito', 'Segoe UI', sans-serif !important;
+  background: linear-gradient(135deg, var(--xm-bg-start), var(--xm-bg-end)) !important;
+  color: var(--xm-text) !important;
+  min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
+}
+body.exam-dark::before,
+body.exam-dark::after {
+  content: '';
+  position: fixed;
+  border-radius: 50%;
+  filter: blur(110px);
+  opacity: .22;
+  pointer-events: none;
+  z-index: 0;
+  animation: xmDrift 8s ease-in-out infinite alternate;
+}
+body.exam-dark::before { width: 500px; height: 500px; background: var(--xm-accent); top: -150px; left: -150px; }
+body.exam-dark::after  { width: 420px; height: 420px; background: var(--xm-cyan);   bottom: -150px; right: -150px; animation-delay: -4s; }
+@keyframes xmDrift { to { transform: translate(40px, 30px); } }
+
+body.exam-dark > *:not(script):not(style) { position: relative; z-index: 1; }
+
+/* Generic card overrides for typical class names used across the app. */
+body.exam-dark .card,
+body.exam-dark .container,
+body.exam-dark .panel,
+body.exam-dark .box,
+body.exam-dark .section-card,
+body.exam-dark .stat-card,
+body.exam-dark .report-card,
+body.exam-dark .surface {
+  background: var(--xm-card-bg) !important;
+  border: 1px solid var(--xm-card-border) !important;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: var(--xm-radius) !important;
+  color: var(--xm-text);
+  box-shadow: var(--xm-shadow) !important;
+}
+
+/* Headings inside dark layout */
+body.exam-dark h1,
+body.exam-dark h2,
+body.exam-dark h3,
+body.exam-dark h4,
+body.exam-dark h5,
+body.exam-dark h6 {
+  color: #ffffff !important;
+}
+body.exam-dark .gradient-title,
+body.exam-dark h1.gold,
+body.exam-dark .hero h1 {
+  background: linear-gradient(135deg, var(--xm-gold), var(--xm-orange));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Forms */
+body.exam-dark input[type=text],
+body.exam-dark input[type=number],
+body.exam-dark input[type=email],
+body.exam-dark input[type=password],
+body.exam-dark input[type=url],
+body.exam-dark input[type=search],
+body.exam-dark input[type=date],
+body.exam-dark input[type=time],
+body.exam-dark input:not([type]),
+body.exam-dark textarea,
+body.exam-dark select {
+  background: var(--xm-input-bg) !important;
+  border: 1.5px solid var(--xm-input-border) !important;
+  color: var(--xm-text) !important;
+  border-radius: 12px !important;
+  font-family: inherit;
+}
+body.exam-dark input:focus,
+body.exam-dark textarea:focus,
+body.exam-dark select:focus {
+  outline: none;
+  border-color: var(--xm-accent2) !important;
+  box-shadow: 0 0 0 4px rgba(168,85,247,.18);
+  background: rgba(15,15,40,.85) !important;
+}
+body.exam-dark ::placeholder { color: #64748b; }
+body.exam-dark select option { background: var(--xm-bg-end); color: var(--xm-text); }
+body.exam-dark label { color: var(--xm-label); }
+
+/* Buttons */
+body.exam-dark button:not(.menu-toggle):not(.nav-link),
+body.exam-dark .btn,
+body.exam-dark .button,
+body.exam-dark .create-btn,
+body.exam-dark a.btn,
+body.exam-dark input[type=submit],
+body.exam-dark input[type=button] {
+  background: linear-gradient(135deg, var(--xm-accent), var(--xm-accent2)) !important;
+  color: #fff !important;
+  border: none !important;
+  border-radius: 12px !important;
+  font-weight: 800 !important;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(124,58,237,.4);
+  transition: transform .15s, box-shadow .15s;
+  text-decoration: none !important;
+}
+body.exam-dark button:hover,
+body.exam-dark .btn:hover,
+body.exam-dark .create-btn:hover,
+body.exam-dark a.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(124,58,237,.5);
+}
+body.exam-dark .btn-secondary,
+body.exam-dark .btn.secondary {
+  background: transparent !important;
+  border: 2px solid rgba(168,85,247,.4) !important;
+  color: var(--xm-label) !important;
+  box-shadow: none !important;
+}
+body.exam-dark .btn-danger { background: linear-gradient(135deg,#ef4444,#dc2626) !important; box-shadow:0 8px 24px rgba(239,68,68,.4) !important; }
+body.exam-dark .btn-success { background: linear-gradient(135deg,#22c55e,#16a34a) !important; box-shadow:0 8px 24px rgba(34,197,94,.4) !important; }
+
+/* Tables (used heavily on report pages) */
+body.exam-dark table {
+  background: var(--xm-card-bg);
+  border-collapse: separate;
+  border-spacing: 0;
+  border-radius: 14px;
+  overflow: hidden;
+  width: 100%;
+  border: 1px solid var(--xm-card-border);
+  backdrop-filter: blur(20px);
+}
+body.exam-dark thead th,
+body.exam-dark th {
+  background: rgba(124,58,237,.18) !important;
+  color: var(--xm-text) !important;
+  font-weight: 800;
+  text-align: left;
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(168,85,247,.3);
+  letter-spacing: .5px;
+  font-size: 13px;
+  text-transform: uppercase;
+}
+body.exam-dark td {
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+  color: var(--xm-text);
+}
+body.exam-dark tbody tr:hover { background: rgba(168,85,247,.07); }
+body.exam-dark tbody tr:last-child td { border-bottom: none; }
+
+/* Badges & pills */
+body.exam-dark .badge,
+body.exam-dark .status,
+body.exam-dark .pill {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 99px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+body.exam-dark .badge.live,    body.exam-dark .status.active,   body.exam-dark .badge.active,   body.exam-dark .badge-done    { background: rgba(34,197,94,.18) !important; color:#86efac !important; border:1px solid rgba(34,197,94,.4) !important; }
+body.exam-dark .badge.finished,body.exam-dark .status.finished, body.exam-dark .badge.ended,    body.exam-dark .badge.completed{ background: rgba(148,163,184,.15) !important; color:#cbd5e1 !important; border:1px solid rgba(148,163,184,.3) !important; }
+body.exam-dark .badge.pending, body.exam-dark .status.pending,  body.exam-dark .badge.draft,    body.exam-dark .badge-pending { background: rgba(250,204,21,.15) !important; color:#fde68a !important; border:1px solid rgba(250,204,21,.4) !important; }
+body.exam-dark .badge.error,   body.exam-dark .status.error,    body.exam-dark .badge.failed                                  { background: rgba(239,68,68,.15) !important; color:#fca5a5 !important; border:1px solid rgba(239,68,68,.4) !important; }
+
+/* Links inside dark pages.
+   IMPORTANT: scoped to plain text-link contexts so coloured Tailwind
+   buttons (`<a class="bg-blue-600 text-white">`) keep their white
+   text instead of inheriting purple from `body.exam-dark a`. */
+body.exam-dark p a,
+body.exam-dark li a,
+body.exam-dark td a,
+body.exam-dark .breadcrumb a,
+body.exam-dark .text-link,
+body.exam-dark a.link {
+  color: var(--xm-accent2);
+  text-decoration: none;
+}
+body.exam-dark p a:hover,
+body.exam-dark li a:hover,
+body.exam-dark td a:hover,
+body.exam-dark .breadcrumb a:hover { color: #c084fc; }
+
+/* Force white text on Tailwind/inline white-text utilities so coloured
+   buttons (bg-blue-600 + text-white, bg-green-600 + text-white, etc.)
+   stay readable. */
+body.exam-dark .text-white,
+body.exam-dark [class*=" text-white"],
+body.exam-dark a[class*="text-white"] { color: #ffffff !important; }
+
+/* Anchor buttons that pages style by hand — make sure they use the
+   accent gradient with white bold text. Catches the “+ Create New Exam”
+   button on exams_dashboard.php and similar headers. */
+body.exam-dark .header > a,
+body.exam-dark .dashboard-header > a,
+body.exam-dark .create-btn,
+body.exam-dark a.create-btn {
+  background: linear-gradient(135deg, var(--xm-accent), var(--xm-accent2)) !important;
+  color: #ffffff !important;
+  font-weight: 800 !important;
+  border: none !important;
+  box-shadow: 0 8px 24px rgba(124,58,237,.4) !important;
+}
+
+/* Override stale light surfaces some pages set inline */
+body.exam-dark [style*="background:#fff"],
+body.exam-dark [style*="background: #fff"],
+body.exam-dark [style*="background:#ffffff"],
+body.exam-dark [style*="background: #ffffff"],
+body.exam-dark [style*="background:white"],
+body.exam-dark [style*="background: white"],
+body.exam-dark [style*="background:#f8fafc"],
+body.exam-dark [style*="background: #f8fafc"],
+body.exam-dark [style*="background:#fffef6"],
+body.exam-dark [style*="background:#fffdf4"],
+body.exam-dark [style*="background:#fff3cd"],
+body.exam-dark [style*="background-color:#fff"],
+body.exam-dark [style*="background-color: #fff"],
+body.exam-dark [style*="background-color:white"],
+body.exam-dark [style*="background-color: white"] {
+  background: var(--xm-card-bg) !important;
+  color: var(--xm-text) !important;
+  border: 1px solid var(--xm-card-border) !important;
+}
+
+/* ----------------------------------------------------------
+   READABILITY OVERRIDES
+   The pages mix Tailwind utility classes and hand-rolled
+   styles that were authored against a light theme. With
+   exam-dark active, those text colors fall onto the dark
+   backdrop and disappear. The rules below restore contrast
+   without changing the look the user likes.
+   ---------------------------------------------------------- */
+
+/* Tailwind dark-text utilities → readable on dark glass */
+body.exam-dark .text-black,
+body.exam-dark .text-gray-900,
+body.exam-dark .text-slate-900,
+body.exam-dark .text-zinc-900,
+body.exam-dark .text-neutral-900 { color: #ffffff !important; }
+
+body.exam-dark .text-gray-800,
+body.exam-dark .text-slate-800,
+body.exam-dark .text-zinc-800,
+body.exam-dark .text-neutral-800 { color: #f8fafc !important; }
+
+body.exam-dark .text-gray-700,
+body.exam-dark .text-slate-700,
+body.exam-dark .text-zinc-700,
+body.exam-dark .text-neutral-700 { color: #f1f5f9 !important; }
+
+body.exam-dark .text-gray-600,
+body.exam-dark .text-slate-600,
+body.exam-dark .text-zinc-600,
+body.exam-dark .text-neutral-600 { color: #e2e8f0 !important; }
+
+body.exam-dark .text-gray-500,
+body.exam-dark .text-slate-500,
+body.exam-dark .text-zinc-500,
+body.exam-dark .text-neutral-500 { color: #cbd5e1 !important; }
+
+body.exam-dark .text-gray-400,
+body.exam-dark .text-slate-400,
+body.exam-dark .text-zinc-400,
+body.exam-dark .text-neutral-400 { color: #b8c4d6 !important; }
+
+body.exam-dark .text-gray-300,
+body.exam-dark .text-slate-300,
+body.exam-dark .text-zinc-300,
+body.exam-dark .text-neutral-300 { color: #cbd5e1 !important; }
+
+/* Tailwind light-bg utilities → translucent glass cards */
+body.exam-dark .bg-white,
+body.exam-dark .bg-gray-50,
+body.exam-dark .bg-slate-50,
+body.exam-dark .bg-zinc-50,
+body.exam-dark .bg-neutral-50 {
+  background: var(--xm-card-bg) !important;
+  color: var(--xm-text) !important;
+  border-color: var(--xm-card-border) !important;
+}
+body.exam-dark .bg-gray-100,
+body.exam-dark .bg-slate-100,
+body.exam-dark .bg-zinc-100,
+body.exam-dark .bg-neutral-100 {
+  background: rgba(255,255,255,.04) !important;
+  color: var(--xm-text) !important;
+}
+body.exam-dark .bg-gray-200 {
+  background: rgba(255,255,255,.08) !important;
+  color: var(--xm-text) !important;
+}
+body.exam-dark .border-gray-200,
+body.exam-dark .border-gray-300,
+body.exam-dark .border-slate-200,
+body.exam-dark .border-slate-300 { border-color: var(--xm-card-border) !important; }
+
+/* Tailwind coloured-button utilities keep their fill but force white
+   bold text so they stay readable on the dark backdrop. */
+body.exam-dark .bg-blue-500, body.exam-dark .bg-blue-600, body.exam-dark .bg-blue-700,
+body.exam-dark .bg-indigo-500, body.exam-dark .bg-indigo-600, body.exam-dark .bg-indigo-700,
+body.exam-dark .bg-green-500, body.exam-dark .bg-green-600, body.exam-dark .bg-green-700,
+body.exam-dark .bg-emerald-500, body.exam-dark .bg-emerald-600,
+body.exam-dark .bg-purple-500, body.exam-dark .bg-purple-600, body.exam-dark .bg-purple-700,
+body.exam-dark .bg-violet-500, body.exam-dark .bg-violet-600,
+body.exam-dark .bg-orange-500, body.exam-dark .bg-orange-600,
+body.exam-dark .bg-amber-500, body.exam-dark .bg-amber-600,
+body.exam-dark .bg-red-500, body.exam-dark .bg-red-600, body.exam-dark .bg-red-700,
+body.exam-dark .bg-pink-500, body.exam-dark .bg-pink-600 {
+  color: #ffffff !important;
+  font-weight: 700;
+}
+
+/* Hover states on light buttons that turn into glass actions */
+body.exam-dark .hover\:bg-gray-100:hover,
+body.exam-dark .hover\:bg-gray-200:hover,
+body.exam-dark .hover\:bg-gray-300:hover { background: rgba(168,85,247,.18) !important; }
+
+/* Common hand-rolled card class names used across exam pages.
+   These pages declare `.stat`, `.submission-row`, `.opt`, etc.
+   with background:white in their own <style> blocks. Force them
+   to use the same glass treatment so inherited light text is
+   readable. */
+body.exam-dark .stat,
+body.exam-dark .submission-row,
+body.exam-dark .empty-state,
+body.exam-dark .opt,
+body.exam-dark .question-block,
+body.exam-dark .question-card,
+body.exam-dark .answer-card,
+body.exam-dark .info-box,
+body.exam-dark .form-card,
+body.exam-dark .modal-card,
+body.exam-dark .dialog,
+body.exam-dark .student-card,
+body.exam-dark .role-btn,
+body.exam-dark .path-card,
+body.exam-dark .path-features,
+body.exam-dark .empty,
+body.exam-dark .exam-code,
+body.exam-dark .exams-list,
+body.exam-dark .exam-item,
+body.exam-dark .header,
+body.exam-dark .pdf-viewer-wrap,
+body.exam-dark .question-type-btn,
+body.exam-dark .question-preview,
+body.exam-dark .success-message,
+body.exam-dark .exam-card,
+body.exam-dark .filter-group select,
+body.exam-dark .action-btn,
+body.exam-dark .grade-card,
+body.exam-dark .question-builder,
+body.exam-dark .question-card.editing,
+body.exam-dark .question-card.draft,
+body.exam-dark .review-question,
+body.exam-dark .form-section {
+  background: var(--xm-card-bg) !important;
+  color: var(--xm-text) !important;
+  border-color: var(--xm-card-border) !important;
+}
+
+/* Generic muted text that pages set to slate/gray inline */
+body.exam-dark [style*="color:#1e293b"],
+body.exam-dark [style*="color: #1e293b"],
+body.exam-dark [style*="color:#0f172a"],
+body.exam-dark [style*="color: #0f172a"],
+body.exam-dark [style*="color:#111827"],
+body.exam-dark [style*="color: #111827"],
+body.exam-dark [style*="color:#1f2937"],
+body.exam-dark [style*="color: #1f2937"],
+body.exam-dark [style*="color:#374151"],
+body.exam-dark [style*="color: #374151"],
+body.exam-dark [style*="color:#4b5563"],
+body.exam-dark [style*="color: #4b5563"],
+body.exam-dark [style*="color:#000"],
+body.exam-dark [style*="color: #000"],
+body.exam-dark [style*="color:black"],
+body.exam-dark [style*="color: black"] { color: var(--xm-text) !important; }
+
+body.exam-dark [style*="color:#64748b"],
+body.exam-dark [style*="color: #64748b"],
+body.exam-dark [style*="color:#6b7280"],
+body.exam-dark [style*="color: #6b7280"],
+body.exam-dark [style*="color:#9ca3af"],
+body.exam-dark [style*="color: #9ca3af"],
+body.exam-dark [style*="color:#666"],
+body.exam-dark [style*="color: #666"],
+body.exam-dark [style*="color:#777"],
+body.exam-dark [style*="color: #777"],
+body.exam-dark [style*="color:#888"],
+body.exam-dark [style*="color: #888"],
+body.exam-dark [style*="color:#999"],
+body.exam-dark [style*="color: #999"] { color: var(--xm-label) !important; }
+
+body.exam-dark [style*="color:#333"],
+body.exam-dark [style*="color: #333"],
+body.exam-dark [style*="color:#444"],
+body.exam-dark [style*="color: #444"],
+body.exam-dark [style*="color:#555"],
+body.exam-dark [style*="color: #555"],
+body.exam-dark [style*="color:#222"],
+body.exam-dark [style*="color: #222"],
+body.exam-dark [style*="color:#111"],
+body.exam-dark [style*="color: #111"] { color: var(--xm-text) !important; }
+
+/* Common light backgrounds via inline style.
+   Each colour is listed with both spacings ("background:#xxx" and
+   "background: #xxx") because PHP/JS templates in this project use
+   both. Without the space variant, the no-space selector misses
+   declarations with a space and the panel stays light. */
+body.exam-dark [style*="background:#fafafa"],
+body.exam-dark [style*="background: #fafafa"],
+body.exam-dark [style*="background:#f3f4f6"],
+body.exam-dark [style*="background: #f3f4f6"],
+body.exam-dark [style*="background:#f6fffa"],
+body.exam-dark [style*="background: #f6fffa"],
+body.exam-dark [style*="background:#ede9fe"],
+body.exam-dark [style*="background: #ede9fe"],
+body.exam-dark [style*="background:#dcfce7"],
+body.exam-dark [style*="background: #dcfce7"],
+body.exam-dark [style*="background:#fef3c7"],
+body.exam-dark [style*="background: #fef3c7"],
+body.exam-dark [style*="background:#f0f4f8"],
+body.exam-dark [style*="background: #f0f4f8"],
+body.exam-dark [style*="background:#f9fafb"],
+body.exam-dark [style*="background: #f9fafb"],
+body.exam-dark [style*="background:#f8f9fa"],
+body.exam-dark [style*="background: #f8f9fa"],
+body.exam-dark [style*="background:#eef2ff"],
+body.exam-dark [style*="background: #eef2ff"],
+body.exam-dark [style*="background:#e0e7ff"],
+body.exam-dark [style*="background: #e0e7ff"],
+body.exam-dark [style*="background-color:#fafafa"],
+body.exam-dark [style*="background-color:#f8f9fa"],
+body.exam-dark [style*="background-color: #fafafa"],
+body.exam-dark [style*="background-color: #f8f9fa"] {
+  background: var(--xm-card-bg) !important;
+  color: var(--xm-text) !important;
+  border-color: var(--xm-card-border) !important;
+}
+
+/* Paragraphs, list items, spans, divs that inherit body color
+   inside light-themed cards already become readable from the
+   bg overrides above. But explicitly bumping common content
+   tags removes any sub-300 contrast that browsers default to. */
+body.exam-dark p,
+body.exam-dark li,
+body.exam-dark span,
+body.exam-dark dt,
+body.exam-dark dd,
+body.exam-dark td,
+body.exam-dark th { color: inherit; }
+
+body.exam-dark strong,
+body.exam-dark b { color: var(--xm-text); }
+
+/* Some pages embed full light themes in their own <style>
+   declaring `body { background:#f8fafc; color:#1e293b }`.
+   The rule above on `body.exam-dark` already wins on
+   specificity, but page <style> tags load AFTER the linked
+   theme. Re-declare the overrides at the very end so cascade
+   order keeps them on top. */
+body.exam-dark { color: var(--xm-text) !important; }
+
+/* Breadcrumb on pages using layout/header.php */
+body.exam-dark .breadcrumb {
+  background: rgba(255,255,255,.04) !important;
+  border-bottom: 1px solid rgba(168,85,247,.2) !important;
+  color: var(--xm-muted);
+}
+body.exam-dark .breadcrumb a { color: var(--xm-accent2); }
+
+/* Sticky nav from layout/header.php */
+body.exam-dark nav.main-nav {
+  background: linear-gradient(135deg, rgba(124,58,237,.65), rgba(6,182,212,.55)) !important;
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(168,85,247,.4);
+}
+
+/* Print-friendly: keep certificates white when printing */
+@media print {
+  body.exam-dark { background: #fff !important; color: #000 !important; }
+  body.exam-dark::before, body.exam-dark::after { display: none !important; }
+  body.exam-dark .card, body.exam-dark .container { background: #fff !important; color: #000 !important; box-shadow: none !important; border: 1px solid #ddd !important; }
+}

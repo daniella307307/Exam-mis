@@ -3,6 +3,14 @@
 
                 </div>
                 <ul class="list-reset flex flex-col">
+                    <li class="w-full h-full py-3 px-2 border-b border-light-border">
+                        <a href="/Exam-mis/exams/live_classes.php"
+                           class="font-sans font-hairline hover:font-normal text-sm text-nav-item no-underline">
+                            <i class="fas fa-video float-left mx-2"></i>
+                            &nbsp;&nbsp; Join Online Class
+                            <span><i class="fa fa-angle-right float-right"></i></span>
+                        </a>
+                    </li>
                     <!-- <li class=" w-full h-full py-3 px-2 border-b border-light-border ">
                         <a href="index"
                            class="font-sans font-hairline hover:font-normal text-sm text-nav-item no-underline">
@@ -46,10 +54,20 @@
                         </a>
                     </li>
                     <?php
-$base_url = "/_bluelackesadigital.com/public_html";
+// Detect environment automatically
+if ($_SERVER['SERVER_NAME'] === 'localhost' && is_dir('/var/www/html/Exam-mis')) {
+    // Ubuntu/Linux local
+    $base_url = "/Exam-mis";
+} elseif ($_SERVER['SERVER_NAME'] === 'localhost') {
+    // Windows XAMPP local
+    $base_url = "/_bluelackesadigital.com/public_html";
+} else {
+    // Live production server
+    $base_url = "";
+}
 ?>
                       <li class="w-full h-full py-3 px-2 border-b border-light-border">
-                        <a href="<?php echo $base_url; ?>/Exams/exams_library.php"
+                        <a href="<?php echo $base_url; ?>/exams/exams_library.php"
                            class="font-sans font-hairline hover:font-normal text-sm text-nav-item no-underline">
                             <i class="fa fa-users float-left mx-2"></i>
                             Exams Library
@@ -61,6 +79,39 @@ $base_url = "/_bluelackesadigital.com/public_html";
                            class="font-sans font-hairline hover:font-normal text-sm text-nav-item no-underline">
                             <i class="fa fa-book float-left mx-2"></i>
                             Current Courses
+                            <span><i class="fa fa-angle-right float-right"></i></span>
+                        </a>
+                    </li>
+
+                    <!-- EXAM DASHBOARDS SECTION -->
+                    <li class="w-full h-full py-3 px-2 border-b border-light-border" style="background-color: #f0f4f8; font-weight: bold;">
+                        <i class="fas fa-chart-bar float-left mx-2" style="color: #667eea;"></i>
+                        &nbsp;&nbsp; Exam Dashboards
+                    </li>
+
+                    <li class="w-full h-full py-3 px-2 border-b border-light-border">
+                        <a href="<?php echo $base_url; ?>/exams/index-router.php"
+                           class="font-sans font-hairline hover:font-normal text-sm text-nav-item no-underline">
+                            <i class="fas fa-tachometer-alt float-left mx-2" style="color: #667eea;"></i>
+                            My Dashboard
+                            <span><i class="fa fa-angle-right float-right"></i></span>
+                        </a>
+                    </li>
+
+                    <li class="w-full h-full py-3 px-2 border-b border-light-border">
+                        <a href="<?php echo $base_url; ?>/exams/teacher/dashboard-integrated.php"
+                           class="font-sans font-hairline hover:font-normal text-sm text-nav-item no-underline">
+                            <i class="fas fa-chalkboard-user float-left mx-2" style="color: #ffc107;"></i>
+                            Teacher Analytics
+                            <span><i class="fa fa-angle-right float-right"></i></span>
+                        </a>
+                    </li>
+
+                    <li class="w-full h-full py-3 px-2 border-b border-light-border">
+                        <a href="<?php echo $base_url; ?>/exams/admin/records-integrated.php"
+                           class="font-sans font-hairline hover:font-normal text-sm text-nav-item no-underline">
+                            <i class="fas fa-cogs float-left mx-2" style="color: #dc3545;"></i>
+                            System Analytics
                             <span><i class="fa fa-angle-right float-right"></i></span>
                         </a>
                     </li>

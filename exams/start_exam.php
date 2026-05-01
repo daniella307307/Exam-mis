@@ -45,11 +45,15 @@ while ($q = $qresult->fetch_assoc()) {
 
 // Guard: if no questions exist, show a friendly message
 if (empty($questions)) {
+    $conn->close();
     die("No questions have been added to this exam yet.");
 }
 
-// Per-question time (fallback to 30 s if duration_minutes is 0)
-$totalSeconds = max(($exam['duration_minutes'] ?? 0) * 60, count($questions) * 30);
+// Close connection - data already fetched into PHP arrays
+if (isset($conn) && $conn instanceof mysqli) { $conn->close(); }
+
+// Per-question time - use 'duration' column (it's in minutes)
+$totalSeconds = max(($exam['duration'] ?? 0) * 60, count($questions) * 30);
 $timePerQ     = intval($totalSeconds / count($questions));
 ?>
 <!DOCTYPE html>
@@ -62,34 +66,32 @@ $timePerQ     = intval($totalSeconds / count($questions));
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#f4f6fb;
-  --card:#ffffff;
   --accent:#7c3aed;
   --accent2:#a855f7;
-  --text:#0f172a;
-  --muted:#64748b;
-  --radius:16px;
+  --text:#f1f5f9;
+  --muted:#94a3b8;
+  --radius:20px;
 }
 body{
   font-family:'Nunito',sans-serif;
-  background:var(--bg);
+  background:linear-gradient(135deg,#0d0d2b,#1e1b4b);
   color:var(--text);
   min-height:100vh;
   display:flex;
   flex-direction:column;
   align-items:center;
   justify-content:flex-start;
-  padding:20px;
+  padding:24px 20px 60px;
   overflow-x:hidden;
   position:relative;
 }
 body::before,body::after{
   content:'';position:fixed;border-radius:50%;
-  filter:blur(80px);opacity:.15;pointer-events:none;
+  filter:blur(110px);opacity:.22;pointer-events:none;
   animation:drift 8s ease-in-out infinite alternate;
 }
-body::before{width:400px;height:400px;background:#c4b5fd;top:-120px;left:-100px}
-body::after{width:350px;height:350px;background:#67e8f9;bottom:-100px;right:-80px;animation-delay:-4s}
+body::before{width:500px;height:500px;background:#7c3aed;top:-150px;left:-150px}
+body::after{width:420px;height:420px;background:#06b6d4;bottom:-150px;right:-150px;animation-delay:-4s}
 @keyframes drift{to{transform:translate(40px,30px)}}
 
 /* ── Top bar ── */
@@ -108,36 +110,41 @@ body::after{width:350px;height:350px;background:#67e8f9;bottom:-100px;right:-80p
 
 /* ── Timer ── */
 .timer-wrap{
-  display:flex;align-items:center;gap:8px;
- background:#ffffff;
-  border:1px solid #e2e8f0;
-  border-radius:30px;padding:6px 14px;
-  border-radius:30px;padding:8px 16px;
+  display:flex;align-items:center;gap:10px;
+  background:rgba(255,255,255,.06);
+  border:1px solid rgba(168,85,247,.3);
+  backdrop-filter:blur(20px);
+  border-radius:30px;padding:8px 18px;
+  color:#f1f5f9;
 }
 .timer-icon{font-size:16px}
 .timer-val{font-size:18px;font-weight:900;min-width:44px;text-align:center}
-.timer-val.warning{color:#f87171}
+.timer-val.warning{color:#f87171;animation:pulseWarn 1s ease-in-out infinite}
+@keyframes pulseWarn{0%,100%{opacity:1}50%{opacity:.5}}
 
 /* ── Progress bar ── */
 .progress-bar{
-  width:100%;max-width:760px;height:6px;
-  background:#e2e8f0;border-radius:99px;
+  width:100%;max-width:760px;height:8px;
+  background:rgba(255,255,255,.08);border-radius:99px;
   margin-bottom:24px;overflow:hidden;position:relative;z-index:1;
 }
 .progress-fill{
   height:100%;border-radius:99px;
-  background:linear-gradient(90deg,var(--accent),var(--accent2));
+  background:linear-gradient(90deg,#facc15,#f97316,#a855f7);
   transition:width .4s ease;
+  box-shadow:0 0 16px rgba(168,85,247,.5);
 }
 
 /* ── Card ── */
 .card{
-  background:var(--card);
-  border:1px solid rgba(255,255,255,.08);
+  background:rgba(255,255,255,.05);
+  border:1px solid rgba(168,85,247,.3);
+  backdrop-filter:blur(20px);
+  -webkit-backdrop-filter:blur(20px);
   border-radius:var(--radius);
-  padding:36px 32px;
+  padding:40px 36px;
   width:100%;max-width:760px;
-  box-shadow:0 32px 80px rgba(0,0,0,.5);
+  box-shadow:0 25px 80px rgba(0,0,0,.5);
   position:relative;z-index:1;
 }
 
@@ -167,12 +174,17 @@ body::after{width:350px;height:350px;background:#67e8f9;bottom:-100px;right:-80p
   cursor:pointer;font-size:16px;font-weight:700;
   font-family:'Nunito',sans-serif;
   display:flex;align-items:center;gap:12px;
-  transition:transform .15s,box-shadow .15s,border-color .15s;
+  transition:transform .15s,box-shadow .15s,border-color .15s,background .15s;
   text-align:left;
-  background:#f8fafc;
+  background:rgba(255,255,255,.04);
   color:var(--text);
+  backdrop-filter:blur(10px);
 }
-.option:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(0,0,0,.3)}
+.option:hover{
+  transform:translateY(-2px);
+  box-shadow:0 12px 28px rgba(0,0,0,.35);
+  background:rgba(255,255,255,.07);
+}
 .option:active{transform:translateY(0)}
 
 /* Each of the four shapes/colours */
@@ -247,7 +259,10 @@ body::after{width:350px;height:350px;background:#67e8f9;bottom:-100px;right:-80p
 <div class="feedback" id="feedback"></div>
 
 <!-- Hidden form for submission -->
-<form method="POST" id="submitForm" action="submit_exam.php"></form>
+<form method="POST" id="submitForm" action="submit_exam.php">
+  <input type="hidden" name="eid" value="<?= (int)$exam_id ?>">
+  <input type="hidden" name="pid" value="<?= (int)($_SESSION['player_id'] ?? 0) ?>">
+</form>
 
 <script>
 // ── Data from PHP ────────────────────────────────────────────────
@@ -273,33 +288,149 @@ function loadQuestion() {
   const pct = (current / questions.length) * 100;
   document.getElementById('progressFill').style.width = pct + '%';
 
-  // Options — use index-based IDs to avoid XSS via inline onclick
+  // Render based on question type
   const grid = document.getElementById('optionsGrid');
   grid.innerHTML = '';
+  if (q.question_type === 'practical') {
+    // PRACTICAL - show PDF + text answer
+    grid.style.gridTemplateColumns = '1fr'; // full width
 
-  q.options.forEach((opt, i) => {
-    const btn = document.createElement('button');
-    btn.className = 'option';
-    btn.type      = 'button';
+    const pdfUrl = q.options.length > 0 ? q.options[0].option_text : '';
 
-    const shape = document.createElement('span');
-    shape.className   = 'shape';
-    shape.textContent = SHAPES[i] || '?';
-
-    const text = document.createElement('span');
-    text.textContent = opt.option_text;
-
-    btn.appendChild(shape);
-    btn.appendChild(text);
-
-    // Restore previous selection if user navigated back (future-proof)
-    if (answers[q.question_id] === opt.option_id) {
-      btn.classList.add('selected');
+    if (pdfUrl) {
+        const pdfWrap = document.createElement('div');
+        pdfWrap.style.cssText = 'width:100%; margin-bottom:16px;';
+        pdfWrap.innerHTML = `
+            <div style="margin-bottom:10px;">
+                <a href="${pdfUrl}" target="_blank" 
+                   style="display:inline-block; padding:8px 14px; background:#667eea; 
+                          color:white; text-decoration:none; border-radius:6px; font-weight:600;">
+                    📄 Open PDF in new tab
+                </a>
+            </div>
+            <iframe 
+               src="/Exam-mis/pdfjs/web/viewer.html?file=${encodeURIComponent('/Exam-mis/exams/exam_pdf_proxy.php?url=' + encodeURIComponent(pdfUrl))}"
+               style="width:100%; height:500px; border:2px solid #e2e8f0; border-radius:8px;"
+               allowfullscreen>
+            </iframe>
+        `;
+        grid.appendChild(pdfWrap);
     }
 
-    btn.addEventListener('click', () => selectOption(btn, q.question_id, opt.option_id));
-    grid.appendChild(btn);
-  });
+    // Project link submission
+    const linkBox = document.createElement('div');
+    linkBox.style.cssText = 'background:rgba(124,58,237,.12); border:2px solid rgba(124,58,237,.4); border-radius:12px; padding:20px; margin-top:8px;';
+    linkBox.innerHTML = `
+        <p style="font-weight:800; font-size:15px; color:#e2d9f3; margin-bottom:6px;">
+            📎 Submit your project link
+        </p>
+        <p style="font-size:13px; color:#a89cc8; margin-bottom:14px;">
+            Paste the link to your completed project (GitHub, Google Drive, Tinkercad, etc.)
+        </p>
+        <input
+            type="url"
+            id="projectLink_${q.question_id}"
+            placeholder="https://github.com/yourname/project  or  https://drive.google.com/..."
+            style="width:100%; padding:14px 16px; border-radius:8px; border:2px solid #4c3a8f;
+                   background:#12103a; color:#f1f5f9; font-size:14px; font-family:inherit;
+                   outline:none; transition:border-color .2s;"
+            value="${answers[q.question_id] ?? ''}"
+        />
+        <p style="font-size:12px; color:#7c6aab; margin-top:10px;">
+            ℹ️ Make sure your link is publicly accessible before submitting.
+        </p>
+    `;
+
+    const linkInput = linkBox.querySelector('input');
+    linkInput.addEventListener('input', (e) => {
+        answers[q.question_id] = e.target.value;
+    });
+    linkInput.addEventListener('focus', (e) => { e.target.style.borderColor = '#a855f7'; });
+    linkInput.addEventListener('blur',  (e) => { e.target.style.borderColor = '#4c3a8f'; });
+
+    grid.appendChild(linkBox);
+
+} else if (q.question_type === 'true_false') {
+    // TRUE/FALSE question - render as 2 buttons
+    ['True', 'False'].forEach((text, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'option';
+      btn.type      = 'button';
+
+      const shape = document.createElement('span');
+      shape.className   = 'shape';
+      shape.textContent = SHAPES[i] || '?';
+
+      const label = document.createElement('span');
+      label.textContent = text;
+
+      btn.appendChild(shape);
+      btn.appendChild(label);
+
+      // Restore previous selection if user navigated back
+      if (answers[q.question_id] === q.options[i].option_id) {
+        btn.classList.add('selected');
+      }
+
+      btn.addEventListener('click', () => selectOption(btn, q.question_id, q.options[i].option_id));
+      grid.appendChild(btn);
+    });
+
+  } else if (q.question_type === 'essay') {
+    // ESSAY question - render text area
+    const textarea = document.createElement('textarea');
+    textarea.id = 'essayAnswer_' + q.question_id;
+    textarea.placeholder = 'Type your answer here...';
+    textarea.style.cssText = `
+      width:100%; min-height:170px; padding:16px;
+      border-radius:12px; border:2px solid rgba(168,85,247,.25);
+      background:rgba(15,15,40,.55); color:#f1f5f9;
+      font-size:15px; font-family:inherit; font-weight:600;
+      outline:none; transition:border-color .2s, box-shadow .2s;
+      resize:vertical;
+    `;
+    textarea.addEventListener('focus', e => {
+      e.target.style.borderColor = '#a855f7';
+      e.target.style.boxShadow = '0 0 0 4px rgba(168,85,247,.18)';
+    });
+    textarea.addEventListener('blur', e => {
+      e.target.style.borderColor = 'rgba(168,85,247,.25)';
+      e.target.style.boxShadow = 'none';
+    });
+    textarea.value = answers[q.question_id] ?? '';
+
+    textarea.addEventListener('input', (e) => {
+      answers[q.question_id] = e.target.value;
+    });
+
+    grid.appendChild(textarea);
+
+  } else {
+    // MCQ (multiple choice) - render as buttons
+    q.options.forEach((opt, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'option';
+      btn.type      = 'button';
+
+      const shape = document.createElement('span');
+      shape.className   = 'shape';
+      shape.textContent = SHAPES[i] || '?';
+
+      const text = document.createElement('span');
+      text.textContent = opt.option_text;
+
+      btn.appendChild(shape);
+      btn.appendChild(text);
+
+      // Restore previous selection if user navigated back
+      if (answers[q.question_id] === opt.option_id) {
+        btn.classList.add('selected');
+      }
+
+      btn.addEventListener('click', () => selectOption(btn, q.question_id, opt.option_id));
+      grid.appendChild(btn);
+    });
+  }
 
   // Button label
   const nextBtn = document.getElementById('nextBtn');

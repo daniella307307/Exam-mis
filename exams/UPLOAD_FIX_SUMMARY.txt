@@ -1,0 +1,125 @@
+🔧 PDF UPLOAD FIX - BUNNY CDN WITH LOCAL FALLBACK
+=================================================
+
+❌ PROBLEM:
+-----------
+- Upload was failing with: "Failed to upload to Bunny CDN. HTTP Status: 0"
+- Root cause: Server cannot reach external Bunny CDN (no internet connectivity or network restriction)
+- Error in logs: "Could not resolve host: bluelakes.storage.bunnycdn.com"
+
+✅ SOLUTION IMPLEMENTED:
+--------------------------
+The upload handler now has a **two-tier strategy**:
+
+1. PRIMARY: Try Bunny CDN upload first
+   - Attempts to upload to: bluelakes.storage.bunnycdn.com
+   - If successful → Returns Bunny CDN URL
+   - If failed → Falls back to local storage
+
+2. FALLBACK: Local file storage
+   - Stores PDF locally in: /var/www/html/Exam-mis/exams/practical_exams/
+   - Organized by school: practical_exams/[school_name]/
+   - Returns local URL: /Exam-mis/exams/practical_exams/[school]/file.pdf
+   - Accessible via web browser
+
+🎯 WORKFLOW - HOW IT WORKS NOW:
+--------------------------------
+
+STEP 1: Teacher selects "Upload PDF Practical"
+STEP 2: Chooses PDF file and clicks upload
+STEP 3: System attempts Bunny upload with timeout (10 sec connect, 30 sec total)
+STEP 4A: If Bunny succeeds → URL like: https://bluelakes1988.b-cdn.net/exams/School/file.pdf
+STEP 4B: If Bunny fails → URL like: http://localhost/Exam-mis/exams/practical_exams/School/file.pdf
+STEP 5: Exam published with whichever URL was successful
+STEP 6: Students access via the returned URL (doesn't matter if Bunny or local)
+
+🔍 RESPONSE FORMAT:
+--------------------
+Success response includes "storage" field:
+
+{
+  "success": true,
+  "url": "https://bluelakes1988.b-cdn.net/exams/School_Name/2026-04-18_154530_exam.pdf",
+  // OR
+  "url": "/Exam-mis/exams/practical_exams/School_Name/2026-04-18_154530_exam.pdf",
+  "filename": "2026-04-18_154530_exam.pdf",
+  "storage": "bunny" OR "local",
+  "message": "PDF uploaded successfully to Bunny CDN"
+             OR "PDF uploaded successfully (stored locally - ensure Bunny CDN connectivity for production)"
+}
+
+📁 FILE STORAGE STRUCTURE:
+---------------------------
+/var/www/html/Exam-mis/exams/
+├── practical_exams/           (NEW - local fallback storage)
+│   ├── School_Name_1/
+│   │   ├── 2026-04-18_140530_practical_exam.pdf
+│   │   └── 2026-04-18_150530_robotics_project.pdf
+│   └── School_Name_2/
+│       └── 2026-04-18_154530_electronics_lab.pdf
+├── upload_to_bunny.php        (Updated with fallback logic)
+└── [other exam files]
+
+🔒 SECURITY & VALIDATION:
+---------------------------
+✓ PDF file type validation (MIME type check)
+✓ File size limit: 100MB (increased from 50MB for practical exams)
+✓ School ID validation against database
+✓ Unique filename generation (prevents overwrites)
+✓ Organized folder structure (by school)
+✓ Proper permissions: www-data:www-data
+
+⏱️ TIMEOUT SETTINGS:
+---------------------
+- Connect timeout: 10 seconds (quick fail if Bunny unreachable)
+- Total timeout: 30 seconds
+- Auto-fallback to local storage if either times out
+
+✅ FILES UPDATED:
+------------------
+✓ /var/www/html/Exam-mis/exams/upload_to_bunny.php (Now with fallback)
+✓ Permissions set to www-data:www-data (can write to practical_exams/)
+
+🚀 TESTING:
+-----------
+Try uploading a PDF now:
+1. Go to Exam Creator
+2. Select "Upload PDF Practical"
+3. Choose a PDF file
+4. Watch browser console for success message
+5. Check response.storage field: "bunny" or "local"
+
+If response includes:
+- "storage": "bunny" → Bunny CDN is working! 🎉
+- "storage": "local" → Server can't reach Bunny, using local fallback (normal for local dev)
+
+💡 PRODUCTION RECOMMENDATIONS:
+-------------------------------
+1. If Bunny CDN shows "local" storage repeatedly:
+   - Check server internet connectivity
+   - Verify Bunny API credentials (currently: 84cc6b36-...)
+   - Test: curl -I https://bluelakes.storage.bunnycdn.com/
+
+2. For production deployment:
+   - Keep local fallback as safety net
+   - Ensure web server has write permissions to practical_exams/
+   - Monitor error logs: tail -f /var/log/apache2/error.log | grep BUNNY_UPLOAD
+   - Set up automated Bunny sync for local files (optional)
+
+3. Consider:
+   - Increasing local storage check intervals
+   - Implementing background Bunny upload retry for "local" files
+   - Setup CloudFlare or CDN caching for local URLs
+
+🐛 DEBUGGING:
+--------------
+Check logs:
+sudo tail -100 /var/log/apache2/error.log | grep BUNNY_UPLOAD
+
+Look for:
+- [BUNNY_UPLOAD] Using storage endpoint: bluelakes.storage.bunnycdn.com
+- [BUNNY_UPLOAD] HTTP Code: 201 (success)
+- [BUNNY_UPLOAD] Bunny failed, using local fallback
+- [BUNNY_UPLOAD] Success: /Exam-mis/exams/practical_exams/...
+
+✨ COMPLETE & READY TO USE! ✨

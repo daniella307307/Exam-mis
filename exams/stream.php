@@ -32,6 +32,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
      $stmt = $conn->prepare("UPDATE players SET nickname=?, stream=?, grade=? WHERE player_id=?");
     $stmt->bind_param("sssi", $name, $stream, $grade, $_SESSION['player_id']);
     $stmt->execute();
+    $stmt->close();
+    $conn->close();
         header("Location: waiting.php");
         exit();
 }
@@ -112,3 +114,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
 </body>
 </html>
+<?php
+if (isset($conn)) $conn->close();
+?>

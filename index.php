@@ -23,8 +23,12 @@
         <p class="text-gray-800 font-medium text-center text-xl font-bold">Who are You ?</p>
         <a href="Parent_login.php"><button class="px-4 py-1 text-white font-light tracking-wider bg-blue-900 rounded ml-24" type="submit">I'm a Parent</button></a><br><br>
 <a href="Student_login"><button class="px-4 py-1 text-white font-light tracking-wider bg-yellow-900 rounded ml-24" type="submit">I'm a Student</button></a>         <br><br>
-<a href="Administrator_login"><button class="px-4 py-1 text-white font-light tracking-wider bg-blue-900 rounded ml-24" type="submit">I'm an Administrator</button></a>        
-     
+<a href="Administrator_login"><button class="px-4 py-1 text-white font-light tracking-wider bg-blue-900 rounded ml-24" type="submit">I'm an Administrator</button></a>
+<br><br>
+<hr class="my-2">
+<p class="text-gray-600 text-center text-sm">New here?</p>
+<a href="Signup.php"><button class="px-4 py-1 text-white font-light tracking-wider bg-green-700 rounded ml-24" type="button">Register New Account</button></a>
+
 	 </div>
 
     </div>

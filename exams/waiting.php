@@ -3,7 +3,7 @@ session_start();
 include('../db.php');
 
 if (!isset($_SESSION['exam_id'])) {
-    header("Location: ../../index.php");
+    header("Location: index.php");
     exit();
 }
 
@@ -39,6 +39,9 @@ $members = implode(", ", $membersArray); // convert to string
 }
 
 $start_time = strtotime($exam['start_time']);
+
+// Close connection - all data fetched
+if (isset($conn) && $conn instanceof mysqli) { $conn->close(); }
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -50,17 +53,15 @@ $start_time = strtotime($exam['start_time']);
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#f8fafc;
-  --card:#ffffff;
   --accent:#7c3aed;
   --accent2:#a855f7;
-  --text:#0f172a;
-  --muted:#64748b;
-  --radius:16px
+  --text:#f1f5f9;
+  --muted:#94a3b8;
+  --radius:20px
 }
 body{
   font-family:'Nunito',sans-serif;
-  background:var(--bg);
+  background:linear-gradient(135deg,#0d0d2b,#1e1b4b);
   color:var(--text);
   min-height:100vh;
   display:flex;
@@ -73,11 +74,11 @@ body{
 }
 body::before,body::after{
   content:'';position:fixed;border-radius:50%;
-  filter:blur(80px);opacity:.12;pointer-events:none;
+  filter:blur(100px);opacity:.25;pointer-events:none;
   animation:drift 8s ease-in-out infinite alternate;
 }
-body::before{width:400px;height:400px;background:var(--accent);top:-120px;left:-100px}
-body::after{width:350px;height:350px;background:#06b6d4;bottom:-100px;right:-80px;animation-delay:-4s}
+body::before{width:500px;height:500px;background:var(--accent);top:-150px;left:-120px}
+body::after{width:420px;height:420px;background:#06b6d4;bottom:-150px;right:-120px;animation-delay:-4s}
 @keyframes drift{to{transform:translate(40px,30px)}}
 
 .logo{font-size:36px;font-weight:900;letter-spacing:-1px;margin-bottom:4px;
@@ -86,12 +87,14 @@ body::after{width:350px;height:350px;background:#06b6d4;bottom:-100px;right:-80p
 .tagline{color:var(--muted);font-size:13px;margin-bottom:28px}
 
 .card{
-  background:var(--card);
-  border:1px solid rgba(0,0,0,.06);
+  background:rgba(255,255,255,.05);
+  border:1px solid rgba(168,85,247,.3);
+  backdrop-filter:blur(20px);
+  -webkit-backdrop-filter:blur(20px);
   border-radius:var(--radius);
-  padding:36px 32px;
+  padding:40px 36px;
   width:100%;max-width:480px;
-  box-shadow:0 20px 50px rgba(0,0,0,.08);
+  box-shadow:0 25px 80px rgba(0,0,0,.5);
   position:relative;z-index:1;
 }
 
@@ -106,27 +109,31 @@ body::after{width:350px;height:350px;background:#06b6d4;bottom:-100px;right:-80p
 }
 @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.8)}}
 
-.exam-title{font-size:20px;font-weight:900;margin-bottom:6px;text-align:center}
-.player-name{color:var(--muted);font-size:13px;margin-bottom:24px;text-align:center}
-.player-name span{color:#a855f7;font-weight:700}
+.exam-title{
+  font-size:24px;font-weight:900;margin-bottom:6px;text-align:center;
+  background:linear-gradient(135deg,#facc15,#f97316);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.player-name{color:var(--muted);font-size:14px;margin-bottom:24px;text-align:center}
+.player-name span{color:#a855f7;font-weight:800}
 
 .countdown-wrap{
-  background:#f1f5f9;
-  border:1px solid rgba(0,0,0,.06);
-  border-radius:12px;
-  padding:20px;
+  background:rgba(124,58,237,.15);
+  border:1px solid rgba(168,85,247,.3);
+  border-radius:14px;
+  padding:24px;
   text-align:center;
-  margin-bottom:24px;
+  margin-bottom:8px;
 }
 .countdown-label{font-size:11px;font-weight:700;text-transform:uppercase;
-  letter-spacing:1px;color:var(--muted);margin-bottom:8px}
-.countdown{font-size:48px;font-weight:900;letter-spacing:4px;
+  letter-spacing:1.5px;color:var(--muted);margin-bottom:10px}
+.countdown{font-size:52px;font-weight:900;letter-spacing:4px;
   background:linear-gradient(135deg,#a855f7,#06b6d4);
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 
 .divider{
   height:1px;
-  background:rgba(0,0,0,.06);
+  background:rgba(255,255,255,.08);
   margin:24px 0;
 }
 .toggle-label{font-size:11px;font-weight:700;letter-spacing:1px;
@@ -150,21 +157,22 @@ label.lbl{display:block;font-size:11px;font-weight:700;letter-spacing:1px;
   text-transform:uppercase;color:var(--muted);margin-bottom:7px}
 input[type=text],textarea{
   width:100%;
-  background:#f1f5f9;
-  border:1.5px solid rgba(0,0,0,.1);
+  background:rgba(15,15,40,.6);
+  border:1.5px solid rgba(168,85,247,.25);
   border-radius:12px;
   padding:12px 16px;
   font-size:15px;
   font-family:'Nunito',sans-serif;
   font-weight:600;
-  color:var(--text);
+  color:#f1f5f9;
   outline:none;
   transition:border-color .2s,background .2s;
 }
 
 input[type=text]:focus,textarea:focus{
   border-color:var(--accent);
-  background:#fff;
+  background:rgba(15,15,40,.85);
+  color:#f1f5f9;
 }
 input[type=text]::placeholder,textarea::placeholder{color:var(--muted);font-weight:400}
 
@@ -190,10 +198,15 @@ input[type=text]::placeholder,textarea::placeholder{color:var(--muted);font-weig
   text-align:center;
 }
 .players-online{
-  display:flex;align-items:center;justify-content:center;gap:8px;
-  color:var(--muted);font-size:13px;margin-top:16px;
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  color:var(--muted);font-size:14px;margin-top:8px;
 }
-.players-online strong{color:var(--text)}
+.players-online strong{
+  color:#facc15;font-size:18px;font-weight:900;
+  padding:2px 12px;border-radius:99px;
+  background:rgba(250,204,21,.12);
+  border:1px solid rgba(250,204,21,.3);
+}
 select{
   width:100%;
   padding:12px;
@@ -240,31 +253,35 @@ textarea{
 </div>
 
 <script>
+const EXAM_ID   = <?= (int)$exam_id ?>;
+const startTime = <?= $start_time ? ($start_time * 1000) : 0 ?>;
 
 // ── Countdown timer ──────────────────────────────────────────────
-const startTime =  1000000; // convert to milliseconds
-
 function updateTimer() {
+  const el = document.getElementById('timer');
+  if (!startTime) { el.textContent = 'Soon'; return; }
+
   const diff = startTime - Date.now();
-  if (diff <= 0) {
-    return;
-  }
-  const m = Math.floor(diff / 60000);
-  const s = Math.floor((diff % 60000) / 1000);
-  document.getElementById('timer').textContent =
-    String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+  if (diff <= 0) { el.textContent = 'Starting…'; return; }
+
+  const totalSec = Math.floor(diff / 1000);
+  const h = Math.floor(totalSec / 3600);
+  const m = Math.floor((totalSec % 3600) / 60);
+  const s = totalSec % 60;
+  const pad = n => String(n).padStart(2, '0');
+  el.textContent = (h > 0 ? pad(h) + ':' : '') + pad(m) + ':' + pad(s);
 }
 setInterval(updateTimer, 1000);
 updateTimer();
 
 // ── Poll live player count ───────────────────────────────────────
 function pollPlayers() {
-  fetch('getplayercount.php')
+  fetch('getplayercount.php?eid=' + EXAM_ID, { credentials: 'same-origin' })
     .then(r => r.json())
     .then(d => { document.getElementById('playerCount').textContent = d.count ?? '–'; })
     .catch(() => {});
 }
-setInterval(pollPlayers, 3000);
+setInterval(pollPlayers, 5000);
 pollPlayers();
 
 // ── Poll for host pressing Start (status = 'active') ─────────────
@@ -276,7 +293,7 @@ function pollStatus() {
     })
     .catch(() => {});
 }
-setInterval(pollStatus, 2000);
+setInterval(pollStatus, 10000);
 </script>
 
 </body>
