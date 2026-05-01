@@ -11,13 +11,21 @@
  *   require_once('db_connection.php');  // Use ONCE, not include
  *   // Now $conn is available
  */
-
 // Use static variable to cache connection across includes
 static $globalConnection = null;
 
 if ($globalConnection === null) {
     // Create connection only once per PHP execution
-    $server = '193.203.168.143';
+    // Auto-detect environment
+$is_local = in_array($_SERVER['SERVER_NAME'] ?? '', ['localhost', '127.0.0.1']);
+
+if ($is_local) {
+    $servername = "193.203.168.143";  // Remote DB from Ubuntu
+    $port = 3306;
+} else {
+    $servername = "localhost";  // Hostinger uses local DB
+    $port = 3306;
+}
     $user = 'u664421868_blisdatabase';
     $password = 'Blisdata@1234';
     $database = 'u664421868_blisdatabase';
