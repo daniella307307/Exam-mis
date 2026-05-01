@@ -3,12 +3,7 @@ vendor
 .DS_Store
 *.log
 *.cache
-/Auth
-/Config
-/Console
-/BIBLE
-/CALCULATOR
-/dist
 /uploads
-/SAMUEL
-/pdfjs
+/Auth/Parents/uploads
+/Auth/SF/uploads
+/Auth/SFinance/uploads
