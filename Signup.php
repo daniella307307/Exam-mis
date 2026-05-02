@@ -46,20 +46,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
         } elseif ($password !== $password_confirm) {
             $flash = ['type' => 'error', 'msg' => 'Passwords do not match.'];
         } else {
+            $emailTaken = false;
+            $phoneTaken = false;
             try {
-                $stmt = $conn->prepare("SELECT user_id FROM users WHERE email_address = ? OR phone_number = ? LIMIT 1");
-                $stmt->bind_param('ss', $values['email_address'], $values['phone_number']);
+                $stmt = $conn->prepare("SELECT user_id FROM users WHERE email_address = ? LIMIT 1");
+                $stmt->bind_param('s', $values['email_address']);
                 $stmt->execute();
-                $exists = $stmt->get_result()->fetch_assoc();
+                $emailTaken = (bool)$stmt->get_result()->fetch_assoc();
+                $stmt->close();
+
+                $stmt = $conn->prepare("SELECT user_id FROM users WHERE phone_number = ? LIMIT 1");
+                $stmt->bind_param('s', $values['phone_number']);
+                $stmt->execute();
+                $phoneTaken = (bool)$stmt->get_result()->fetch_assoc();
                 $stmt->close();
             } catch (Throwable $e) {
                 error_log('signup duplicate check failed: ' . $e->getMessage());
-                $exists = null;
                 $flash = ['type' => 'error', 'msg' => 'Internal error. Please try again later.'];
             }
 
-            if ($flash === null && $exists) {
-                $flash = ['type' => 'error', 'msg' => 'An account with that email or phone number already exists.'];
+            if ($flash === null) {
+                if ($emailTaken && $phoneTaken) {
+                    $flash = ['type' => 'error', 'msg' => 'Both this email and this phone number are already registered to existing users.'];
+                } elseif ($emailTaken) {
+                    $flash = ['type' => 'error', 'msg' => 'This email address is already registered. Use a different email or contact your administrator.'];
+                } elseif ($phoneTaken) {
+                    $flash = ['type' => 'error', 'msg' => 'This phone number is already registered to another user.'];
+                }
             }
 
             $school_country = null;
