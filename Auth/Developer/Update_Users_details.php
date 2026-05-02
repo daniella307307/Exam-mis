@@ -1,9 +1,24 @@
 <?php
-ob_start(); 
+ob_start();
 include('header.php');
 if(isset($_GET['ID'])){
 	 $ID =$_GET['ID'];
  }
+
+// Hard-delete handler. Removes the user row entirely (not a status flag).
+// Wrapped in prepared statement to avoid SQL injection on the integer id.
+if (isset($_POST['HardDelete']) && isset($ID)) {
+    $delId = (int)$ID;
+    $del = $conn->prepare("DELETE FROM users WHERE user_id = ?");
+    $del->bind_param('i', $delId);
+    if ($del->execute() && $del->affected_rows > 0) {
+        $del->close();
+        header('Location: Users.php');
+        exit;
+    }
+    $del->close();
+    $delete_error = 'Could not delete this user — they may be referenced by other records (students, exams, etc.). Set status to "Deleted" instead.';
+}
  
  $details_user =mysqli_fetch_array(mysqli_query($conn,"SELECT * FROM users  
 LEFT JOIN user_permission ON users.access_level=user_permission.permissio_id
@@ -104,8 +119,8 @@ lastname = '$lastname',
                 </div>
                 <div class="mt-2">
                     <label class="block text-sm text-gray-600" for="cus_email">Email</label>
-                    <input class="w-full px-5  py-4 text-gray-700 bg-gray-200 rounded" id="cus_email" name="email_address" value ="<?php echo $details_user['email_address'];?>" type="text" required="" placeholder="Email adress" aria-label="Email" readonly>
-                 
+                    <input class="w-full px-5  py-4 text-gray-700 bg-gray-200 rounded" id="cus_email" name="email_address" value ="<?php echo $details_user['email_address'];?>" type="email" placeholder="Email address (optional)" aria-label="Email">
+
 
 			   </div>
 			    
@@ -214,8 +229,18 @@ WHERE Country_status='Active'");
 
                 <div class="mt-4">
                     <button type="submit" name ="Update" class="px-4 py-1 text-white font-light tracking-wider bg-green-500 rounded" type="submit">Update User Details</button>
+                    <button type="submit" name="HardDelete"
+                            onclick="return confirm('This will permanently DELETE this user from the database. This cannot be undone. Continue?');"
+                            class="px-4 py-1 text-white font-light tracking-wider bg-red-700 rounded ml-2">
+                        Delete Forever
+                    </button>
                 </div>
-                
+                <?php if (!empty($delete_error)): ?>
+                <div class="mt-3 bg-red-300 border border-red-300 text-red-800 px-4 py-3 rounded">
+                    <?= htmlspecialchars($delete_error, ENT_QUOTES, 'UTF-8') ?>
+                </div>
+                <?php endif; ?>
+
             </form>
         </div>
     </div>
