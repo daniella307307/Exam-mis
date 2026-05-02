@@ -3,6 +3,7 @@
  * EXAM-MIS DASHBOARD TESTING SCRIPT
  * Simple script to test all dashboards after login
  */
+require_once __DIR__ . '/app_config.php';
 
 session_start();
 
@@ -32,7 +33,7 @@ if (!isset($_SESSION['user_id'])) {
             </div>
             <p><strong>Steps:</strong></p>
             <ol>
-                <li>Go to <a href='http://localhost/Exam-mis/Auth/SF/' target='_blank'>LMS Login</a></li>
+                <li>Go to <a href='http://localhost<?= APP_BASE_URL ?>/Auth/SF/' target='_blank'>LMS Login</a></li>
                 <li>Login with your credentials</li>
                 <li>After login, come back to access dashboards</li>
             </ol>

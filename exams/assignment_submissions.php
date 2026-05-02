@@ -41,7 +41,7 @@ if (!$exam_id) {
     .badge{background:#ede9fe;color:#7c3aed;font-size:12px;font-weight:700;padding:4px 10px;border-radius:99px}
     .empty{text-align:center;padding:60px 20px;color:#94a3b8}
     </style>
-        <link rel="stylesheet" href="/Exam-mis/exams/assets/exam-theme.css">
+        <link rel="stylesheet" href="<?= APP_BASE_URL ?>/exams/assets/exam-theme.css">
 </head>
     <body class="exam-dark">
     <div class="container">
@@ -179,7 +179,7 @@ body{font-family:'Segoe UI',sans-serif;background:#f8fafc;color:#1e293b;padding:
     .stats-row .stat{flex:1 1 calc(50% - 6px)}
 }
 </style>
-    <link rel="stylesheet" href="/Exam-mis/exams/assets/exam-theme.css">
+    <link rel="stylesheet" href="<?= APP_BASE_URL ?>/exams/assets/exam-theme.css">
 </head>
 <body class="exam-dark">
 <div class="container">

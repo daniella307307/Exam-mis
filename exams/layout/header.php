@@ -2,8 +2,9 @@
 // layout/header.php - Common navigation for all pages
 // Detects current page and user role from session/URL
 
+require_once __DIR__ . '/../../app_config.php';
 $current_page = basename($_SERVER['PHP_SELF']);
-$base_url = '/Exam-mis/exams';
+$base_url = APP_BASE_URL . '/exams';
 
 // Detect user role from session or URL parameter
 $user_role = $_SESSION['user_role'] ?? $_GET['role'] ?? 'student';
@@ -26,7 +27,7 @@ $color = $colors[$user_role];
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Exam Management System</title>
-    <link rel="stylesheet" href="/Exam-mis/exams/assets/exam-theme.css">
+    <link rel="stylesheet" href="<?= APP_BASE_URL ?>/exams/assets/exam-theme.css">
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }

@@ -16,7 +16,7 @@ require_once __DIR__ . '/../Auth/auth_helpers.php';
 
 // ---- Auth gate -------------------------------------------------------------
 if (empty($_SESSION['user_id'])) {
-    header('Location: /Exam-mis/Administrator_login.php');
+    header('Location: ' . APP_BASE_URL . '/Administrator_login.php');
     exit;
 }
 $current_user_id = (int)$_SESSION['user_id'];
@@ -172,7 +172,7 @@ $default_dt = date('Y-m-d\TH:i', strtotime('+30 minutes'));
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Live Online Classes | BLIS LMS</title>
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.13/css/all.css">
-<link rel="stylesheet" href="/Exam-mis/exams/assets/exam-theme.css">
+<link rel="stylesheet" href="<?= APP_BASE_URL ?>/exams/assets/exam-theme.css">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Nunito','Segoe UI',sans-serif;padding:24px;color:#f1f5f9}
@@ -256,7 +256,7 @@ textarea{min-height:78px;resize:vertical}
 </head>
 <body class="exam-dark">
 <div class="wrap">
-    <a href="/Exam-mis/Auth/SF/index.php" class="back">← Back to LMS Home</a>
+    <a href="<?= APP_BASE_URL ?>/Auth/SF/index.php" class="back">← Back to LMS Home</a>
     <h1 class="page-title">🎥 Live Online Classes</h1>
     <p class="subtitle">Schedule a meet, or join one already in progress.</p>
 

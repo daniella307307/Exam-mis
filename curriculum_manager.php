@@ -496,7 +496,7 @@ $topics = $topicsResult ? $topicsResult->fetch_all(MYSQLI_ASSOC) : [];
                     
                     <div class="form-group form-full">
                         <label>Document/File URL</label>
-                        <input type="url" name="document_url" placeholder="/Exam-mis/uploads/curriculum/lesson.pdf">
+                        <input type="url" name="document_url" placeholder="<?= APP_BASE_URL ?>/uploads/curriculum/lesson.pdf">
                     </div>
                 </div>
                 

@@ -60,7 +60,7 @@ $exam_status = $exam['status'];
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Exam Details</title>
 <link rel="stylesheet" href="../dist/styles.css">
-    <link rel="stylesheet" href="/Exam-mis/exams/assets/exam-theme.css">
+    <link rel="stylesheet" href="<?= APP_BASE_URL ?>/exams/assets/exam-theme.css">
 </head>
 
 <body class="bg-gray-100 min-h-screen exam-dark">

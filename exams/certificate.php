@@ -36,7 +36,7 @@ if (!$cert) {
     <html lang="en"><head><meta charset="UTF-8"><title>Certificate Not Found</title>
     <style>body{font-family:sans-serif;text-align:center;padding:60px;background:#f1f5f9;color:#334155}
     .box{background:white;border-radius:12px;padding:40px;display:inline-block;box-shadow:0 4px 20px rgba(0,0,0,.1)}
-    a{color:#7c3aed;font-weight:700}</style>    <link rel="stylesheet" href="/Exam-mis/exams/assets/exam-theme.css">
+    a{color:#7c3aed;font-weight:700}</style>    <link rel="stylesheet" href="<?= APP_BASE_URL ?>/exams/assets/exam-theme.css">
 </head>
     <body class="exam-dark"><div class="box">
     <h2>Certificate Not Found</h2>
@@ -241,7 +241,7 @@ body{background:#1e1b4b;display:flex;flex-direction:column;align-items:center;ju
     .cert-inner{outline:4px solid #a855f7;padding:36px 48px}
 }
 </style>
-    <link rel="stylesheet" href="/Exam-mis/exams/assets/exam-theme.css">
+    <link rel="stylesheet" href="<?= APP_BASE_URL ?>/exams/assets/exam-theme.css">
 </head>
 <body class="exam-dark">
     <?php $back_to = 'results.php'; $back_label = 'Results'; include('nav_back.php'); ?>

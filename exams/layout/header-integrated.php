@@ -1,6 +1,7 @@
 <?php
 // Integrated Header - Works with existing BLIS LMS session
 // This header bridges the new dashboard system with the existing LMS
+require_once __DIR__ . '/../../app_config.php';
 
 // Check if session is already started (from LMS)
 if (session_status() === PHP_SESSION_NONE) {
@@ -352,7 +353,7 @@ $current_path = basename(dirname($_SERVER['PHP_SELF']));
             }
         }
     </style>
-    <link rel="stylesheet" href="/Exam-mis/exams/assets/exam-theme.css">
+    <link rel="stylesheet" href="<?= APP_BASE_URL ?>/exams/assets/exam-theme.css">
 </head>
 <body class="exam-dark">
 

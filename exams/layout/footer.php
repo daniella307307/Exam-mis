@@ -1,5 +1,6 @@
 <?php
 // layout/footer.php - Common footer for all pages
+require_once __DIR__ . '/../../app_config.php';
 ?>
 </div> <!-- Close main-content -->
 
@@ -14,9 +15,9 @@
             <div class="footer-section">
                 <h4>Quick Links</h4>
                 <ul>
-                    <li><a href="/Exam-mis/exams/home.php">Home</a></li>
-                    <li><a href="/Exam-mis/exams/join_exam.php">Take Exam</a></li>
-                    <li><a href="/Exam-mis/exams/exam_creator_working.php">Create Exam</a></li>
+                    <li><a href="<?= APP_BASE_URL ?>/exams/home.php">Home</a></li>
+                    <li><a href="<?= APP_BASE_URL ?>/exams/join_exam.php">Take Exam</a></li>
+                    <li><a href="<?= APP_BASE_URL ?>/exams/exam_creator_working.php">Create Exam</a></li>
                 </ul>
             </div>
             <div class="footer-section">
@@ -136,7 +137,7 @@
         const breadcrumb = document.getElementById('breadcrumb');
         if (!breadcrumb) return;
 
-        let html = '<a href="/Exam-mis/exams/home.php">🏠 Home</a>';
+        let html = '<a href="<?= APP_BASE_URL ?>/exams/home.php">🏠 Home</a>';
         items.forEach((item, index) => {
             html += ' <span>/</span> ';
             if (index === items.length - 1) {

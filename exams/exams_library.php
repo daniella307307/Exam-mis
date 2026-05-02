@@ -27,7 +27,7 @@ $exam_status = htmlspecialchars($exam['status'], ENT_QUOTES, 'UTF-8');
 <title>Exam Details</title>
 <link rel="stylesheet" href="../dist/styles.css">
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.13/css/all.css" integrity="sha384-DNOHZ68U8hZfKXOrtjWvjxusGo9WQnrNx2sqG0tfsghAvtVlRW3tvkXWZh58N9jp" crossorigin="anonymous">
-    <link rel="stylesheet" href="/Exam-mis/exams/assets/exam-theme.css">
+    <link rel="stylesheet" href="<?= APP_BASE_URL ?>/exams/assets/exam-theme.css">
 </head>
 
 <body class="bg-gray-100 min-h-screen exam-dark">

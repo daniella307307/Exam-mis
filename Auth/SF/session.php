@@ -18,10 +18,7 @@ $this_year = DATE("Y");
 $IDLE_LIMIT_SECONDS = 30 * 60; // 30 minutes
 
 function session_redirect_login(string $reason = ''): void {
-    // Pick a path that works whether we're in /Auth/SF, /exams, or root.
-    $depth = substr_count($_SERVER['SCRIPT_NAME'] ?? '', '/');
-    // /Exam-mis/Auth/SF/foo.php has 4 slashes; /Exam-mis/foo.php has 2.
-    $base = '/Exam-mis/';
+    $base = APP_BASE_URL . '/';
     $url  = $base . 'Administrator_login.php' . ($reason ? '?reason=' . urlencode($reason) : '');
     if (!headers_sent()) {
         header('Location: ' . $url);

@@ -378,7 +378,7 @@ include('layout/header.php');
     // Fetch and display statistics
     async function loadStats() {
         try {
-            const response = await fetch('/Exam-mis/exams/api/get_stats.php');
+            const response = await fetch('<?= APP_BASE_URL ?>/exams/api/get_stats.php');
             const data = await response.json();
             
             if (data.success) {

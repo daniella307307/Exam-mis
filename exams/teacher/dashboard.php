@@ -305,7 +305,7 @@ if (!empty($status_filter) || !empty($grade_filter) || !empty($stream_filter)) {
     ]);
 </script>
 
-<a href="/Exam-mis/Auth/SF/index.php"
+<a href="<?= APP_BASE_URL ?>/Auth/SF/index.php"
    style="display:inline-flex;align-items:center;gap:8px;margin-bottom:14px;padding:10px 18px;background:rgba(255,255,255,.08);color:#fff;font-weight:700;font-size:13px;border-radius:8px;text-decoration:none;border:1px solid rgba(168,85,247,.3)">
     ← Back to LMS Home
 </a>

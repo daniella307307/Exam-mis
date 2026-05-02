@@ -297,7 +297,7 @@ textarea{
   color:#f1f5f9;
 }
 </style>
-    <link rel="stylesheet" href="/Exam-mis/exams/assets/exam-theme.css">
+    <link rel="stylesheet" href="<?= APP_BASE_URL ?>/exams/assets/exam-theme.css">
 </head>
 <body class="exam-dark">
 <div class="icons">

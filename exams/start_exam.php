@@ -309,7 +309,7 @@ function loadQuestion() {
                 </a>
             </div>
             <iframe 
-               src="/Exam-mis/pdfjs/web/viewer.html?file=${encodeURIComponent('/Exam-mis/exams/exam_pdf_proxy.php?url=' + encodeURIComponent(pdfUrl))}"
+               src="<?= APP_BASE_URL ?>/pdfjs/web/viewer.html?file=${encodeURIComponent('<?= APP_BASE_URL ?>/exams/exam_pdf_proxy.php?url=' + encodeURIComponent(pdfUrl))}"
                style="width:100%; height:500px; border:2px solid #e2e8f0; border-radius:8px;"
                allowfullscreen>
             </iframe>

@@ -105,7 +105,7 @@ foreach ($practical_questions as $q) {
     .pending-pill { display:inline-block; padding:3px 10px; border-radius:99px; background:rgba(250,204,21,.18); color:#fde68a; font-size:11px; font-weight:800; letter-spacing:1px; text-transform:uppercase; border:1px solid rgba(250,204,21,.4); }
     .graded-pill { display:inline-block; padding:3px 10px; border-radius:99px; background:rgba(34,197,94,.18); color:#86efac; font-size:11px; font-weight:800; letter-spacing:1px; text-transform:uppercase; border:1px solid rgba(34,197,94,.4); }
 </style>
-    <link rel="stylesheet" href="/Exam-mis/exams/assets/exam-theme.css">
+    <link rel="stylesheet" href="<?= APP_BASE_URL ?>/exams/assets/exam-theme.css">
 </head>
 <body class="bg-gray-100 min-h-screen exam-dark">
 <?php include('../Auth/SF/header.php'); ?>

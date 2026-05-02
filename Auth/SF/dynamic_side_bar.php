@@ -1,10 +1,11 @@
+<?php require_once __DIR__ . '/../../app_config.php'; ?>
 <aside id="sidebar" class="bg-side-nav w-1/2 md:w-1/6 lg:w-1/6 border-r border-side-nav hidden md:block lg:block">
                 <div class="flex">
 
                 </div>
                 <ul class="list-reset flex flex-col">
                     <li class="w-full h-full py-3 px-2 border-b border-light-border">
-                        <a href="/Exam-mis/exams/live_classes.php"
+                        <a href="<?= APP_BASE_URL ?>/exams/live_classes.php"
                            class="font-sans font-hairline hover:font-normal text-sm text-nav-item no-underline">
                             <i class="fas fa-video float-left mx-2"></i>
                             &nbsp;&nbsp; Join Online Class

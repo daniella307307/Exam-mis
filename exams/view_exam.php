@@ -87,7 +87,7 @@ if (count($questions) > 0) {
     .btn-back { background:#667eea; color:white; }
     .btn-back:hover { background:#764ba2; }
 </style>
-    <link rel="stylesheet" href="/Exam-mis/exams/assets/exam-theme.css">
+    <link rel="stylesheet" href="<?= APP_BASE_URL ?>/exams/assets/exam-theme.css">
 </head>
 <body class="exam-dark">
     <?php include('../Auth/SF/header.php'); ?>
@@ -149,7 +149,7 @@ if (count($questions) > 0) {
                                 <!-- PDF VIEWER EMBED -->
                                 <div style="border:1px solid #ddd; border-radius:6px; overflow:hidden; background:white;">
                                     <iframe 
-                                      src="/Exam-mis/pdfjs/web/viewer.html?file=<?= urlencode($pdf_url) ?>"
+                                      src="<?= APP_BASE_URL ?>/pdfjs/web/viewer.html?file=<?= urlencode($pdf_url) ?>"
                                       style="width:100%; height:600px; border:none;"
                                       allowfullscreen>
                                     </iframe>   

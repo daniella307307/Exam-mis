@@ -60,7 +60,7 @@ function addOptionField() {
     container.appendChild(div);
 }
 </script>
-    <link rel="stylesheet" href="/Exam-mis/exams/assets/exam-theme.css">
+    <link rel="stylesheet" href="<?= APP_BASE_URL ?>/exams/assets/exam-theme.css">
 </head>
 <body class="bg-gray-100 min-h-screen p-6 exam-dark">
 <div class="max-w-2xl mx-auto bg-white p-6 rounded shadow-md">

@@ -2,6 +2,7 @@
 /**
  * PERSISTENT DATABASE CONNECTION WRAPPER
  */
+require_once __DIR__ . '/app_config.php';
 
 static $globalConnection = null;
 

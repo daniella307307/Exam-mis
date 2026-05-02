@@ -1,4 +1,6 @@
 <?php
+require_once __DIR__ . '/app_config.php';
+
 // Auto-detect environment
 $is_local = in_array($_SERVER['SERVER_NAME'] ?? '', ['localhost', '127.0.0.1']);
 
