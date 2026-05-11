@@ -12,3 +12,7 @@ $smtpUser     = 'noreply@blisglobal.gloryacademy.rw';
 $smtpPass     = 'ah_YZJ+W5bcd';
 $smtpPort     = 465;
 $mailFromName = 'BLIS LMS';
+
+// Where to send admin notifications (e.g. new-registration alerts).
+// Comma-separated to notify multiple admins.
+$adminNotifyEmail = 'ramadhanishafiiwanjenja@gmail.com';

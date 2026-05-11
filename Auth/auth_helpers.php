@@ -118,4 +118,30 @@ if (!function_exists('auth_hash_password')) {
     {
         return rtrim(strtr(base64_encode(random_bytes($bytes)), '+/', '-_'), '=');
     }
+
+    /**
+     * Enforce a minimum password strength: 8+ chars, mix of upper, lower,
+     * and at least one digit. Returns null if the password is acceptable,
+     * or a user-facing error string explaining what's missing.
+     *
+     * Symbols are encouraged via the HTML hint but not required, because
+     * teachers tend to forget them and we'd rather lock down the real
+     * weakness (single-word lowercase passwords) than block adoption.
+     */
+    function auth_password_validate(string $pw): ?string
+    {
+        if (strlen($pw) < 8) {
+            return 'Password must be at least 8 characters long.';
+        }
+        if (!preg_match('/[A-Z]/', $pw)) {
+            return 'Password must include at least one UPPERCASE letter.';
+        }
+        if (!preg_match('/[a-z]/', $pw)) {
+            return 'Password must include at least one lowercase letter.';
+        }
+        if (!preg_match('/[0-9]/', $pw)) {
+            return 'Password must include at least one digit.';
+        }
+        return null;
+    }
 }

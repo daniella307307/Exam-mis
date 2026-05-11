@@ -151,7 +151,13 @@ $csrf = auth_csrf_token();
         </div>
         <div class="mt-2">
           <label class="block text-sm text-gray-600" for="password">Password</label>
-          <input class="w-full px-5 py-1 text-gray-700 bg-gray-200 rounded" id="password" name="password" type="password" required placeholder="*******" autocomplete="current-password">
+          <div class="relative">
+            <input class="w-full px-5 py-1 pr-10 text-gray-700 bg-gray-200 rounded" id="password" name="password" type="password" required placeholder="*******" autocomplete="current-password">
+            <button type="button" data-toggle-password="password" aria-label="Show password"
+                    class="absolute inset-y-0 right-0 px-3 flex items-center text-gray-600 hover:text-gray-900 focus:outline-none">
+              <i class="fas fa-eye" aria-hidden="true"></i>
+            </button>
+          </div>
         </div>
         <div class="mt-4 items-center justify-between">
           <button class="px-12 py-1 text-white font-light tracking-wider bg-gray-900 rounded" type="submit">Login</button>
@@ -164,5 +170,23 @@ $csrf = auth_csrf_token();
     </div>
   </div>
 </div>
+<script>
+  document.querySelectorAll('[data-toggle-password]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var input = document.getElementById(btn.getAttribute('data-toggle-password'));
+      if (!input) return;
+      var icon = btn.querySelector('i');
+      if (input.type === 'password') {
+        input.type = 'text';
+        btn.setAttribute('aria-label', 'Hide password');
+        if (icon) { icon.classList.remove('fa-eye'); icon.classList.add('fa-eye-slash'); }
+      } else {
+        input.type = 'password';
+        btn.setAttribute('aria-label', 'Show password');
+        if (icon) { icon.classList.remove('fa-eye-slash'); icon.classList.add('fa-eye'); }
+      }
+    });
+  });
+</script>
 </body>
 </html>

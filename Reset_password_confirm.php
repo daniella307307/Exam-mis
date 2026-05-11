@@ -61,8 +61,8 @@ if ($token_valid && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['set_p
         $new1 = (string)($_POST['new_password'] ?? '');
         $new2 = (string)($_POST['new_password_confirm'] ?? '');
 
-        if (strlen($new1) < 8) {
-            $flash = ['type' => 'error', 'msg' => 'Password must be at least 8 characters.'];
+        if (($pwErr = auth_password_validate($new1)) !== null) {
+            $flash = ['type' => 'error', 'msg' => $pwErr];
         } elseif ($new1 !== $new2) {
             $flash = ['type' => 'error', 'msg' => 'Passwords do not match.'];
         } else {
@@ -148,12 +148,27 @@ $csrf = auth_csrf_token();
 
         <?php if ($token_valid): ?>
           <div>
-            <label class="block text-sm text-gray-600" for="new_password">New password (min 8 chars)</label>
-            <input class="w-full px-5 py-1 text-gray-700 bg-gray-200 rounded" id="new_password" name="new_password" type="password" minlength="8" required autocomplete="new-password">
+            <label class="block text-sm text-gray-600" for="new_password">New password</label>
+            <div class="relative">
+              <input class="w-full px-5 py-1 pr-10 text-gray-700 bg-gray-200 rounded" id="new_password" name="new_password" type="password" minlength="8" required autocomplete="new-password"
+                     pattern="(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}"
+                     title="At least 8 characters, with one UPPERCASE, one lowercase, and one digit.">
+              <button type="button" data-toggle-password="new_password" aria-label="Show password"
+                      class="absolute inset-y-0 right-0 px-3 flex items-center text-gray-600 hover:text-gray-900 focus:outline-none">
+                <i class="fas fa-eye" aria-hidden="true"></i>
+              </button>
+            </div>
+            <p class="text-xs text-gray-500 mt-1">At least 8 characters, with one UPPERCASE, one lowercase, and one digit.</p>
           </div>
           <div class="mt-2">
             <label class="block text-sm text-gray-600" for="new_password_confirm">Confirm new password</label>
-            <input class="w-full px-5 py-1 text-gray-700 bg-gray-200 rounded" id="new_password_confirm" name="new_password_confirm" type="password" minlength="8" required autocomplete="new-password">
+            <div class="relative">
+              <input class="w-full px-5 py-1 pr-10 text-gray-700 bg-gray-200 rounded" id="new_password_confirm" name="new_password_confirm" type="password" minlength="8" required autocomplete="new-password">
+              <button type="button" data-toggle-password="new_password_confirm" aria-label="Show password"
+                      class="absolute inset-y-0 right-0 px-3 flex items-center text-gray-600 hover:text-gray-900 focus:outline-none">
+                <i class="fas fa-eye" aria-hidden="true"></i>
+              </button>
+            </div>
           </div>
           <div class="mt-6 text-center">
             <button class="px-12 py-2 text-white font-light tracking-wider bg-gray-900 rounded" name="set_password" type="submit">Update password</button>
@@ -169,5 +184,23 @@ $csrf = auth_csrf_token();
     </div>
   </div>
 </div>
+<script>
+  document.querySelectorAll('[data-toggle-password]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var input = document.getElementById(btn.getAttribute('data-toggle-password'));
+      if (!input) return;
+      var icon = btn.querySelector('i');
+      if (input.type === 'password') {
+        input.type = 'text';
+        btn.setAttribute('aria-label', 'Hide password');
+        if (icon) { icon.classList.remove('fa-eye'); icon.classList.add('fa-eye-slash'); }
+      } else {
+        input.type = 'password';
+        btn.setAttribute('aria-label', 'Show password');
+        if (icon) { icon.classList.remove('fa-eye-slash'); icon.classList.add('fa-eye'); }
+      }
+    });
+  });
+</script>
 </body>
 </html>

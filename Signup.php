@@ -41,8 +41,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
             $flash = ['type' => 'error', 'msg' => 'Phone number is required.'];
         } elseif ($values['school_ref'] === '' || !ctype_digit($values['school_ref'])) {
             $flash = ['type' => 'error', 'msg' => 'Please choose your school.'];
-        } elseif (strlen($password) < 8) {
-            $flash = ['type' => 'error', 'msg' => 'Password must be at least 8 characters.'];
+        } elseif (($pwErr = auth_password_validate($password)) !== null) {
+            $flash = ['type' => 'error', 'msg' => $pwErr];
         } elseif ($password !== $password_confirm) {
             $flash = ['type' => 'error', 'msg' => 'Passwords do not match.'];
         } else {
@@ -155,6 +155,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
                         $body .= "If you did not create this account, please ignore this email.\n";
                         send_mail($values['email_address'], $subject, $body, false);
 
+                        // Notify admin(s). Pulls $adminNotifyEmail from
+                        // mail_config.php; supports comma-separated list.
+                        $cfg = [];
+                        @include __DIR__ . '/mail_config.php';
+                        if (!empty($adminNotifyEmail)) {
+                            $school_label = '';
+                            try {
+                                $sname = $conn->prepare("SELECT school_name FROM schools WHERE school_id = ? LIMIT 1");
+                                $sname->bind_param('i', $sid);
+                                $sname->execute();
+                                $rowSch = $sname->get_result()->fetch_assoc();
+                                $sname->close();
+                                $school_label = $rowSch['school_name'] ?? ('school_id ' . $sid);
+                            } catch (Throwable $e) { $school_label = 'school_id ' . $sid; }
+
+                            $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+                            $host   = (string)($_SERVER['HTTP_HOST'] ?? 'localhost');
+                            $approveUrl = $scheme . '://' . $host . APP_BASE_URL . '/Auth/Developer/Users.php';
+
+                            $adminSubject = 'BLIS LMS — new registration pending: ' . $values['firstname'] . ' ' . $values['lastname'];
+                            $adminBody  = "A new account is awaiting your approval.\n\n";
+                            $adminBody .= "Name:    " . $values['firstname'] . ' ' . $values['lastname'] . "\n";
+                            $adminBody .= "Email:   " . $values['email_address'] . "\n";
+                            $adminBody .= "Phone:   " . $values['phone_number'] . "\n";
+                            $adminBody .= "School:  " . $school_label . "\n";
+                            $adminBody .= "Status:  Pending\n\n";
+                            $adminBody .= "Approve at: " . $approveUrl . "\n";
+
+                            foreach (preg_split('/[,;]\s*/', $adminNotifyEmail) as $admin) {
+                                $admin = trim($admin);
+                                if ($admin !== '') {
+                                    send_mail($admin, $adminSubject, $adminBody, false);
+                                }
+                            }
+                        }
+
                         $flash = [
                             'type' => 'success',
                             'msg'  => 'Account created. It is pending administrator approval — you will receive an email once it is active.',
@@ -266,12 +302,27 @@ $registered = ($flash !== null && $flash['type'] === 'success');
           <?php endif; ?>
         </div>
         <div class="mt-2">
-          <label class="block text-sm text-gray-600" for="password">Password (min 8 characters)</label>
-          <input class="w-full px-5 py-1 text-gray-700 bg-gray-200 rounded" id="password" name="password" type="password" required minlength="8" autocomplete="new-password">
+          <label class="block text-sm text-gray-600" for="password">Password</label>
+          <div class="relative">
+            <input class="w-full px-5 py-1 pr-10 text-gray-700 bg-gray-200 rounded" id="password" name="password" type="password" required minlength="8" autocomplete="new-password"
+                   pattern="(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}"
+                   title="At least 8 characters, with one UPPERCASE, one lowercase, and one digit.">
+            <button type="button" data-toggle-password="password" aria-label="Show password"
+                    class="absolute inset-y-0 right-0 px-3 flex items-center text-gray-600 hover:text-gray-900 focus:outline-none">
+              <i class="fas fa-eye" aria-hidden="true"></i>
+            </button>
+          </div>
+          <p class="text-xs text-gray-500 mt-1">Must be at least 8 characters with an UPPERCASE letter, a lowercase letter, and a digit.</p>
         </div>
         <div class="mt-2">
           <label class="block text-sm text-gray-600" for="password_confirm">Confirm password</label>
-          <input class="w-full px-5 py-1 text-gray-700 bg-gray-200 rounded" id="password_confirm" name="password_confirm" type="password" required minlength="8" autocomplete="new-password">
+          <div class="relative">
+            <input class="w-full px-5 py-1 pr-10 text-gray-700 bg-gray-200 rounded" id="password_confirm" name="password_confirm" type="password" required minlength="8" autocomplete="new-password">
+            <button type="button" data-toggle-password="password_confirm" aria-label="Show password"
+                    class="absolute inset-y-0 right-0 px-3 flex items-center text-gray-600 hover:text-gray-900 focus:outline-none">
+              <i class="fas fa-eye" aria-hidden="true"></i>
+            </button>
+          </div>
         </div>
 
         <div class="mt-4 items-center justify-between">
@@ -282,5 +333,23 @@ $registered = ($flash !== null && $flash['type'] === 'success');
     </div>
   </div>
 </div>
+<script>
+  document.querySelectorAll('[data-toggle-password]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var input = document.getElementById(btn.getAttribute('data-toggle-password'));
+      if (!input) return;
+      var icon = btn.querySelector('i');
+      if (input.type === 'password') {
+        input.type = 'text';
+        btn.setAttribute('aria-label', 'Hide password');
+        if (icon) { icon.classList.remove('fa-eye'); icon.classList.add('fa-eye-slash'); }
+      } else {
+        input.type = 'password';
+        btn.setAttribute('aria-label', 'Show password');
+        if (icon) { icon.classList.remove('fa-eye-slash'); icon.classList.add('fa-eye'); }
+      }
+    });
+  });
+</script>
 </body>
 </html>
