@@ -102,29 +102,39 @@ $distinct_streams = $streams_stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 <link rel="stylesheet" href="../dist/styles.css">
     <link rel="stylesheet" href="<?= APP_BASE_URL ?>/exams/assets/exam-theme.css">
     <style>
-        /* Light-theme rescue for cards rendered on the dark exam-theme page.
-           exam-theme.css forces white text on td/h2/h3/h4 — that makes player names
-           invisible inside the white leaderboard card. Scope overrides here. */
-        .exam-light-card { background:#ffffff !important; color:#1f2937 !important; }
-        .exam-light-card h1, .exam-light-card h2, .exam-light-card h3, .exam-light-card h4 {
-            color:#1f2937 !important; -webkit-text-fill-color:#1f2937 !important; background:none !important;
+        /* Match the dark glass exam-theme used everywhere else.
+           Overrides Tailwind `bg-white` and gray text classes so cards blend with the
+           dark page background instead of fighting it. */
+        .exam-glass {
+            background: rgba(255,255,255,.05) !important;
+            border: 1px solid rgba(168,85,247,.3) !important;
+            backdrop-filter: blur(20px) !important;
+            -webkit-backdrop-filter: blur(20px) !important;
+            color: #f1f5f9 !important;
+            box-shadow: 0 8px 24px rgba(0,0,0,.25) !important;
         }
-        .exam-light-card table { background:#ffffff !important; border:none !important; backdrop-filter:none !important; }
-        .exam-light-card thead th {
-            background:#f9fafb !important; color:#6b7280 !important;
-            font-weight:600 !important; letter-spacing:.05em;
-            border-bottom:1px solid #e5e7eb !important;
-            text-transform:uppercase;
+        .exam-glass .text-gray-500 { color: #cbd5e1 !important; }
+        .exam-glass .text-gray-800 { color: #ffffff !important; }
+        .exam-glass .text-blue-600 { color: #93c5fd !important; }
+        .exam-glass table {
+            background: transparent !important;
+            backdrop-filter: none !important;
+            border: none !important;
         }
-        .exam-light-card td {
-            color:#1f2937 !important;
-            border-bottom:1px solid #f3f4f6 !important;
-            padding:12px 24px !important;
+        .exam-glass thead th {
+            background: rgba(124,58,237,.18) !important;
+            color: #cbd5e1 !important;
+            text-transform: uppercase;
+            letter-spacing: .5px;
+            font-weight: 700 !important;
+            border-bottom: 1px solid rgba(168,85,247,.3) !important;
         }
-        .exam-light-card tbody tr:hover { background:#f9fafb !important; }
-        .exam-light-card .text-gray-500 { color:#6b7280 !important; }
-        .exam-light-card .text-blue-600 { color:#2563eb !important; }
-        .exam-light-card .text-gray-800 { color:#1f2937 !important; }
+        .exam-glass td {
+            color: #f1f5f9 !important;
+            border-bottom: 1px solid rgba(255,255,255,.06) !important;
+            padding: 12px 24px !important;
+        }
+        .exam-glass tbody tr:hover { background: rgba(168,85,247,.08) !important; }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen exam-dark">
@@ -180,19 +190,19 @@ $distinct_streams = $streams_stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 
         <!-- Info Cards -->
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-            <div class="bg-white p-4 rounded-xl border">
+            <div class="bg-white p-4 rounded-xl border exam-glass">
                 <p class="text-xs text-gray-500 mb-1">Exam title</p>
                 <p class="font-semibold text-gray-800"><?= $exam_title ?></p>
             </div>
-            <div class="bg-white p-4 rounded-xl border">
+            <div class="bg-white p-4 rounded-xl border exam-glass">
                 <p class="text-xs text-gray-500 mb-1">Topic</p>
                 <p class="font-semibold text-gray-800"><?= $exam_topic ?></p>
             </div>
-            <div class="bg-white p-4 rounded-xl border">
+            <div class="bg-white p-4 rounded-xl border exam-glass">
                 <p class="text-xs text-gray-500 mb-1">Grade</p>
                 <p class="font-semibold text-gray-800"><?= $exam_grade ?></p>
             </div>
-            <div class="bg-white p-4 rounded-xl border">
+            <div class="bg-white p-4 rounded-xl border exam-glass">
                 <p class="text-xs text-gray-500 mb-1">Total marks</p>
                 <p class="font-semibold text-blue-600"><?= $total_marks ?></p>
             </div>
@@ -291,10 +301,10 @@ $distinct_streams = $streams_stmt->get_result()->fetch_all(MYSQLI_ASSOC);
         </form>
 
         <!-- Leaderboard Table -->
-        <div class="bg-white rounded-xl border exam-light-card">
+        <div class="bg-white rounded-xl border exam-glass">
             <div class="flex justify-between items-center px-6 py-4 border-b">
-                <h2 class="font-semibold" style="color:#1f2937">Leaderboard &amp; reports</h2>
-                <span class="text-sm" style="color:#6b7280"><?= count($all_players) ?> player(s)</span>
+                <h2 class="font-semibold" style="color:#ffffff">Leaderboard &amp; reports</h2>
+                <span class="text-sm" style="color:#cbd5e1"><?= count($all_players) ?> player(s)</span>
             </div>
 
             <?php if (count($all_players) > 0): ?>

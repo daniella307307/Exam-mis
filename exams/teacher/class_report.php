@@ -18,10 +18,13 @@ if (!$exam_id) {
     ?>
     <style>
         .exam-selector {
-            background: white;
+            background: rgba(255,255,255,.05);
+            border: 1px solid rgba(168,85,247,.3);
             border-radius: 12px;
             padding: 40px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            box-shadow: 0 8px 24px rgba(0,0,0,.25);
         }
 
         .exam-selector h2 {
@@ -136,11 +139,14 @@ if (!empty($grade_filter)) {
 
 <style>
     .report-header {
-        background: white;
+        background: rgba(255,255,255,.05);
+        border: 1px solid rgba(168,85,247,.3);
         border-radius: 12px;
         padding: 30px;
         margin-bottom: 30px;
-        box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        box-shadow: 0 8px 24px rgba(0,0,0,.25);
     }
 
     .report-title {
@@ -199,10 +205,13 @@ if (!empty($grade_filter)) {
     }
 
     .results-table {
-        background: white;
+        background: rgba(255,255,255,.05);
+        border: 1px solid rgba(168,85,247,.3);
         border-radius: 12px;
         overflow: hidden;
-        box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        box-shadow: 0 8px 24px rgba(0,0,0,.25);
     }
 
     table {
@@ -295,14 +304,20 @@ if (!empty($grade_filter)) {
     }
 
     @media print {
-        nav, .main-footer, .export-btn {
-            display: none;
-        }
+        nav, .main-footer, .export-btn { display: none; }
 
-        .report-header {
-            box-shadow: none;
-            border: 1px solid #ddd;
+        body { background: #ffffff !important; color: #1f2937 !important; }
+        .report-header, .results-table {
+            background: #ffffff !important;
+            border: 1px solid #ddd !important;
+            box-shadow: none !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
         }
+        .report-title, .info-value, .student-name, td { color: #1f2937 !important; }
+        .info-label { color: #6b7280 !important; }
+        thead { background: #f3f4f6 !important; color: #1f2937 !important; }
+        th { color: #1f2937 !important; }
     }
 </style>
 

@@ -455,65 +455,86 @@ if ($editing_exam_id) {
     </style>
     <link rel="stylesheet" href="<?= APP_BASE_URL ?>/exams/assets/exam-theme.css">
     <style>
-        /* Rescue popup dialogs (e.g. AI generation modal) from exam-theme.css overrides.
-           Without this, headings/labels go white on the white modal background — invisible. */
+        /* AI generation modal — match the dark glass exam-theme used everywhere else.
+           Overrides the inline `background:white` on the modal card so the dialog
+           doesn't fight the dark page underneath. */
+        #customDialog > div > div {
+            background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%) !important;
+            border: 1px solid rgba(168,85,247,.4) !important;
+            color: #f1f5f9 !important;
+            box-shadow: 0 25px 80px rgba(0,0,0,.5) !important;
+        }
         #customDialog h1, #customDialog h2, #customDialog h3,
         #customDialog h4, #customDialog h5 {
-            color:#1f2937 !important;
-            -webkit-text-fill-color:#1f2937 !important;
-            background:none !important;
-            font-weight:700 !important;
-            margin-bottom:8px !important;
+            color: #ffffff !important;
+            -webkit-text-fill-color: #ffffff !important;
+            background: none !important;
+            font-weight: 800 !important;
+            margin-bottom: 8px !important;
         }
+        /* "Exam Context:" sub-heading — was washed-out #667eea on #f0f4f8 (low contrast).
+           Brighten it for a dark glass info box. */
         #customDialog h4[style*="667eea"] {
-            color:#667eea !important;
-            -webkit-text-fill-color:#667eea !important;
+            color: #c4b5fd !important;
+            -webkit-text-fill-color: #c4b5fd !important;
         }
-        #customDialog label {
-            color:#374151 !important;
-            font-weight:600 !important;
+        #customDialog label { color: #cbd5e1 !important; font-weight: 700 !important; }
+        #customDialog p { color: #e2e8f0 !important; }
+        #customDialog p[style*="#666"] { color: #94a3b8 !important; }
+
+        /* Exam Context info card inside modal (inline bg #f0f4f8 -> dark accent) */
+        #customDialog div[style*="f0f4f8"] {
+            background: rgba(124,58,237,.18) !important;
+            border-left-color: #a855f7 !important;
+            border-radius: 8px !important;
         }
-        #customDialog p { color:inherit; }
-        #customDialog input[type=number],
-        #customDialog input[type=text],
-        #customDialog input[type=email],
-        #customDialog input[type=password],
-        #customDialog textarea,
-        #customDialog select {
-            background:#ffffff !important;
-            color:#111827 !important;
-            border:1px solid #d1d5db !important;
-            border-radius:6px !important;
-            font-weight:400 !important;
-            font-family:inherit !important;
-            box-shadow:none !important;
+
+        #customDialog input[type=number], #customDialog input[type=text],
+        #customDialog input[type=email], #customDialog input[type=password],
+        #customDialog textarea, #customDialog select {
+            background: rgba(15,15,40,.6) !important;
+            color: #f1f5f9 !important;
+            border: 1.5px solid rgba(168,85,247,.25) !important;
+            border-radius: 10px !important;
+            font-weight: 500 !important;
+            font-family: inherit !important;
+            box-shadow: none !important;
         }
-        #customDialog input:focus,
-        #customDialog textarea:focus,
-        #customDialog select:focus {
-            border-color:#667eea !important;
-            box-shadow:0 0 0 3px rgba(102,126,234,.15) !important;
+        #customDialog input:focus, #customDialog textarea:focus, #customDialog select:focus {
+            border-color: #a855f7 !important;
+            box-shadow: 0 0 0 4px rgba(168,85,247,.18) !important;
+            outline: none !important;
         }
+        #customDialog ::placeholder { color: #64748b !important; }
+        #customDialog select option { background: #1e1b4b !important; color: #f1f5f9 !important; }
+
         #customDialog .cancel-btn {
-            background:#ffffff !important;
-            background-image:none !important;
-            color:#374151 !important;
-            border:1px solid #d1d5db !important;
-            border-radius:4px !important;
-            font-weight:600 !important;
-            box-shadow:none !important;
+            background: transparent !important;
+            background-image: none !important;
+            color: #cbd5e1 !important;
+            border: 1.5px solid rgba(168,85,247,.4) !important;
+            border-radius: 10px !important;
+            font-weight: 700 !important;
+            box-shadow: none !important;
         }
         #customDialog .generate-btn {
-            background:#667eea !important;
-            background-image:none !important;
-            color:#ffffff !important;
-            border:none !important;
-            border-radius:4px !important;
-            font-weight:600 !important;
-            box-shadow:none !important;
+            background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%) !important;
+            background-image: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%) !important;
+            color: #ffffff !important;
+            border: none !important;
+            border-radius: 10px !important;
+            font-weight: 800 !important;
+            box-shadow: 0 8px 24px rgba(124,58,237,.4) !important;
         }
-        #customDialog .cancel-btn:hover { background:#f3f4f6 !important; transform:none !important; }
-        #customDialog .generate-btn:hover { background:#5568d3 !important; transform:none !important; }
+        #customDialog .cancel-btn:hover {
+            background: rgba(168,85,247,.1) !important;
+            transform: none !important;
+        }
+        #customDialog .generate-btn:hover {
+            background: linear-gradient(135deg, #6d28d9 0%, #9333ea 100%) !important;
+            background-image: linear-gradient(135deg, #6d28d9 0%, #9333ea 100%) !important;
+            transform: translateY(-1px) !important;
+        }
     </style>
 </head>
 <body class="exam-dark">
