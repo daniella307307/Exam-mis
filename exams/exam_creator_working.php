@@ -454,6 +454,67 @@ if ($editing_exam_id) {
         }
     </style>
     <link rel="stylesheet" href="<?= APP_BASE_URL ?>/exams/assets/exam-theme.css">
+    <style>
+        /* Rescue popup dialogs (e.g. AI generation modal) from exam-theme.css overrides.
+           Without this, headings/labels go white on the white modal background — invisible. */
+        #customDialog h1, #customDialog h2, #customDialog h3,
+        #customDialog h4, #customDialog h5 {
+            color:#1f2937 !important;
+            -webkit-text-fill-color:#1f2937 !important;
+            background:none !important;
+            font-weight:700 !important;
+            margin-bottom:8px !important;
+        }
+        #customDialog h4[style*="667eea"] {
+            color:#667eea !important;
+            -webkit-text-fill-color:#667eea !important;
+        }
+        #customDialog label {
+            color:#374151 !important;
+            font-weight:600 !important;
+        }
+        #customDialog p { color:inherit; }
+        #customDialog input[type=number],
+        #customDialog input[type=text],
+        #customDialog input[type=email],
+        #customDialog input[type=password],
+        #customDialog textarea,
+        #customDialog select {
+            background:#ffffff !important;
+            color:#111827 !important;
+            border:1px solid #d1d5db !important;
+            border-radius:6px !important;
+            font-weight:400 !important;
+            font-family:inherit !important;
+            box-shadow:none !important;
+        }
+        #customDialog input:focus,
+        #customDialog textarea:focus,
+        #customDialog select:focus {
+            border-color:#667eea !important;
+            box-shadow:0 0 0 3px rgba(102,126,234,.15) !important;
+        }
+        #customDialog .cancel-btn {
+            background:#ffffff !important;
+            background-image:none !important;
+            color:#374151 !important;
+            border:1px solid #d1d5db !important;
+            border-radius:4px !important;
+            font-weight:600 !important;
+            box-shadow:none !important;
+        }
+        #customDialog .generate-btn {
+            background:#667eea !important;
+            background-image:none !important;
+            color:#ffffff !important;
+            border:none !important;
+            border-radius:4px !important;
+            font-weight:600 !important;
+            box-shadow:none !important;
+        }
+        #customDialog .cancel-btn:hover { background:#f3f4f6 !important; transform:none !important; }
+        #customDialog .generate-btn:hover { background:#5568d3 !important; transform:none !important; }
+    </style>
 </head>
 <body class="exam-dark">
     <div class="container">
@@ -877,8 +938,8 @@ if ($editing_exam_id) {
                         <textarea id="aiInstructions" placeholder="e.g., Include practical examples, focus on calculations, add diagrams..." rows="3" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-family: inherit;"></textarea>
                     </div>
                     <div style="display: flex; gap: 10px; margin-top: 20px;">
-                        <button onclick="closeDialog()" style="flex: 1; padding: 10px; border: 1px solid #ddd; background: white; border-radius: 4px; cursor: pointer;">Cancel</button>
-                        <button onclick="generateAIQuestions()" style="flex: 1; padding: 10px; background: #667eea; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">Generate</button>
+                        <button class="cancel-btn" onclick="closeDialog()" style="flex: 1; padding: 10px; cursor: pointer;">Cancel</button>
+                        <button class="generate-btn" onclick="generateAIQuestions()" style="flex: 1; padding: 10px; cursor: pointer;">Generate</button>
                     </div>
                 </div>
             `;
