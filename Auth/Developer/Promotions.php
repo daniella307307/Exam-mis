@@ -38,6 +38,12 @@ $result = mysqli_stmt_get_result($stmt);
 /* --------- Dropdown data --------- */
 $schools_q = mysqli_query($conn, "SELECT school_id, school_name FROM schools WHERE school_status='Active' ORDER BY school_name");
 $years_q   = mysqli_query($conn, "SELECT DISTINCT promotion_year FROM students_promotion ORDER BY promotion_year DESC");
+
+/* --------- One-click rollover target (latest existing year -> current calendar year) --------- */
+$target_year  = (int)date('Y');
+$src_year_q   = mysqli_query($conn, "SELECT MAX(promotion_year) AS y FROM students_promotion WHERE promotion_year < $target_year");
+$src_year_row = mysqli_fetch_assoc($src_year_q);
+$src_year     = ($src_year_row && $src_year_row['y']) ? (int)$src_year_row['y'] : 0;
 ?>
 
 <div class="flex flex-1">
@@ -56,7 +62,22 @@ $years_q   = mysqli_query($conn, "SELECT DISTINCT promotion_year FROM students_p
                             <a href="Promotions?STATUS=Active"><button class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-3 rounded">Active</button></a>
                             <a href="Promotions?STATUS=Inactive"><button class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-3 rounded">Inactive</button></a>
                         </div>
-                        <div class="flex gap-2">
+                        <div class="flex gap-2 flex-wrap">
+                            <?php if ($src_year > 0): ?>
+                                <form method="POST" action="Rollover_Promotions" class="inline"
+                                      onsubmit="return confirm('Promote ALL schools and levels from <?php echo $src_year; ?> → <?php echo $target_year; ?>?\n\nThis creates a new promotion row for every (school × level) combination in <?php echo $target_year; ?>. Existing rows are skipped, never overwritten.');">
+                                    <input type="hidden" name="from_year"   value="<?php echo $src_year; ?>">
+                                    <input type="hidden" name="to_year"     value="<?php echo $target_year; ?>">
+                                    <input type="hidden" name="school_id"   value="0">
+                                    <input type="hidden" name="only_active" value="1">
+                                    <input type="hidden" name="mode"        value="apply">
+                                    <button type="submit"
+                                            class="bg-amber-500 hover:bg-amber-700 text-white font-bold py-2 px-3 rounded"
+                                            title="One-click: copy every <?php echo $src_year; ?> promotion row into <?php echo $target_year; ?> for all schools & levels">
+                                        <i class="fas fa-rocket mr-1"></i>Promote all &rarr; <?php echo $target_year; ?>
+                                    </button>
+                                </form>
+                            <?php endif; ?>
                             <a href="Add_Promotion"><button class="bg-blue-600 hover:bg-blue-800 text-white font-bold py-2 px-3 rounded"><i class="fas fa-plus mr-1"></i>Add Promotion</button></a>
                             <a href="Rollover_Promotions"><button class="bg-purple-600 hover:bg-purple-800 text-white font-bold py-2 px-3 rounded"><i class="fas fa-sync mr-1"></i>Bulk Rollover</button></a>
                         </div>
