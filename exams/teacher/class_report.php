@@ -4,17 +4,38 @@ $_SESSION['user_role'] = 'teacher';
 
 include('../layout/header.php');
 include('../../db.php');
+require_once(__DIR__ . '/../lib/exam_acl.php');
+
+$acl = exam_acl_context($conn);
+if (!$acl['user_id']) {
+    header('Location: ../../index.php');
+    exit;
+}
 
 $exam_id = $_GET['exam_id'] ?? null;
 
 if (!$exam_id) {
-    // Show list of exams to choose from
-    $query = "SELECT exam_id, title, exam_code, grade, created_at FROM exams ORDER BY created_at DESC LIMIT 50";
-    $result = $conn->query($query);
+    // Show list of exams to choose from (own + same-school colleagues; developers see all)
+    if ($acl['is_developer']) {
+        $stmt = $conn->prepare("SELECT exam_id, title, exam_code, grade, created_at FROM exams ORDER BY created_at DESC LIMIT 50");
+    } else {
+        $stmt = $conn->prepare(
+            "SELECT e.exam_id, e.title, e.exam_code, e.grade, e.created_at
+               FROM exams e
+              WHERE e.created_by = ?
+                 OR (? > 0 AND e.school_id = ?)
+              ORDER BY e.created_at DESC LIMIT 50"
+        );
+        $school_id = (int)($acl['school_id'] ?? 0);
+        $stmt->bind_param('iii', $acl['user_id'], $school_id, $school_id);
+    }
+    $stmt->execute();
+    $result = $stmt->get_result();
     $exams_list = [];
     while ($row = $result->fetch_assoc()) {
         $exams_list[] = $row;
     }
+    $stmt->close();
     ?>
     <style>
         .exam-selector {
@@ -83,6 +104,9 @@ if (!$exam_id) {
     <?php include('../layout/footer.php');
     exit;
 }
+
+// Gate this report to the owning teacher, a same-school facilitator, or a Developer.
+exam_acl_require_view($conn, (int)$exam_id);
 
 // Get exam details
 $exam_stmt = $conn->prepare("SELECT * FROM exams WHERE exam_id = ?");

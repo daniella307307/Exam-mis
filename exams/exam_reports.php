@@ -11,20 +11,36 @@
  * Optional ?exam_id=X — defaults to the latest exam if not supplied.
  */
 include('../db.php');
+require_once(__DIR__ . '/lib/exam_acl.php');
+
+$acl = exam_acl_context($conn);
+if (!$acl['user_id']) { http_response_code(401); die('Login required.'); }
 
 $exam_id = isset($_GET['exam_id']) ? (int)$_GET['exam_id'] : 0;
 if ($exam_id > 0) {
+    exam_acl_require_view($conn, $exam_id);
     $stmt = $conn->prepare("SELECT exam_id, title, topic, grade, exam_code FROM exams WHERE exam_id = ? LIMIT 1");
     $stmt->bind_param('i', $exam_id);
-} else {
+} elseif ($acl['is_developer']) {
     $stmt = $conn->prepare("SELECT exam_id, title, topic, grade, exam_code FROM exams ORDER BY created_at DESC LIMIT 1");
+} else {
+    // Latest exam visible to me (own + tagged for my school).
+    $stmt = $conn->prepare(
+        "SELECT e.exam_id, e.title, e.topic, e.grade, e.exam_code
+           FROM exams e
+          WHERE e.created_by = ?
+             OR (? > 0 AND e.school_id = ?)
+          ORDER BY e.created_at DESC LIMIT 1"
+    );
+    $school_id = (int)($acl['school_id'] ?? 0);
+    $stmt->bind_param('iii', $acl['user_id'], $school_id, $school_id);
 }
 $stmt->execute();
 $exam = $stmt->get_result()->fetch_assoc();
 $stmt->close();
 if (!$exam) {
     http_response_code(404);
-    die('No exam found.');
+    die('No exam found for your account.');
 }
 
 $exam_id    = (int)$exam['exam_id'];

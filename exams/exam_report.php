@@ -1,21 +1,41 @@
 <?php
 require_once('../db_connection.php');
+require_once(__DIR__ . '/lib/exam_acl.php');
+
+$acl = exam_acl_context($conn);
+if (!$acl['user_id']) {
+    header('Location: ../index.php');
+    exit;
+}
 
 // ==============================
-// FETCH EXAM (optionally by ?exam_id=X, else latest)
+// FETCH EXAM (optionally by ?exam_id=X, else latest owned by me)
 // ==============================
 $exam_id = isset($_GET['exam_id']) ? (int)$_GET['exam_id'] : 0;
 
 if ($exam_id) {
+    // School-scoped view gate. Developers bypass.
+    exam_acl_require_view($conn, $exam_id);
     $stmt = $conn->prepare("SELECT * FROM exams WHERE exam_id = ? LIMIT 1");
     $stmt->bind_param("i", $exam_id);
-} else {
+} elseif ($acl['is_developer']) {
     $stmt = $conn->prepare("SELECT * FROM exams ORDER BY created_at DESC LIMIT 1");
+} else {
+    // Latest exam visible to me: my own OR tagged for my school.
+    $stmt = $conn->prepare(
+        "SELECT e.*
+           FROM exams e
+          WHERE e.created_by = ?
+             OR (? > 0 AND e.school_id = ?)
+          ORDER BY e.created_at DESC LIMIT 1"
+    );
+    $school_id = (int)($acl['school_id'] ?? 0);
+    $stmt->bind_param("iii", $acl['user_id'], $school_id, $school_id);
 }
 $stmt->execute();
 $exam = $stmt->get_result()->fetch_assoc();
 
-if (!$exam) { echo "No exam found."; exit(); }
+if (!$exam) { echo "You have not published any exams yet. <a href='exam_creator_working.php'>Create one</a>."; exit(); }
 
 $exam_id     = $exam['exam_id'];
 $exam_title  = htmlspecialchars($exam['title']);
@@ -43,9 +63,29 @@ $stmt3->execute();
 $total_marks = $stmt3->get_result()->fetch_assoc()['total_marks'] ?? 0;
 
 // ==============================
-// FETCH ALL EXAMS for dropdown
+// FETCH ALL EXAMS for dropdown (scoped to current teacher + same-school colleagues)
 // ==============================
-$all_exams = $conn->query("SELECT exam_id, title FROM exams ORDER BY created_at DESC");
+if ($acl['is_developer']) {
+    $all_exams = $conn->query(
+        "SELECT e.exam_id, e.title, e.created_by, COALESCE(CONCAT(u.firstname,' ',u.lastname), '') AS owner_name
+           FROM exams e
+           LEFT JOIN users u ON u.user_id = e.created_by
+          ORDER BY e.created_at DESC"
+    );
+} else {
+    $ae_stmt = $conn->prepare(
+        "SELECT e.exam_id, e.title, e.created_by, COALESCE(CONCAT(u.firstname,' ',u.lastname), '') AS owner_name
+           FROM exams e
+           LEFT JOIN users u ON u.user_id = e.created_by
+          WHERE e.created_by = ?
+             OR (? > 0 AND e.school_id = ?)
+          ORDER BY e.created_at DESC"
+    );
+    $school_id = (int)($acl['school_id'] ?? 0);
+    $ae_stmt->bind_param("iii", $acl['user_id'], $school_id, $school_id);
+    $ae_stmt->execute();
+    $all_exams = $ae_stmt->get_result();
+}
 
 // ==============================
 // FETCH PLAYERS (with filters)
@@ -161,6 +201,10 @@ $distinct_streams = $streams_stmt->get_result()->fetch_all(MYSQLI_ASSOC);
                 class="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white text-sm rounded-lg shadow">
                🎓 Grade Practicals
                </a>
+                <a href="question_report.php?exam_id=<?= $exam_id ?>"
+                   class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm rounded-lg shadow">
+                    📊 Per-question report
+                </a>
                 <a href="exam_creator_working.php"
                    class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm rounded-lg shadow">
                     + Create Exam
@@ -178,10 +222,13 @@ $distinct_streams = $streams_stmt->get_result()->fetch_all(MYSQLI_ASSOC);
                 <label class="text-sm text-gray-600">Viewing exam:</label>
                 <select name="exam_id" onchange="this.form.submit()"
                         class="border border-gray-300 rounded px-3 py-1.5 text-sm bg-white">
-                    <?php while ($e = $all_exams->fetch_assoc()): ?>
+                    <?php while ($e = $all_exams->fetch_assoc()):
+                        $is_mine = ((int)$e['created_by'] === (int)$acl['user_id']);
+                        $tag = $is_mine ? '' : ' — by ' . trim($e['owner_name'] ?: 'colleague');
+                    ?>
                         <option value="<?= $e['exam_id'] ?>"
                             <?= $e['exam_id'] == $exam_id ? 'selected' : '' ?>>
-                            <?= htmlspecialchars($e['title']) ?>
+                            <?= htmlspecialchars($e['title'] . $tag) ?>
                         </option>
                     <?php endwhile; ?>
                 </select>

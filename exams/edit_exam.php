@@ -1,11 +1,15 @@
 <?php
 include("../db.php");
-$exam_id = $_GET['exam_id'] ?? 0;
+require_once(__DIR__ . '/lib/exam_acl.php');
+
+$exam_id = (int)($_GET['exam_id'] ?? 0);
 
 if (!$exam_id) {
     echo "Invalid Exam ID.";
     exit();
 }
+
+exam_acl_require_owner($conn, $exam_id);
 
 $stmt = $conn->prepare("SELECT * FROM exams WHERE exam_id=? LIMIT 1");
 $stmt->bind_param("i", $exam_id);

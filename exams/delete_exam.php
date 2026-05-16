@@ -1,5 +1,6 @@
 <?php
 require_once('../db_connection.php');
+require_once(__DIR__ . '/lib/exam_acl.php');
 header('Content-Type: application/json');
 
 $data = json_decode(file_get_contents('php://input'), true);
@@ -7,6 +8,12 @@ $exam_id = isset($data['exam_id']) ? (int)$data['exam_id'] : 0;
 
 if (!$exam_id) {
     echo json_encode(['success' => false, 'error' => 'No exam ID provided']);
+    exit;
+}
+
+if (!exam_acl_owns($conn, $exam_id)) {
+    http_response_code(403);
+    echo json_encode(['success' => false, 'error' => 'You can only delete your own exams.']);
     exit;
 }
 

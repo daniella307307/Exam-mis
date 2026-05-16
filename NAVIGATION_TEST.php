@@ -9,10 +9,10 @@ session_start();
 $user_id = $_SESSION['user_id'] ?? null;
 $logged_in = $user_id ? true : false;
 
-// Simulate logged in for testing purposes
-if (!$logged_in) {
-    $_SESSION['user_id'] = 1;  // TEST USER
-}
+// Backdoor removed: this page used to set $_SESSION['user_id'] = 1 when the
+// visitor was not logged in. That caused new exams to be saved with
+// created_by = 1 (the admin) even when a real teacher was using the system.
+// If you need to test as user 1, log in normally.
 
 ?>
 <!DOCTYPE html>

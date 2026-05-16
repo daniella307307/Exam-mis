@@ -8,6 +8,7 @@
  */
 
 require_once('../db_connection.php');
+require_once(__DIR__ . '/lib/exam_acl.php');
 
 // Check if user is logged in
 if (session_status() === PHP_SESSION_NONE) {
@@ -27,6 +28,8 @@ $existing_exam = null;
 $existing_questions = [];
 
 if ($editing_exam_id) {
+    // Only the owning teacher (or a Developer) may edit an existing exam.
+    exam_acl_require_owner($conn, $editing_exam_id);
     $stmt = $conn->prepare("SELECT * FROM exams WHERE exam_id = ? LIMIT 1");
     $stmt->bind_param('i', $editing_exam_id);
     $stmt->execute();

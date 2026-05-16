@@ -1,11 +1,14 @@
 <?php
 require_once('../db_connection.php');
+require_once(__DIR__ . '/lib/exam_acl.php');
 
 $exam_id = isset($_GET['exam_id']) ? (int)$_GET['exam_id'] : 0;
 if (!$exam_id) {
     echo "<p>No exam specified. <a href=\"exams_dashboard.php\">Back to dashboard</a></p>";
     exit;
 }
+
+exam_acl_require_owner($conn, $exam_id);
 
 // Fetch exam
 $stmt = $conn->prepare("SELECT * FROM exams WHERE exam_id = ? LIMIT 1");

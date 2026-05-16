@@ -1,19 +1,44 @@
 <?php
 require_once('../db_connection.php');
+require_once(__DIR__ . '/lib/exam_acl.php');
 
-// Get all exams (sorted by created_at, newest first)
-$query = "SELECT exam_id, exam_code, title, topic, grade, status, created_at, start_time, is_active 
-          FROM exams 
-          ORDER BY created_at DESC 
-          LIMIT 100";
+$acl = exam_acl_context($conn);
+if (!$acl['user_id']) {
+    header('Location: ../index.php');
+    exit;
+}
 
-$result = $conn->query($query);
+// Teachers see their own exams + any exam tagged for their school. Developers see everything.
+if ($acl['is_developer']) {
+    $stmt = $conn->prepare(
+        "SELECT e.exam_id, e.exam_code, e.title, e.topic, e.grade, e.status, e.created_at, e.start_time,
+                e.is_active, e.is_public, e.created_by,
+                COALESCE(CONCAT(u.firstname,' ',u.lastname), '') AS owner_name
+           FROM exams e
+           LEFT JOIN users u ON u.user_id = e.created_by
+          ORDER BY e.created_at DESC LIMIT 100"
+    );
+} else {
+    $stmt = $conn->prepare(
+        "SELECT e.exam_id, e.exam_code, e.title, e.topic, e.grade, e.status, e.created_at, e.start_time,
+                e.is_active, e.is_public, e.created_by,
+                COALESCE(CONCAT(u.firstname,' ',u.lastname), '') AS owner_name
+           FROM exams e
+           LEFT JOIN users u ON u.user_id = e.created_by
+          WHERE e.created_by = ?
+             OR (? > 0 AND e.school_id = ?)
+          ORDER BY e.created_at DESC LIMIT 100"
+    );
+    $school_id = (int)($acl['school_id'] ?? 0);
+    $stmt->bind_param('iii', $acl['user_id'], $school_id, $school_id);
+}
+$stmt->execute();
+$result = $stmt->get_result();
 $exams = [];
-
 while ($row = $result->fetch_assoc()) {
     $exams[] = $row;
 }
-// Connection closed by db_connection.php shutdown handler
+$stmt->close();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -299,10 +324,17 @@ while ($row = $result->fetch_assoc()) {
                     <p>Create your first exam to get started</p>
                 </div>
             <?php else: ?>
-                <?php foreach ($exams as $exam): ?>
+                <?php foreach ($exams as $exam):
+                    $is_mine = ((int)$exam['created_by'] === (int)$acl['user_id']) || $acl['is_developer'];
+                ?>
                     <div class="exam-item">
                         <div class="exam-info">
-                            <h3><?= htmlspecialchars($exam['title']) ?></h3>
+                            <h3>
+                                <?= htmlspecialchars($exam['title']) ?>
+                                <?php if (!$is_mine): ?>
+                                    <span style="font-size:12px;background:rgba(124,58,237,.2);color:#a78bfa;padding:2px 8px;border-radius:6px;margin-left:6px;font-weight:600">by <?= htmlspecialchars(trim($exam['owner_name'] ?: 'colleague')) ?></span>
+                                <?php endif; ?>
+                            </h3>
                             <p>📝 Topic: <strong><?= htmlspecialchars($exam['topic']) ?></strong> | 👥 Grade: <strong><?= htmlspecialchars($exam['grade']) ?></strong></p>
                             <p>📅 Created: <?= date('M d, Y H:i', strtotime($exam['created_at'])) ?></p>
                             <?php if ($exam['status'] === 'active'): ?>
@@ -313,15 +345,19 @@ while ($row = $result->fetch_assoc()) {
                             <span class="exam-code">Code: <?= $exam['exam_code'] ?></span>
                             <span class="badge <?= strtolower($exam['status']) ?>"><?= ucfirst($exam['status']) ?></span>
                             <div class="actions">
-                                <?php if ($exam['status'] === 'draft'): ?>
-                                    <button class="btn btn-activate" onclick="activateExam(<?= $exam['exam_id'] ?>)">Activate</button>
-                                <?php elseif ($exam['status'] === 'active'): ?>
-                                    <button class="btn btn-deactivate" onclick="deactivateExam(<?= $exam['exam_id'] ?>)">Deactivate</button>
+                                <?php if ($is_mine): ?>
+                                    <?php if ($exam['status'] === 'draft'): ?>
+                                        <button class="btn btn-activate" onclick="activateExam(<?= $exam['exam_id'] ?>)">Activate</button>
+                                    <?php elseif ($exam['status'] === 'active'): ?>
+                                        <button class="btn btn-deactivate" onclick="deactivateExam(<?= $exam['exam_id'] ?>)">Deactivate</button>
+                                    <?php endif; ?>
+                                    <a href="view_exam.php?exam_id=<?= $exam['exam_id'] ?>" class="btn btn-view">📋 View</a>
+                                    <a href="exam_creator_working.php?exam_id=<?= $exam['exam_id'] ?>" class="btn btn-view" style="background:#28a745;">✏️ Edit</a>
+                                    <a href="assignment_submissions.php?exam_id=<?= $exam['exam_id'] ?>" class="btn btn-view" style="background:#7c3aed;">📎 Submissions</a>
+                                    <button class="btn btn-view" style="background:#f59e0b;" onclick="republishExam(<?= $exam['exam_id'] ?>, '<?= htmlspecialchars(addslashes($exam['title'])) ?>')">🔄 Re-Publish</button>
                                 <?php endif; ?>
-                                <a href="view_exam.php?exam_id=<?= $exam['exam_id'] ?>" class="btn btn-view">📋 View</a>
-                                <a href="exam_creator_working.php?exam_id=<?= $exam['exam_id'] ?>" class="btn btn-view" style="background:#28a745;">✏️ Edit</a>
-                                <a href="assignment_submissions.php?exam_id=<?= $exam['exam_id'] ?>" class="btn btn-view" style="background:#7c3aed;">📎 Submissions</a>
-                                <button class="btn btn-view" style="background:#f59e0b;" onclick="republishExam(<?= $exam['exam_id'] ?>, '<?= htmlspecialchars(addslashes($exam['title'])) ?>')">🔄 Re-Publish</button>
+                                <a href="exam_report.php?exam_id=<?= $exam['exam_id'] ?>" class="btn btn-view" style="background:#2563eb;">📈 Reports</a>
+                                <a href="question_report.php?exam_id=<?= $exam['exam_id'] ?>" class="btn btn-view" style="background:#4f46e5;">📊 Per-question</a>
                             </div>
                         </div>
                     </div>

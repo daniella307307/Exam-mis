@@ -8,10 +8,18 @@ ini_set('error_log', $logFile);
 
 // Use the single-connection wrapper to reduce connection churn
 require_once('../db_connection.php');
+require_once(__DIR__ . '/lib/exam_acl.php');
 
 header('Content-Type: application/json');
 
 try {
+    $acl = exam_acl_context($conn);
+    if (!$acl['user_id']) {
+        http_response_code(401);
+        throw new Exception('You must be logged in to publish an exam.');
+    }
+    $user_id = (int)$acl['user_id'];
+
     $data = json_decode(file_get_contents('php://input'), true);
     if (!$data) {
         throw new Exception('No data received');
@@ -25,8 +33,13 @@ try {
     $school_id        = isset($data['school_id']) ? intval($data['school_id']) : 0;
     $passing_score    = isset($data['passing_score']) ? intval($data['passing_score']) : 50;
     $exam_certification = isset($data['exam_certification']) && $data['exam_certification'] ? intval($data['exam_certification']) : null;
+    $is_public        = !empty($data['is_public']) ? 1 : 0;
     $questions        = $data['questions'] ?? [];
-    $user_id          = 1; // Default user
+
+    if ($exam_id) {
+        // Edit path: only the owner (or a Developer) may overwrite an exam.
+        exam_acl_require_owner($conn, $exam_id);
+    }
 
     if (!$title || empty($questions)) {
         throw new Exception('Title and questions required');
@@ -45,8 +58,8 @@ try {
     if ($exam_id) {
         // UPDATE existing exam
         error_log("[PUBLISH] Updating exam ID=$exam_id");
-        $stmt = $conn->prepare("UPDATE exams SET title=?, topic=?, grade=?, duration=?, school_id=? WHERE exam_id=?");
-        $stmt->bind_param("sssiiii", $title, $topic, $grade, $duration, $school_id, $exam_id);
+        $stmt = $conn->prepare("UPDATE exams SET title=?, topic=?, grade=?, duration=?, school_id=?, is_public=? WHERE exam_id=?");
+        $stmt->bind_param("sssiiiii", $title, $topic, $grade, $duration, $school_id, $is_public, $exam_id);
         if (!$stmt->execute()) {
             throw new Exception('Exam update: ' . $stmt->error);
         }
@@ -69,9 +82,9 @@ try {
         $exam_code = rand(10000, 99999);
         $pin = str_pad(rand(1, 9999), 4, '0', STR_PAD_LEFT);
 
-        $stmt = $conn->prepare("INSERT INTO exams (title, exam_code, topic, grade, duration, created_by, school_id, status, start_time, end_time, pin, is_active)
-                                VALUES (?, ?, ?, ?, ?, ?, ?, 'active', ?, ?, ?, 1)");
-        $stmt->bind_param("siisiiisss", $title, $exam_code, $topic, $grade, $duration, $user_id, $school_id, $now, $end, $pin);
+        $stmt = $conn->prepare("INSERT INTO exams (title, exam_code, topic, grade, duration, created_by, school_id, status, start_time, end_time, pin, is_active, is_public)
+                                VALUES (?, ?, ?, ?, ?, ?, ?, 'active', ?, ?, ?, 1, ?)");
+        $stmt->bind_param("siisiiisssi", $title, $exam_code, $topic, $grade, $duration, $user_id, $school_id, $now, $end, $pin, $is_public);
 
         if (!$stmt->execute()) {
             throw new Exception('Exam insert: ' . $stmt->error);

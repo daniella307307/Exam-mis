@@ -1,6 +1,7 @@
 <?php
 session_start();
 include("../db.php");
+require_once(__DIR__ . '/lib/exam_acl.php');
 header('Content-Type: application/json');
 
 $exam_id = (int)($_POST['exam_id'] ?? 0);
@@ -9,6 +10,12 @@ $user_id = (int)($_SESSION['user_id'] ?? 0);
 
 if (!$exam_id) {
     echo json_encode(['success' => false, 'error' => 'Exam ID required']);
+    exit;
+}
+
+if (!exam_acl_owns($conn, $exam_id)) {
+    http_response_code(403);
+    echo json_encode(['success' => false, 'error' => 'You can only republish your own exams.']);
     exit;
 }
 
