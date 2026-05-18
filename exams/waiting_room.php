@@ -32,6 +32,21 @@ $members = implode(", ", $membersArray); // convert to string
     // grade VARCHAR(100), group_nbr int
     //generate a unique group number
     $group_nbr = mt_rand(1000,9999);
+
+    // Link the placeholder player (created by join_exam.php when the code was
+    // entered) to this group, and finally save the grade/stream that were
+    // sitting only in $_SESSION. Without this link, submit_exam.php would
+    // score only the placeholder and leave the named member rows at 0.
+    if (!empty($_SESSION['player_id'])) {
+        $linkStmt = $conn->prepare(
+            "UPDATE players SET group_nbr = ?, grade = ?, stream = ?, school = ?
+              WHERE player_id = ?"
+        );
+        $linkStmt->bind_param("isssi", $group_nbr, $grade, $stream, $school, $_SESSION['player_id']);
+        $linkStmt->execute();
+        $linkStmt->close();
+    }
+
    //save each group memeber as a separate player with the same group number
    foreach($membersArray as $m){
     $session_id_val = $_SESSION['session_id'] ?? null;

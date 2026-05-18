@@ -142,6 +142,27 @@ $upd = $conn->prepare("UPDATE players SET score = ? WHERE player_id = ?");
 $upd->bind_param("ii", $total_score, $player_id);
 $upd->execute();
 
+// Group propagation: in group mode, only the placeholder (the row whose
+// player_id sits in the session) actually answered questions; the other group
+// members are sibling rows linked by group_nbr (set in waiting_room.php).
+// Push the same score onto every sibling so the leaderboard and per-student
+// reports show all named members with the team's score instead of 0.
+$gn_stmt = $conn->prepare("SELECT group_nbr FROM players WHERE player_id = ? LIMIT 1");
+$gn_stmt->bind_param("i", $player_id);
+$gn_stmt->execute();
+$gn_row = $gn_stmt->get_result()->fetch_assoc();
+$gn_stmt->close();
+
+$group_nbr = (int)($gn_row['group_nbr'] ?? 0);
+if ($group_nbr > 0) {
+    $g_upd = $conn->prepare(
+        "UPDATE players SET score = ? WHERE exam_id = ? AND group_nbr = ?"
+    );
+    $g_upd->bind_param("iii", $total_score, $exam_id, $group_nbr);
+    $g_upd->execute();
+    $g_upd->close();
+}
+
 // ---- Certificate issuance ----
 // Get total marks and exam passing threshold
 $tm_stmt = $conn->prepare("SELECT SUM(marks) AS total FROM questions WHERE exam_id = ?");
