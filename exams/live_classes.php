@@ -315,7 +315,10 @@ textarea{min-height:78px;resize:vertical}
                             </span>
                         </div>
                         <div class="session-meta">
-                            <span><i class="far fa-calendar"></i><?= htmlspecialchars($when, ENT_QUOTES, 'UTF-8') ?></span>
+                            <span class="lc-when" data-ts="<?= $lc_start ?>">
+                                <i class="far fa-calendar"></i>
+                                <?= htmlspecialchars($when, ENT_QUOTES, 'UTF-8') ?>
+                            </span>
                             <span><i class="far fa-clock"></i><?= (int)$c['duration_min'] ?> min</span>
                             <span><i class="fas fa-users"></i><?= htmlspecialchars(ucfirst((string)$c['audience']), ENT_QUOTES, 'UTF-8') ?></span>
                         </div>
@@ -449,6 +452,21 @@ textarea{min-height:78px;resize:vertical}
     pill.classList.add('ended');
     return false; // no more updates needed once ended
   }
+
+  // Render each scheduled-at line in the viewer's *local* timezone, derived
+  // from the same unix timestamp the countdown uses. Guarantees the date
+  // string and the countdown can never disagree, even if a viewer is in a
+  // different timezone than the server.
+  document.querySelectorAll('.lc-when').forEach((el) => {
+    const ts = parseInt(el.dataset.ts, 10);
+    if (!ts) return;
+    const d = new Date(ts * 1000);
+    const formatted = d.toLocaleString(undefined, {
+      weekday: 'short', month: 'short', day: 'numeric',
+      hour: '2-digit', minute: '2-digit', hour12: false,
+    });
+    el.innerHTML = '<i class="far fa-calendar"></i> ' + formatted;
+  });
 
   const pills = Array.from(document.querySelectorAll('.lc-countdown'));
   if (pills.length === 0) return;

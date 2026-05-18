@@ -14,6 +14,16 @@
  *   header('Location: ' . APP_BASE_URL . '/Administrator_login.php');
  *   fetch('<?= APP_BASE_URL ?>/exams/api/get_stats.php')
  */
+// Pin PHP to East Africa Time. Hostinger's default is UTC, so without this a
+// teacher who types "May 18 19:00" in the Live-Class form has it interpreted
+// as 19:00 UTC, then the page later prints "19:00" while the browser's
+// countdown is computed against the real (UTC+3-offset) instant. Match the
+// teacher's clock and everything lines up. (Set MYSQL session tz too — see
+// db_connection.php — so any DATE_ADD / NOW() comparisons agree.)
+if (!ini_get('date.timezone') || date_default_timezone_get() === 'UTC') {
+    date_default_timezone_set('Africa/Dar_es_Salaam');
+}
+
 if (!defined('APP_BASE_URL')) {
     $proj = realpath(__DIR__);
     $proj = $proj ? str_replace('\\', '/', $proj) : __DIR__;
