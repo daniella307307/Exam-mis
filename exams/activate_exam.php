@@ -1,6 +1,7 @@
 <?php
 header("Content-Type: application/json");
 include('../db.php');
+require_once(__DIR__ . '/lib/exam_acl.php');
 
 // Get request data
 $input = json_decode(file_get_contents("php://input"), true);
@@ -12,6 +13,16 @@ if (!$exam_id) {
     echo json_encode([
         "success" => false,
         "error" => "exam_id required"
+    ]);
+    exit;
+}
+
+// Same-school colleagues may activate/deactivate; strangers are blocked.
+if (!exam_acl_can_collaborate($conn, (int)$exam_id)) {
+    http_response_code(403);
+    echo json_encode([
+        "success" => false,
+        "error" => "You can only activate or deactivate exams from your school."
     ]);
     exit;
 }

@@ -12,7 +12,7 @@ if (!$acl['user_id']) {
 if ($acl['is_developer']) {
     $stmt = $conn->prepare(
         "SELECT e.exam_id, e.exam_code, e.title, e.topic, e.grade, e.status, e.created_at, e.start_time,
-                e.is_active, e.is_public, e.created_by,
+                e.is_active, e.is_public, e.created_by, e.school_id,
                 COALESCE(CONCAT(u.firstname,' ',u.lastname), '') AS owner_name
            FROM exams e
            LEFT JOIN users u ON u.user_id = e.created_by
@@ -21,7 +21,7 @@ if ($acl['is_developer']) {
 } else {
     $stmt = $conn->prepare(
         "SELECT e.exam_id, e.exam_code, e.title, e.topic, e.grade, e.status, e.created_at, e.start_time,
-                e.is_active, e.is_public, e.created_by,
+                e.is_active, e.is_public, e.created_by, e.school_id,
                 COALESCE(CONCAT(u.firstname,' ',u.lastname), '') AS owner_name
            FROM exams e
            LEFT JOIN users u ON u.user_id = e.created_by
@@ -325,13 +325,21 @@ $stmt->close();
                 </div>
             <?php else: ?>
                 <?php foreach ($exams as $exam):
-                    $is_mine = ((int)$exam['created_by'] === (int)$acl['user_id']) || $acl['is_developer'];
+                    // OWN  → can rewrite content (Edit, View answer keys).
+                    // COLLAB → can run the exam: Activate, Deactivate, Re-Publish, Submissions.
+                    //          Includes same-school colleagues so co-teachers (e.g. Bright Angels)
+                    //          can run each other's exams without owning them.
+                    $is_owner  = ((int)$exam['created_by'] === (int)$acl['user_id']) || $acl['is_developer'];
+                    $viewer_school = (int)($acl['school_id'] ?? 0);
+                    $exam_school   = (int)($exam['school_id'] ?? 0);
+                    $is_collab = $is_owner
+                              || ($viewer_school > 0 && $exam_school > 0 && $viewer_school === $exam_school);
                 ?>
                     <div class="exam-item">
                         <div class="exam-info">
                             <h3>
                                 <?= htmlspecialchars($exam['title']) ?>
-                                <?php if (!$is_mine): ?>
+                                <?php if (!$is_owner): ?>
                                     <span style="font-size:12px;background:rgba(124,58,237,.2);color:#a78bfa;padding:2px 8px;border-radius:6px;margin-left:6px;font-weight:600">by <?= htmlspecialchars(trim($exam['owner_name'] ?: 'colleague')) ?></span>
                                 <?php endif; ?>
                             </h3>
@@ -345,16 +353,19 @@ $stmt->close();
                             <span class="exam-code">Code: <?= $exam['exam_code'] ?></span>
                             <span class="badge <?= strtolower($exam['status']) ?>"><?= ucfirst($exam['status']) ?></span>
                             <div class="actions">
-                                <?php if ($is_mine): ?>
+                                <?php if ($is_collab): ?>
                                     <?php if ($exam['status'] === 'draft'): ?>
                                         <button class="btn btn-activate" onclick="activateExam(<?= $exam['exam_id'] ?>)">Activate</button>
                                     <?php elseif ($exam['status'] === 'active'): ?>
                                         <button class="btn btn-deactivate" onclick="deactivateExam(<?= $exam['exam_id'] ?>)">Deactivate</button>
                                     <?php endif; ?>
-                                    <a href="view_exam.php?exam_id=<?= $exam['exam_id'] ?>" class="btn btn-view">📋 View</a>
-                                    <a href="exam_creator_working.php?exam_id=<?= $exam['exam_id'] ?>" class="btn btn-view" style="background:#28a745;">✏️ Edit</a>
                                     <a href="assignment_submissions.php?exam_id=<?= $exam['exam_id'] ?>" class="btn btn-view" style="background:#7c3aed;">📎 Submissions</a>
                                     <button class="btn btn-view" style="background:#f59e0b;" onclick="republishExam(<?= $exam['exam_id'] ?>, '<?= htmlspecialchars(addslashes($exam['title'])) ?>')">🔄 Re-Publish</button>
+                                <?php endif; ?>
+                                <?php if ($is_owner): ?>
+                                    <!-- Edit + View expose answer keys / rewrite content → owner only -->
+                                    <a href="view_exam.php?exam_id=<?= $exam['exam_id'] ?>" class="btn btn-view">📋 View</a>
+                                    <a href="exam_creator_working.php?exam_id=<?= $exam['exam_id'] ?>" class="btn btn-view" style="background:#28a745;">✏️ Edit</a>
                                 <?php endif; ?>
                                 <a href="exam_report.php?exam_id=<?= $exam['exam_id'] ?>" class="btn btn-view" style="background:#2563eb;">📈 Reports</a>
                                 <a href="question_report.php?exam_id=<?= $exam['exam_id'] ?>" class="btn btn-view" style="background:#4f46e5;">📊 Per-question</a>

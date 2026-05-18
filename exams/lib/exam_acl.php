@@ -2,10 +2,13 @@
 /**
  * Multi-tenancy ACL for the exams module.
  *
- * Two tiers:
- *   MANAGE  — owner only (edit / delete / republish / publish / answer-key preview)
- *   VIEW    — owner OR same-school facilitator (dashboard listings, leaderboard,
- *             reports, Excel download, per-question report)
+ * Three tiers:
+ *   OWN          — owner only (edit content / delete / answer-key preview)
+ *   COLLABORATE  — owner OR same-school facilitator (republish, activate,
+ *                  deactivate, grade submissions). Safe state changes that
+ *                  don't rewrite the exam content or expose answer keys.
+ *   VIEW         — owner OR same-school facilitator (dashboard listings,
+ *                  leaderboard, reports, Excel download, per-question report)
  *
  *   $acl = exam_acl_context($conn);
  *
@@ -14,14 +17,17 @@
  *   $acl['school_id']     (int)        users.school_ref (0 if none)
  *   $acl['is_developer']  (bool)       bypass all checks
  *
- *   exam_acl_owns($conn, $exam_id)            (bool)  MANAGE — non-fatal
- *   exam_acl_require_owner($conn, $exam_id)           MANAGE — 403 + exit
- *   exam_acl_can_view($conn, $exam_id)        (bool)  VIEW  — non-fatal
- *   exam_acl_require_view($conn, $exam_id)            VIEW  — 403 + exit
+ *   exam_acl_owns($conn, $exam_id)                    (bool) OWN          — non-fatal
+ *   exam_acl_require_owner($conn, $exam_id)                  OWN          — 403 + exit
+ *   exam_acl_can_collaborate($conn, $exam_id)         (bool) COLLABORATE  — non-fatal
+ *   exam_acl_require_collaborate($conn, $exam_id)            COLLABORATE  — 403 + exit
+ *   exam_acl_can_view($conn, $exam_id)                (bool) VIEW         — non-fatal
+ *   exam_acl_require_view($conn, $exam_id)                   VIEW         — 403 + exit
  *
- * Same-school rule: a user with school_ref > 0 may VIEW any exam whose creator
- * shares the same school_ref. school_ref = 0 (placeholder accounts) is treated
- * as "no school" and does NOT pool with other 0-school users.
+ * Same-school rule: a user with school_ref > 0 may collaborate on / view any
+ * exam whose school_id matches their own school_ref. school_ref = 0
+ * (placeholder accounts) is treated as "no school" and does NOT pool with
+ * other 0-school users.
  */
 
 if (session_status() !== PHP_SESSION_ACTIVE) {
@@ -82,6 +88,32 @@ function exam_acl_require_owner(mysqli $conn, int $exam_id): void {
        . '<div style="font-family:sans-serif;max-width:560px;margin:80px auto;text-align:center">'
        . '<h1 style="color:#dc2626">403 &mdash; Not your exam</h1>'
        . '<p style="color:#475569">This exam belongs to another teacher. Only the teacher who created it (or a Developer) can edit, delete, republish, or see its results.</p>'
+       . '<p><a href="exams_dashboard.php" style="color:#2563eb">&larr; Back to my exams</a></p>'
+       . '</div>';
+    exit;
+}
+
+/**
+ * Non-fatal: may the current user perform safe state changes (republish,
+ * activate, deactivate, grade submissions) on $exam_id? Currently identical
+ * to VIEW (same-school is enough), but expressed separately so we can tighten
+ * it independently in future.
+ */
+function exam_acl_can_collaborate(mysqli $conn, int $exam_id): bool {
+    return exam_acl_can_view($conn, $exam_id);
+}
+
+/** Fatal: 403 + exit if the current user can't collaborate on $exam_id. */
+function exam_acl_require_collaborate(mysqli $conn, int $exam_id): void {
+    if (exam_acl_can_collaborate($conn, $exam_id)) return;
+    http_response_code(403);
+    if (PHP_SAPI !== 'cli') {
+        header('Content-Type: text/html; charset=utf-8');
+    }
+    echo '<!doctype html><meta charset="utf-8"><title>403 Forbidden</title>'
+       . '<div style="font-family:sans-serif;max-width:560px;margin:80px auto;text-align:center">'
+       . '<h1 style="color:#dc2626">403 &mdash; Not your school</h1>'
+       . '<p style="color:#475569">This exam belongs to a teacher at a different school. Only the owner, a same-school facilitator, or a Developer can republish, activate, or grade it.</p>'
        . '<p><a href="exams_dashboard.php" style="color:#2563eb">&larr; Back to my exams</a></p>'
        . '</div>';
     exit;

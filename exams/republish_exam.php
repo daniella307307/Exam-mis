@@ -13,9 +13,9 @@ if (!$exam_id) {
     exit;
 }
 
-if (!exam_acl_owns($conn, $exam_id)) {
+if (!exam_acl_can_collaborate($conn, $exam_id)) {
     http_response_code(403);
-    echo json_encode(['success' => false, 'error' => 'You can only republish your own exams.']);
+    echo json_encode(['success' => false, 'error' => 'You can only republish exams from your school.']);
     exit;
 }
 

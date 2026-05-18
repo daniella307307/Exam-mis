@@ -59,7 +59,8 @@ try {
         // UPDATE existing exam
         error_log("[PUBLISH] Updating exam ID=$exam_id");
         $stmt = $conn->prepare("UPDATE exams SET title=?, topic=?, grade=?, duration=?, school_id=?, is_public=? WHERE exam_id=?");
-        $stmt->bind_param("sssiiiii", $title, $topic, $grade, $duration, $school_id, $is_public, $exam_id);
+        // 7 placeholders → 7 type chars: title(s) topic(s) grade(s) duration(i) school_id(i) is_public(i) exam_id(i)
+        $stmt->bind_param("sssiiii", $title, $topic, $grade, $duration, $school_id, $is_public, $exam_id);
         if (!$stmt->execute()) {
             throw new Exception('Exam update: ' . $stmt->error);
         }
