@@ -30,19 +30,52 @@ $res = $conn->query(
 $players = [];
 while ($row = $res->fetch_assoc()) { $players[] = $row; }
 
-// Determine player rank and score FIRST
-$myRank = 0; $myScore = 0;
-foreach ($players as $i => $p) {
-    if ((int)$p['player_id'] === $player_id) {
-        $myRank = $i + 1; $myScore = (int)$p['score'];
-    }
+// Pull the session player's own score directly so we don't rely on them
+// being in the top-50 leaderboard. Also grab group_nbr so we can fall back
+// to the team's score for legacy submissions that pre-date group score
+// propagation (placeholder row was scored, members weren't, or vice-versa).
+$me_stmt = $conn->prepare("SELECT score, group_nbr FROM players WHERE player_id = ? AND exam_id = ? LIMIT 1");
+$me_stmt->bind_param("ii", $player_id, $exam_id);
+$me_stmt->execute();
+$me_row    = $me_stmt->get_result()->fetch_assoc();
+$me_stmt->close();
+$myScore   = (int)($me_row['score'] ?? 0);
+$myGroupNbr = (int)($me_row['group_nbr'] ?? 0);
+
+// Group fallback: if this player has no score but belongs to a group,
+// inherit the highest score the group earned. Covers the case where the
+// placeholder is the session player but the score landed on the named
+// member rows (or vice-versa) before propagation was added.
+if ($myScore <= 0 && $myGroupNbr > 0) {
+    $grp_stmt = $conn->prepare("SELECT MAX(score) AS s FROM players WHERE exam_id = ? AND group_nbr = ?");
+    $grp_stmt->bind_param("ii", $exam_id, $myGroupNbr);
+    $grp_stmt->execute();
+    $myScore = (int)($grp_stmt->get_result()->fetch_assoc()['s'] ?? 0);
+    $grp_stmt->close();
 }
 
-// Now calculate percentage after $myScore is known
+// Find rank within the loaded leaderboard window.
+$myRank = 0;
+foreach ($players as $i => $p) {
+    if ((int)$p['player_id'] === $player_id) { $myRank = $i + 1; break; }
+}
+
+// Total available marks for percentage. If the questions table is empty for
+// this exam (e.g. wiped during a republish that never finished) or every
+// question has marks=0, fall back to the highest player score so the page
+// doesn't print "0 / 0".
 $mstmt = $conn->prepare("SELECT SUM(marks) AS total_marks FROM questions WHERE exam_id = ?");
 $mstmt->bind_param("i", $exam_id);
 $mstmt->execute();
 $total_marks = (int)($mstmt->get_result()->fetch_assoc()['total_marks'] ?? 0);
+$mstmt->close();
+if ($total_marks <= 0) {
+    $fb_stmt = $conn->prepare("SELECT MAX(score) AS m FROM players WHERE exam_id = ?");
+    $fb_stmt->bind_param("i", $exam_id);
+    $fb_stmt->execute();
+    $total_marks = (int)($fb_stmt->get_result()->fetch_assoc()['m'] ?? 0);
+    $fb_stmt->close();
+}
 $percentage = $total_marks > 0 ? round(($myScore / $total_marks) * 100) : 0;
 
 // Check if this player has a certificate (only if table exists)
@@ -58,16 +91,24 @@ if ($ct_chk && $ct_chk->num_rows > 0) {
 
 $medals = ['🥇','🥈','🥉'];
 
-$qres = $conn->query(
-    "SELECT a.chosen_answer, o.is_correct, a.points_earned, q.question_text
-     FROM answers a JOIN options o ON a.chosen_answer = o.option_id
-     JOIN questions q ON a.question_id = q.question_id
-     WHERE a.player_id=$player_id AND a.exam_id=$exam_id ORDER BY a.answer_id"
+// is_correct and points_earned already live on the answers row (written by
+// submit_exam.php) — no need to JOIN the options table. The previous query
+// joined on chosen_answer = option_id, but chosen_answer stores the option
+// TEXT (or free-typed answer text for short-answer/essay), so the JOIN
+// matched zero rows and the "Your answers" section silently disappeared.
+$qres = $conn->prepare(
+    "SELECT a.chosen_answer, a.is_correct, a.points_earned, q.question_text
+       FROM answers a
+       JOIN questions q ON a.question_id = q.question_id
+      WHERE a.player_id = ? AND a.exam_id = ?
+      ORDER BY a.answer_id"
 );
-$answers = [];
-while ($row = $qres->fetch_assoc()) { $answers[] = $row; }
-$correct_count = array_sum(array_column($answers,'is_correct'));
-$total_q = count($answers);
+$qres->bind_param("ii", $player_id, $exam_id);
+$qres->execute();
+$answers = $qres->get_result()->fetch_all(MYSQLI_ASSOC);
+$qres->close();
+$correct_count = array_sum(array_column($answers, 'is_correct'));
+$total_q       = count($answers);
 ?>
 <!DOCTYPE html>
 <html lang="en">
