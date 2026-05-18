@@ -297,8 +297,17 @@ textarea{min-height:78px;resize:vertical}
                                 <div class="session-title"><?= htmlspecialchars($c['title'], ENT_QUOTES, 'UTF-8') ?></div>
                                 <div class="session-host">Hosted by <?= htmlspecialchars($hostname, ENT_QUOTES, 'UTF-8') ?></div>
                             </div>
-                            <span class="pill <?= htmlspecialchars($pill_cls, ENT_QUOTES, 'UTF-8') ?>">
+                            <?php
+                                $lc_start = (int)strtotime($c['scheduled_at']);
+                                $lc_end   = $lc_start + ((int)$c['duration_min'] * 60);
+                            ?>
+                            <span class="pill <?= htmlspecialchars($pill_cls, ENT_QUOTES, 'UTF-8') ?> lc-countdown"
+                                  data-start="<?= $lc_start ?>"
+                                  data-end="<?= $lc_end ?>"
+                                  data-cancelled="<?= (int)$c['is_cancelled'] ?>">
                                 <?php
+                                    // Server-rendered fallback for no-JS / first paint.
+                                    // The JS below replaces this with a live d/h/m/s ticker.
                                     if ($status === 'Live')         echo '🔴 Live · ' . (int)$rem . 'm left';
                                     elseif ($status === 'Scheduled') echo 'Starts in ' . (int)$rem . 'm';
                                     else                              echo htmlspecialchars($status, ENT_QUOTES, 'UTF-8');
@@ -377,5 +386,81 @@ textarea{min-height:78px;resize:vertical}
 
     </div>
 </div>
+
+<script>
+/**
+ * Live ticker for the status pill on every scheduled / live class.
+ *
+ * The PHP pill renders an initial state, then this JS replaces the text
+ * each second with a d/h/m/s countdown using server-emitted absolute
+ * timestamps (data-start, data-end). We use the *user's* clock for
+ * differential math, so a clock skew offsets every card equally — much
+ * less confusing than the page-load-instant snapshot the server used to
+ * print ("193m" never updating).
+ *
+ * State transitions are handled here too: a Scheduled pill will flip to
+ * Live when the moment passes; a Live pill flips to Ended at duration.
+ * (Page reload is still needed to enable the Join button if it was
+ *  blocked, but the pill stays honest.)
+ */
+(function () {
+  function pad(n) { return String(n).padStart(2, '0'); }
+
+  function formatRemaining(seconds) {
+    if (seconds <= 0) return '0s';
+    const d = Math.floor(seconds / 86400);
+    const h = Math.floor((seconds % 86400) / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = seconds % 60;
+    // Trim leading zero components so a "30 seconds away" doesn't print
+    // "0d 0h 0m 30s"; once a day is in play we show every step.
+    if (d > 0) return `${d}d ${pad(h)}h ${pad(m)}m ${pad(s)}s`;
+    if (h > 0) return `${h}h ${pad(m)}m ${pad(s)}s`;
+    if (m > 0) return `${m}m ${pad(s)}s`;
+    return `${s}s`;
+  }
+
+  function refreshOne(pill) {
+    if (pill.dataset.cancelled === '1') {
+      pill.textContent = 'Cancelled';
+      pill.classList.remove('scheduled', 'live', 'ended');
+      pill.classList.add('cancelled');
+      return false; // no more updates needed
+    }
+
+    const start = parseInt(pill.dataset.start, 10) * 1000;
+    const end   = parseInt(pill.dataset.end,   10) * 1000;
+    const now   = Date.now();
+
+    if (now < start) {
+      pill.textContent = 'Starts in ' + formatRemaining(Math.floor((start - now) / 1000));
+      pill.classList.remove('live', 'ended', 'cancelled');
+      pill.classList.add('scheduled');
+      return true;
+    }
+    if (now <= end) {
+      pill.textContent = '🔴 Live · ' + formatRemaining(Math.floor((end - now) / 1000)) + ' left';
+      pill.classList.remove('scheduled', 'ended', 'cancelled');
+      pill.classList.add('live');
+      return true;
+    }
+    pill.textContent = 'Ended';
+    pill.classList.remove('scheduled', 'live', 'cancelled');
+    pill.classList.add('ended');
+    return false; // no more updates needed once ended
+  }
+
+  const pills = Array.from(document.querySelectorAll('.lc-countdown'));
+  if (pills.length === 0) return;
+
+  // Initial paint, then tick every second. Drop pills from the live set
+  // once they're terminal (Cancelled / Ended) to save work on long-open tabs.
+  let active = pills.filter(refreshOne);
+  setInterval(() => {
+    active = active.filter(refreshOne);
+  }, 1000);
+})();
+</script>
+
 </body>
 </html>
