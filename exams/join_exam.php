@@ -45,11 +45,14 @@ if ($sess_result->num_rows > 0) {
     $_SESSION['player_id'] = $conn->insert_id;
 
     $conn->close();
-    // Absolute URL: when the student arrives via the friendly /exam, /join, or /take-exam
-    // route, the URL bar is /exam (not /exams/join_exam.php) — a relative `Location:
-    // add_name.php` would resolve to /add_name.php and 404. Use APP_BASE_URL so the
-    // same code works on localhost (/Exam-mis/...) and Hostinger (/...).
-    header("Location: " . APP_BASE_URL . "/exams/add_name.php");
+    // Original flow (preserved from exams/index.php):
+    //   code → select_mode (mode + grade + stream) → add_name (individual)
+    //                                              ↳ waiting_room (group)
+    // Absolute URL is required because students often arrive via the friendly
+    // /exam route, where the URL bar is /exam — a relative `Location:` would
+    // resolve against / and 404. APP_BASE_URL keeps it portable across
+    // localhost (/Exam-mis/...) and Hostinger (/...).
+    header("Location: " . APP_BASE_URL . "/exams/select_mode.php");
     exit();
 }
 
@@ -79,7 +82,7 @@ if ($result->num_rows === 0) {
         $_SESSION['player_id'] = $conn->insert_id;
 
         $conn->close();
-        header("Location: " . APP_BASE_URL . "/exams/add_name.php");
+        header("Location: " . APP_BASE_URL . "/exams/select_mode.php");
         exit();
     }
 }
