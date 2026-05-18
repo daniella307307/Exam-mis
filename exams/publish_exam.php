@@ -108,7 +108,9 @@ try {
         
         // Map types
         if ($qtype === 'multiple') $qtype = 'mcq';
-        if ($qtype === 'short_answer') $qtype = 'essay';
+        // short_answer is kept as its own type now — it stores an expected
+        // answer (in options) and is auto-graded with a fuzzy/lenient match
+        // by submit_exam.php. Plain 'essay' stays manually-graded.
         
         $marks = intval($q['points'] ?? 1);
 
@@ -167,6 +169,26 @@ try {
                 throw new Exception('False option insert: ' . $stmt->error);
             }
             $stmt->close();
+        }
+        else if ($qtype === 'short_answer') {
+            // Store the expected answer text as a single is_correct=1 option row,
+            // matching the convention the editor loader already reads back from
+            // ($options[0]['option_text']). Multiple acceptable answers can be
+            // separated by '|' in the input — submit_exam.php splits on that
+            // and accepts any of them.
+            $expected = trim((string)($q['correctAnswer'] ?? ''));
+            if ($expected !== '') {
+                error_log("[PUBLISH] Adding short_answer expected: " . substr($expected, 0, 120));
+                $stmt = $conn->prepare("INSERT INTO options (question_id, option_text, is_correct) VALUES (?, ?, 1)");
+                $stmt->bind_param("is", $question_id, $expected);
+                if (!$stmt->execute()) {
+                    error_log("[PUBLISH] Short-answer expected insert FAILED: " . $stmt->error);
+                    throw new Exception('Short-answer expected answer insert: ' . $stmt->error);
+                }
+                $stmt->close();
+            } else {
+                error_log("[PUBLISH] short_answer question has no expected answer; will not auto-grade");
+            }
         }
         else if ($qtype === 'practical') {
             // Practical question - persist the Bunny URL (if provided) as an option so the viewer can show the link

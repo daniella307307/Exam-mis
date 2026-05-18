@@ -376,8 +376,9 @@ function loadQuestion() {
       grid.appendChild(btn);
     });
 
-  } else if (q.question_type === 'essay') {
-    // ESSAY question - render text area
+  } else if (q.question_type === 'essay' || q.question_type === 'short_answer') {
+    // ESSAY / SHORT-ANSWER question — same UI (text area). Grading differs
+    // server-side: short_answer is fuzzy auto-graded, essay is manual.
     const textarea = document.createElement('textarea');
     textarea.id = 'essayAnswer_' + q.question_id;
     textarea.placeholder = 'Type your answer here...';

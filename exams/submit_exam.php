@@ -2,6 +2,58 @@
 session_start();
 include("../db.php");
 
+/**
+ * Lenient short-answer match.
+ *
+ *   - Case insensitive ("HUB" == "hub")
+ *   - Punctuation stripped, whitespace collapsed
+ *   - Token order doesn't matter ("hub and motors" matches "motors and hub")
+ *   - Per-token typo tolerance via similar_text — singular/plural pairs like
+ *     hub/hubs or motor/motors score ~85–91%, comfortably above the 70% cutoff
+ *   - A question is correct overall when ≥70% of the expected tokens have a
+ *     ≥70%-similar counterpart in the student's answer
+ *   - Teachers can supply alternate answers separated by '|' ; any match wins
+ */
+function fuzzy_short_answer_match(string $expected, string $actual, int $threshold_pct = 70): bool {
+    $normalize_tokens = function (string $s): array {
+        $s = mb_strtolower(trim($s));
+        $s = preg_replace('/[^\p{L}\p{N}\s]+/u', ' ', $s); // strip punctuation, keep unicode letters/digits
+        $tokens = preg_split('/\s+/', $s, -1, PREG_SPLIT_NO_EMPTY);
+        return $tokens ?: [];
+    };
+
+    foreach (preg_split('/\s*\|\s*/', $expected) as $variant) {
+        $exp = $normalize_tokens($variant);
+        $act = $normalize_tokens($actual);
+        if (empty($exp) || empty($act)) continue;
+
+        // Fast path: order-insensitive exact match
+        $a = $exp; $b = $act; sort($a); sort($b);
+        if (implode(' ', $a) === implode(' ', $b)) return true;
+
+        // Greedy per-token best match (each student token claimed at most once)
+        $remaining = $act;
+        $matched   = 0;
+        foreach ($exp as $et) {
+            $best_i = -1;
+            $best_p = 0;
+            foreach ($remaining as $i => $at) {
+                similar_text($et, $at, $p);
+                if ($p > $best_p) { $best_p = $p; $best_i = $i; }
+            }
+            if ($best_p >= $threshold_pct) {
+                $matched++;
+                unset($remaining[$best_i]);
+                $remaining = array_values($remaining);
+            }
+        }
+
+        $coverage = ($matched / count($exp)) * 100;
+        if ($coverage >= $threshold_pct) return true;
+    }
+    return false;
+}
+
 // Fall back to POST hidden fields if the session expired during a long exam.
 $exam_id   = (int) ($_SESSION['exam_id']   ?? $_POST['eid'] ?? 0);
 $player_id = (int) ($_SESSION['player_id'] ?? $_POST['pid'] ?? 0);
@@ -92,7 +144,29 @@ foreach ($questions as $q) {
             }
         }
     }
-    // ============ ESSAY ============
+    // ============ SHORT ANSWER (lenient auto-grade) ============
+    else if ($qtype === 'short_answer') {
+        $chosen = trim($submitted_value);
+        if ($chosen !== '') {
+            // Fetch the teacher's expected answer (stored as the is_correct=1
+            // option by publish_exam.php). If absent, this short_answer was
+            // published before the expected-answer feature existed — fall
+            // through with 0 points so the teacher can grade it manually,
+            // exactly like an essay.
+            $ans_stmt = $conn->prepare("SELECT option_text FROM options WHERE question_id = ? AND is_correct = 1 LIMIT 1");
+            $ans_stmt->bind_param("i", $qid);
+            $ans_stmt->execute();
+            $row = $ans_stmt->get_result()->fetch_assoc();
+            $ans_stmt->close();
+
+            $expected = trim((string)($row['option_text'] ?? ''));
+            if ($expected !== '' && fuzzy_short_answer_match($expected, $chosen)) {
+                $is_correct = 1;
+                $points     = $marks;
+            }
+        }
+    }
+    // ============ ESSAY (manual grading) ============
     else if ($qtype === 'essay') {
         $chosen = trim($submitted_value);
         if (!empty($chosen)) {
