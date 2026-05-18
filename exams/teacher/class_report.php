@@ -118,9 +118,27 @@ if (!$exam) {
     die("Exam not found");
 }
 
-// Get all students who took this exam with their scores
-$students_stmt = $conn->prepare("
-    SELECT 
+// Filters
+$grade_filter  = trim($_GET['grade']  ?? '');
+$stream_filter = trim($_GET['stream'] ?? '');
+
+// Build dynamic WHERE so stats and rows always reflect the same filtered set
+$where  = "p.exam_id = ?";
+$types  = "ii"; // first 'i' = answers join exam_id, second 'i' = players exam_id
+$params = [$exam_id, $exam_id];
+if ($grade_filter !== '') {
+    $where  .= " AND p.grade = ?";
+    $types  .= "s";
+    $params[] = $grade_filter;
+}
+if ($stream_filter !== '') {
+    $where  .= " AND p.stream = ?";
+    $types  .= "s";
+    $params[] = $stream_filter;
+}
+
+$sql = "
+    SELECT
         p.player_id,
         p.nickname,
         p.grade,
@@ -131,11 +149,12 @@ $students_stmt = $conn->prepare("
         SUM(a.is_correct) as correct_answers
     FROM players p
     LEFT JOIN answers a ON p.player_id = a.player_id AND a.exam_id = ?
-    WHERE p.exam_id = ?
+    WHERE $where
     GROUP BY p.player_id, p.nickname, p.grade, p.school, p.stream, p.score
     ORDER BY p.score DESC
-");
-$students_stmt->bind_param("ii", $exam_id, $exam_id);
+";
+$students_stmt = $conn->prepare($sql);
+$students_stmt->bind_param($types, ...$params);
 $students_stmt->execute();
 $students_result = $students_stmt->get_result();
 $students = [];
@@ -150,15 +169,21 @@ $marks_stmt->execute();
 $marks_result = $marks_stmt->get_result();
 $total_marks = $marks_result->fetch_assoc()['total_marks'] ?? 0;
 
-// Calculate statistics
+// Calculate statistics on the filtered set so the cards match the table
 $pass_count = count(array_filter($students, fn($s) => ($s['score'] / max($total_marks, 1)) * 100 >= 50));
-$avg_score = count($students) > 0 ? array_sum(array_column($students, 'score')) / count($students) : 0;
+$avg_score  = count($students) > 0 ? array_sum(array_column($students, 'score')) / count($students) : 0;
 
-// Get filter
-$grade_filter = $_GET['grade'] ?? '';
-if (!empty($grade_filter)) {
-    $students = array_filter($students, fn($s) => $s['grade'] === $grade_filter);
-}
+// Distinct grades/streams across ALL participants in this exam (for the dropdowns —
+// independent of the current filter so the user can switch between them)
+$grades_stmt = $conn->prepare("SELECT DISTINCT grade FROM players WHERE exam_id = ? AND grade IS NOT NULL AND grade <> '' ORDER BY grade");
+$grades_stmt->bind_param("i", $exam_id);
+$grades_stmt->execute();
+$distinct_grades = $grades_stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+
+$streams_stmt = $conn->prepare("SELECT DISTINCT stream FROM players WHERE exam_id = ? AND stream IS NOT NULL AND stream <> '' ORDER BY stream");
+$streams_stmt->bind_param("i", $exam_id);
+$streams_stmt->execute();
+$distinct_streams = $streams_stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 ?>
 
 <style>
@@ -398,6 +423,35 @@ if (!empty($grade_filter)) {
     </div>
 </div>
 
+<form method="GET" class="filter-bar" style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-bottom:18px;">
+    <input type="hidden" name="exam_id" value="<?= (int)$exam_id ?>">
+
+    <label style="font-size:13px;color:var(--muted);">Grade:</label>
+    <select name="grade" style="padding:6px 10px;border-radius:6px;border:1px solid var(--border);background:rgba(255,255,255,.08);color:var(--text);">
+        <option value="">All grades</option>
+        <?php foreach ($distinct_grades as $g): ?>
+            <option value="<?= htmlspecialchars($g['grade']) ?>" <?= $grade_filter === $g['grade'] ? 'selected' : '' ?>>
+                <?= htmlspecialchars($g['grade']) ?>
+            </option>
+        <?php endforeach; ?>
+    </select>
+
+    <label style="font-size:13px;color:var(--muted);">Stream:</label>
+    <select name="stream" style="padding:6px 10px;border-radius:6px;border:1px solid var(--border);background:rgba(255,255,255,.08);color:var(--text);">
+        <option value="">All streams</option>
+        <?php foreach ($distinct_streams as $s): ?>
+            <option value="<?= htmlspecialchars($s['stream']) ?>" <?= $stream_filter === $s['stream'] ? 'selected' : '' ?>>
+                <?= htmlspecialchars($s['stream']) ?>
+            </option>
+        <?php endforeach; ?>
+    </select>
+
+    <button type="submit" class="export-btn" style="padding:6px 14px;">Apply</button>
+    <?php if ($grade_filter !== '' || $stream_filter !== ''): ?>
+        <a href="?exam_id=<?= (int)$exam_id ?>" style="font-size:13px;color:var(--muted);text-decoration:underline;">Clear filters</a>
+    <?php endif; ?>
+</form>
+
 <div class="results-table">
     <table>
         <thead>
@@ -405,15 +459,23 @@ if (!empty($grade_filter)) {
                 <th style="width: 40px;">Rank</th>
                 <th>Student Name</th>
                 <th>Grade</th>
+                <th>Stream</th>
                 <th>Score</th>
                 <th>Percentage</th>
                 <th>Status</th>
             </tr>
         </thead>
         <tbody>
-            <?php 
+            <?php if (empty($students)): ?>
+                <tr>
+                    <td colspan="7" style="text-align:center;padding:32px;color:var(--muted);">
+                        No students match the selected filters.
+                    </td>
+                </tr>
+            <?php else: ?>
+            <?php
             $rank = 1;
-            foreach ($students as $student): 
+            foreach ($students as $student):
                 $percentage = ($total_marks > 0) ? ($student['score'] / $total_marks) * 100 : 0;
                 $status = $percentage >= 50 ? 'pass' : 'fail';
             ?>
@@ -421,6 +483,7 @@ if (!empty($grade_filter)) {
                     <td class="rank"><?= $rank++ ?></td>
                     <td class="student-name"><?= htmlspecialchars($student['nickname']) ?></td>
                     <td><?= htmlspecialchars($student['grade'] ?? 'N/A') ?></td>
+                    <td><?= htmlspecialchars($student['stream'] ?? '') ?: '<span style="color:var(--muted);">—</span>' ?></td>
                     <td class="score"><?= $student['score'] ?>/<?= $total_marks ?></td>
                     <td class="percentage <?= $status ?>">
                         <?= round($percentage) ?>%
@@ -432,6 +495,7 @@ if (!empty($grade_filter)) {
                     </td>
                 </tr>
             <?php endforeach; ?>
+            <?php endif; ?>
         </tbody>
     </table>
 </div>

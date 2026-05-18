@@ -44,12 +44,11 @@ LEFT JOIN countries ON schools.country_ref= countries.id  WHERE  $action");
 
                     <div class="flex flex-1  flex-col md:flex-row lg:flex-row mx-2">
                         <div class="mb-2 border-solid border-gray-300 rounded border shadow-sm w-full">
-                            <div class="bg-gray-200 px-2 py-3 border-solid border-gray-200 border-b">
-                               Schools
-					<a href="Countries?STATUS=Active"><button class='bg-green-500 hover:bg-blue-800 text-white font-bold py-2 px-4 rounded'>Active</button></a>  
-                   <a href="Countries?STATUS=Inactive"><button class='bg-red-500 hover:bg-yellow-800 text-white font-bold py-2 px-4 rounded'>Inactive</button></a>  
-                           
-							
+                            <div class="bg-gray-200 px-2 py-3 border-solid border-gray-200 border-b flex flex-wrap items-center gap-2">
+                               <span class="mr-2">Schools</span>
+					<a href="Countries?STATUS=Active"><button class='bg-green-500 hover:bg-blue-800 text-white font-bold py-2 px-4 rounded'>Active</button></a>
+                   <a href="Countries?STATUS=Inactive"><button class='bg-red-500 hover:bg-yellow-800 text-white font-bold py-2 px-4 rounded'>Inactive</button></a>
+                   <a href="Add_new_school" class="ml-auto"><button class='bg-blue-600 hover:bg-blue-800 text-white font-bold py-2 px-4 rounded'>+ Add New School</button></a>
 							</div>
                             <div class="p-3">
                                 <table class="table-responsive w-full rounded">

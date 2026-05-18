@@ -30,6 +30,12 @@ RewriteEngine On
 Options -Indexes
 
 # ==================== Core Fixes ====================
+# 4b. Friendly short URLs for the student exam entry.
+#     /exam, /join, /take-exam all serve exams/join_exam.php without
+#     changing the address bar. Must come BEFORE the PHP-extension
+#     hiding rule below so it wins.
+RewriteRule ^(exam|join|take-exam)/?$ exams/join_exam.php [L]
+
 # 5. PHP extension hiding
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteCond %{REQUEST_FILENAME}\.php -f

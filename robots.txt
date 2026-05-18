@@ -1,0 +1,29 @@
+User-agent: *
+Allow: /
+Allow: /exam
+Allow: /join
+Allow: /take-exam
+Allow: /exams/join_exam.php
+Allow: /Signup.php
+
+# Block authenticated / heavy admin areas
+Disallow: /Auth/
+Disallow: /uploads/
+Disallow: /db_backup/
+Disallow: /exams/admin/
+Disallow: /exams/api/
+Disallow: /exams/teacher/
+Disallow: /exams/exam_creator_working.php
+Disallow: /exams/exam_report.php
+Disallow: /exams/exam_reports.php
+Disallow: /exams/question_report.php
+Disallow: /exams/edit_exam.php
+Disallow: /exams/delete_exam.php
+Disallow: /exams/publish_exam.php
+Disallow: /exams/start_exam.php
+Disallow: /exams/submit_exam.php
+Disallow: /exams/results.php
+Disallow: /exams/leaderboard.php
+Disallow: /NAVIGATION_TEST.php
+
+Sitemap: https://bluelackesadigital.com/sitemap.xml
