@@ -69,15 +69,21 @@ $estmt->execute();
 $exam = $estmt->get_result()->fetch_assoc();
 if (!$exam) die('Exam not found.');
 
-// Fetch every question that needs (or may need) a human grader: practicals are
-// always manual, essays are always manual, and short_answer falls here when the
-// fuzzy auto-grade didn't award full marks or when the teacher wants to
-// override. Ordered MCQ-then-text so practicals come first as before.
+// Fetch every question that needs (or may need) a human grader.
+// We invert the filter rather than enumerate types: anything that is NOT
+// a known auto-gradable type falls into manual grading. This catches
+// legacy hyphenated 'short-answer', missing/NULL types, and any future
+// type added without updating this page.
 $qstmt = $conn->prepare(
     "SELECT * FROM questions
        WHERE exam_id = ?
-         AND question_type IN ('practical', 'essay', 'short_answer')
-       ORDER BY FIELD(question_type, 'practical', 'short_answer', 'essay'), question_id"
+         AND (
+             question_type IS NULL
+             OR LOWER(REPLACE(question_type, '-', '_')) NOT IN ('mcq', 'multiple', 'true_false')
+         )
+       ORDER BY
+         FIELD(LOWER(REPLACE(question_type, '-', '_')), 'practical', 'short_answer', 'essay'),
+         question_id"
 );
 $qstmt->bind_param("i", $exam_id);
 $qstmt->execute();

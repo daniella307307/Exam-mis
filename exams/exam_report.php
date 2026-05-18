@@ -199,8 +199,12 @@ $distinct_streams = $streams_stmt->get_result()->fetch_all(MYSQLI_ASSOC);
             <div class="flex gap-3">
                 <a href="grade_practical.php?exam_id=<?= $exam_id ?>"
                 class="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white text-sm rounded-lg shadow">
-               🎓 Grade Practicals
+               🎓 Grade Open-Ended
                </a>
+                <button type="button" onclick="cleanupUnfinished(<?= (int)$exam_id ?>)"
+                        class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-sm rounded-lg shadow">
+                    🧹 Clean Unfinished
+                </button>
                 <a href="question_report.php?exam_id=<?= $exam_id ?>"
                    class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm rounded-lg shadow">
                     📊 Per-question report
@@ -215,6 +219,31 @@ $distinct_streams = $streams_stmt->get_result()->fetch_all(MYSQLI_ASSOC);
                 </a>
             </div>
         </div>
+
+        <script>
+            // Removes player rows that joined the exam but never submitted any
+            // answer (typical cause of duplicate empty/zero-score rows when a
+            // student re-clicks "Take Exam"). Group named members of REAL
+            // submissions are preserved — see cleanup_players.php for the
+            // exact rule.
+            async function cleanupUnfinished(examId) {
+                if (!confirm("This deletes players who joined but never submitted any answer.\n\nGroup teammates of real submissions stay safe.\n\nProceed?")) return;
+                try {
+                    const fd = new FormData();
+                    fd.append('exam_id', examId);
+                    const r = await fetch('cleanup_players.php', { method: 'POST', body: fd });
+                    const j = await r.json();
+                    if (j.success) {
+                        alert(j.message || ('Removed ' + j.removed));
+                        location.reload();
+                    } else {
+                        alert('Cleanup failed: ' + (j.error || 'unknown'));
+                    }
+                } catch (err) {
+                    alert('Cleanup error: ' + err.message);
+                }
+            }
+        </script>
 
         <!-- Exam Switcher -->
         <div class="mb-6">
