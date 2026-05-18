@@ -90,9 +90,15 @@ $total_score = 0;
 
 foreach ($questions as $q) {
     $qid = $q['question_id'];
-    $qtype = $q['question_type'];
+    // Normalize the type so legacy/hyphenated values still hit the right branch.
+    // Without this, a question stored as 'short-answer' (hyphen) or 'Short_Answer'
+    // would silently slip past every branch, leaving $chosen = '' and producing
+    // the "⚠️ No answer submitted" rows on the grading page even when the
+    // student actually typed an answer.
+    $qtype = strtolower(str_replace('-', '_', trim($q['question_type'] ?? '')));
+    if ($qtype === 'multiple') $qtype = 'mcq';
     $marks = (int) $q['marks'];
-    
+
     // Get submitted answer value
     $submitted_value = $_POST["q{$qid}"] ?? '';
 
@@ -181,6 +187,16 @@ foreach ($questions as $q) {
             $is_correct = 0; // Teacher reviews manually
             $points = 0;
         }
+    }
+    // ============ UNKNOWN / LEGACY TYPE — preserve text, manual grade ============
+    else {
+        // Don't lose the student's typing just because the type column has an
+        // unfamiliar value. Stash the raw input; grade_practical.php will pick
+        // it up because its filter accepts anything that isn't auto-gradable.
+        $chosen = trim($submitted_value);
+        $is_correct = 0;
+        $points = 0;
+        error_log("[SUBMIT] Unknown question_type '" . ($q['question_type'] ?? '') . "' for Q{$qid} — saved raw text for manual grading.");
     }
 
     $total_score += $points;

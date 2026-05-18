@@ -288,10 +288,13 @@ function loadQuestion() {
   const pct = (current / questions.length) * 100;
   document.getElementById('progressFill').style.width = pct + '%';
 
-  // Render based on question type
+  // Render based on question type. Normalize first so legacy / hyphenated /
+  // mixed-case values still hit the right branch (e.g. a question stored as
+  // "Short-Answer" used to fall into the MCQ else and render as a button).
+  const qType = String(q.question_type || '').toLowerCase().replace(/-/g, '_');
   const grid = document.getElementById('optionsGrid');
   grid.innerHTML = '';
-  if (q.question_type === 'practical') {
+  if (qType === 'practical') {
     // PRACTICAL - show PDF + text answer
     grid.style.gridTemplateColumns = '1fr'; // full width
 
@@ -350,7 +353,7 @@ function loadQuestion() {
 
     grid.appendChild(linkBox);
 
-} else if (q.question_type === 'true_false') {
+} else if (qType === 'true_false') {
     // TRUE/FALSE question - render as 2 buttons
     ['True', 'False'].forEach((text, i) => {
       const btn = document.createElement('button');
@@ -376,7 +379,7 @@ function loadQuestion() {
       grid.appendChild(btn);
     });
 
-  } else if (q.question_type === 'essay' || q.question_type === 'short_answer' || q.question_type === 'short-answer') {
+  } else if (qType === 'essay' || qType === 'short_answer') {
     // ESSAY / SHORT-ANSWER question — same UI (text area). Grading differs
     // server-side: short_answer is fuzzy auto-graded, essay is manual.
     // We also accept the hyphenated 'short-answer' as a paranoid safeguard
@@ -408,7 +411,7 @@ function loadQuestion() {
 
     grid.appendChild(textarea);
 
-  } else if (q.question_type === 'mcq' || q.question_type === 'multiple') {
+  } else if (qType === 'mcq' || qType === 'multiple') {
     // MCQ (multiple choice) - render as buttons.
     // IMPORTANT: only do this for explicitly multiple-choice questions.
     // The previous catch-all `else` here turned every short-answer question
@@ -453,7 +456,7 @@ function loadQuestion() {
     fallback.value = answers[q.question_id] ?? '';
     fallback.addEventListener('input', (e) => { answers[q.question_id] = e.target.value; });
     grid.appendChild(fallback);
-    console.warn('Unknown question_type, rendering text fallback:', q.question_type, q.question_id);
+    console.warn('Unknown question_type, rendering text fallback:', q.question_type, 'normalized:', qType, q.question_id);
   }
 
   // Button label
