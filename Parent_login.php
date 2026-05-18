@@ -57,9 +57,25 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <title>Parent Login | BLIS MIS</title>
+  <title>Parent Login — Track Your Child's ICRPplus Results | BLIS MIS</title>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+  <!-- SEO -->
+  <meta name="description" content="Parent login for ICRPplus Exam. Sign in to view your child's exam results, performance reports, and certificates from their ICRPplus school.">
+  <meta name="keywords" content="ICRPplus parent login, ICRP plus parent, parent portal, child exam results, parent BLIS MIS, ICRPplus Tanzania parent">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://bluelackesadigital.com/Parent_login.php">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="ICRPplus Exam">
+  <meta property="og:title" content="Parent Login — ICRPplus Exam">
+  <meta property="og:description" content="Sign in to track your child's ICRPplus exam results and progress.">
+  <meta property="og:url" content="https://bluelackesadigital.com/Parent_login.php">
+  <meta property="og:image" content="https://bluelackesadigital.com/dist/images/Microprocessor.jpg">
+  <meta name="twitter:card" content="summary_large_image">
+
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
     :root {

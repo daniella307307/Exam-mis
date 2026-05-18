@@ -92,7 +92,53 @@ if (isset($conn) && $conn instanceof mysqli) { $conn->close(); }
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Join Exam</title>
+
+    <title>Take Your ICRPplus Exam Online — Enter Exam Code | BLIS MIS</title>
+
+    <!-- SEO -->
+    <meta name="description" content="Take your ICRPplus exam online. Students enter a 6-digit exam code to start. Instant scoring, certificates and per-grade reports for ICRPplus schools.">
+    <meta name="keywords" content="ICRPplus exam, ICRP plus exam, take exam online, enter exam code, online exam, school exam, ICRPplus Tanzania, BLIS MIS, online exam platform">
+    <meta name="robots" content="index, follow">
+    <meta name="author" content="BLIS MIS">
+
+    <!-- Canonical: point both /exam and /exams/join_exam.php at the short URL so Google merges them -->
+    <link rel="canonical" href="https://bluelackesadigital.com/exam">
+
+    <!-- Open Graph (WhatsApp / Facebook / LinkedIn link previews) -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="ICRPplus Exam">
+    <meta property="og:title" content="Take Your ICRPplus Exam Online — Enter Exam Code">
+    <meta property="og:description" content="Got an exam code? Enter it here to take your ICRPplus exam online — instant results and certificates.">
+    <meta property="og:url" content="https://bluelackesadigital.com/exam">
+    <meta property="og:image" content="https://bluelackesadigital.com/dist/images/Microprocessor.jpg">
+
+    <!-- Twitter card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Take Your ICRPplus Exam Online">
+    <meta name="twitter:description" content="Enter your ICRPplus exam code to start the test. Online exams with instant scoring.">
+    <meta name="twitter:image" content="https://bluelackesadigital.com/dist/images/Microprocessor.jpg">
+
+    <!-- JSON-LD: tells Google this page is an exam entry / assessment service -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": "Take Your ICRPplus Exam Online",
+      "url": "https://bluelackesadigital.com/exam",
+      "description": "Online ICRPplus exam entry page. Students enter an exam code provided by their instructor to start the exam.",
+      "isPartOf": {
+        "@type": "WebSite",
+        "name": "ICRPplus Exam",
+        "url": "https://bluelackesadigital.com/"
+      },
+      "potentialAction": {
+        "@type": "Action",
+        "name": "Enter exam code",
+        "target": "https://bluelackesadigital.com/exam"
+      }
+    }
+    </script>
+
     <style>
         * {
             margin: 0;
@@ -245,8 +291,8 @@ if (isset($conn) && $conn instanceof mysqli) { $conn->close(); }
     <?php $back_to = 'index.php'; $back_label = 'Home'; include('nav_back.php'); ?>
     <div class="container">
         <div class="header">
-            <h1>📝 Join Exam</h1>
-            <p>Enter your exam code to get started</p>
+            <h1>📝 Take Your ICRPplus Exam</h1>
+            <p>Enter the exam code your instructor gave you to start the online exam</p>
         </div>
         
         <?php if ($error): ?>

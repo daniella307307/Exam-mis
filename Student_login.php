@@ -76,9 +76,25 @@ $csrf = auth_csrf_token();
 <!doctype html>
 <html lang="en">
 <head>
-  <title>Student Login | BLIS MIS</title>
+  <title>Student Login — ICRPplus Exam | BLIS MIS</title>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+  <!-- SEO -->
+  <meta name="description" content="Student login for ICRPplus Exam. Sign in to access your online exams, view results, and download certificates from ICRPplus schools.">
+  <meta name="keywords" content="ICRPplus student login, ICRP plus login, student exam login, online exam login, ICRPplus Tanzania, BLIS MIS student">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://bluelackesadigital.com/Student_login.php">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="ICRPplus Exam">
+  <meta property="og:title" content="Student Login — ICRPplus Exam">
+  <meta property="og:description" content="Sign in to your ICRPplus Exam student account to take exams and view results.">
+  <meta property="og:url" content="https://bluelackesadigital.com/Student_login.php">
+  <meta property="og:image" content="https://bluelackesadigital.com/dist/images/Microprocessor.jpg">
+  <meta name="twitter:card" content="summary_large_image">
+
   <link rel="stylesheet" href="./dist/styles.css">
   <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.13/css/all.css">
   <style>.login{background:url('./dist/images/Microprocessor.jpg')}</style>

@@ -221,9 +221,25 @@ $registered = ($flash !== null && $flash['type'] === 'success');
 <!doctype html>
 <html lang="en">
 <head>
-  <title>Register | BLIS MIS</title>
+  <title>Sign Up — Create Your ICRPplus Exam Account | BLIS MIS</title>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+  <!-- SEO -->
+  <meta name="description" content="Create a free ICRPplus Exam account. Register as a school facilitator or student to take online exams, view results, and download certificates.">
+  <meta name="keywords" content="ICRPplus signup, ICRPplus register, ICRP plus account, create exam account, ICRPplus Tanzania, BLIS MIS register, school exam signup">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://bluelackesadigital.com/Signup.php">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="ICRPplus Exam">
+  <meta property="og:title" content="Sign Up — Create Your ICRPplus Exam Account">
+  <meta property="og:description" content="Register on ICRPplus Exam to take online exams, view results, and earn certificates.">
+  <meta property="og:url" content="https://bluelackesadigital.com/Signup.php">
+  <meta property="og:image" content="https://bluelackesadigital.com/dist/images/Microprocessor.jpg">
+  <meta name="twitter:card" content="summary_large_image">
+
   <link rel="stylesheet" href="./dist/styles.css">
   <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.13/css/all.css">
   <style>.login{background:url('./dist/images/Microprocessor.jpg')}</style>
