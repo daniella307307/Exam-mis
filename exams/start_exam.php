@@ -376,9 +376,11 @@ function loadQuestion() {
       grid.appendChild(btn);
     });
 
-  } else if (q.question_type === 'essay' || q.question_type === 'short_answer') {
+  } else if (q.question_type === 'essay' || q.question_type === 'short_answer' || q.question_type === 'short-answer') {
     // ESSAY / SHORT-ANSWER question — same UI (text area). Grading differs
     // server-side: short_answer is fuzzy auto-graded, essay is manual.
+    // We also accept the hyphenated 'short-answer' as a paranoid safeguard
+    // in case a future write path stores the un-normalized type.
     const textarea = document.createElement('textarea');
     textarea.id = 'essayAnswer_' + q.question_id;
     textarea.placeholder = 'Type your answer here...';
@@ -406,8 +408,12 @@ function loadQuestion() {
 
     grid.appendChild(textarea);
 
-  } else {
-    // MCQ (multiple choice) - render as buttons
+  } else if (q.question_type === 'mcq' || q.question_type === 'multiple') {
+    // MCQ (multiple choice) - render as buttons.
+    // IMPORTANT: only do this for explicitly multiple-choice questions.
+    // The previous catch-all `else` here turned every short-answer question
+    // (which stores its expected answer as a single options row) into a
+    // single clickable button — students saw the answer as the only option.
     q.options.forEach((opt, i) => {
       const btn = document.createElement('button');
       btn.className = 'option';
@@ -431,6 +437,23 @@ function loadQuestion() {
       btn.addEventListener('click', () => selectOption(btn, q.question_id, opt.option_id));
       grid.appendChild(btn);
     });
+  } else {
+    // Unknown / legacy question type — fall back to a free-text input rather
+    // than showing the raw expected answer as a clickable button.
+    const fallback = document.createElement('textarea');
+    fallback.id = 'essayAnswer_' + q.question_id;
+    fallback.placeholder = 'Type your answer here...';
+    fallback.style.cssText = `
+      width:100%; min-height:170px; padding:16px;
+      border-radius:12px; border:2px solid rgba(168,85,247,.25);
+      background:rgba(15,15,40,.55); color:#f1f5f9;
+      font-size:15px; font-family:inherit; font-weight:600;
+      outline:none; resize:vertical;
+    `;
+    fallback.value = answers[q.question_id] ?? '';
+    fallback.addEventListener('input', (e) => { answers[q.question_id] = e.target.value; });
+    grid.appendChild(fallback);
+    console.warn('Unknown question_type, rendering text fallback:', q.question_type, q.question_id);
   }
 
   // Button label

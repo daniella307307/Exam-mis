@@ -35,6 +35,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     $upd->bind_param("iii", $new_score, $player_id, $exam_id);
     $upd->execute();
 
+    // Group propagation: if the graded player is a group placeholder, mirror
+    // the new score onto every teammate (same exam_id + group_nbr) so the
+    // teacher's manual grade flows to the named members too — otherwise they
+    // stay stuck on the auto-graded value while the placeholder jumps up.
+    $gn_stmt = $conn->prepare("SELECT group_nbr FROM players WHERE player_id = ? LIMIT 1");
+    $gn_stmt->bind_param("i", $player_id);
+    $gn_stmt->execute();
+    $gn_row    = $gn_stmt->get_result()->fetch_assoc();
+    $gn_stmt->close();
+    $group_nbr = (int)($gn_row['group_nbr'] ?? 0);
+    if ($group_nbr > 0) {
+        $g_upd = $conn->prepare("UPDATE players SET score = ? WHERE exam_id = ? AND group_nbr = ?");
+        $g_upd->bind_param("iii", $new_score, $exam_id, $group_nbr);
+        $g_upd->execute();
+        $g_upd->close();
+    }
+
     echo json_encode(['success' => true, 'new_score' => $new_score, 'points' => $points]);
     exit;
 }
@@ -52,13 +69,21 @@ $estmt->execute();
 $exam = $estmt->get_result()->fetch_assoc();
 if (!$exam) die('Exam not found.');
 
-// Fetch all practical questions for this exam
-$qstmt = $conn->prepare("SELECT * FROM questions WHERE exam_id = ? AND question_type = 'practical'");
+// Fetch every question that needs (or may need) a human grader: practicals are
+// always manual, essays are always manual, and short_answer falls here when the
+// fuzzy auto-grade didn't award full marks or when the teacher wants to
+// override. Ordered MCQ-then-text so practicals come first as before.
+$qstmt = $conn->prepare(
+    "SELECT * FROM questions
+       WHERE exam_id = ?
+         AND question_type IN ('practical', 'essay', 'short_answer')
+       ORDER BY FIELD(question_type, 'practical', 'short_answer', 'essay'), question_id"
+);
 $qstmt->bind_param("i", $exam_id);
 $qstmt->execute();
 $practical_questions = $qstmt->get_result()->fetch_all(MYSQLI_ASSOC);
 
-// Fetch all players with their practical answers
+// Fetch all players with their open-ended answers
 $data = [];
 foreach ($practical_questions as $q) {
     $qid = $q['question_id'];
@@ -80,7 +105,7 @@ foreach ($practical_questions as $q) {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Grade Practical - <?= htmlspecialchars($exam['title']) ?></title>
+<title>Grade Open-Ended Answers - <?= htmlspecialchars($exam['title']) ?></title>
 <link rel="stylesheet" href="../dist/styles.css">
 <style>
     .grade-card { background:rgba(255,255,255,.05); border-radius:14px; border:1px solid rgba(168,85,247,.3); padding:20px; margin-bottom:16px; backdrop-filter:blur(16px); color:#f1f5f9; }
@@ -120,11 +145,12 @@ foreach ($practical_questions as $q) {
         <div class="flex justify-between items-center mb-6">
             <div>
                 <h1 class="text-xl font-semibold" style="color:#fff">
-                    🎓 Grade Practical Submissions
+                    🎓 Grade Open-Ended Answers
                 </h1>
                 <p class="text-sm" style="color:#cbd5e1">
-                    <?= htmlspecialchars($exam['title']) ?> &nbsp;·&nbsp;
-                    Grade: <?= htmlspecialchars($exam['grade']) ?>
+                    Practical, short-answer & essay submissions for
+                    <strong><?= htmlspecialchars($exam['title']) ?></strong>
+                    &nbsp;·&nbsp; Grade: <?= htmlspecialchars($exam['grade']) ?>
                 </p>
             </div>
             <a href="exam_report.php?exam_id=<?= $exam_id ?>" 
@@ -135,7 +161,7 @@ foreach ($practical_questions as $q) {
 
         <?php if (empty($practical_questions)): ?>
             <div class="bg-white rounded-xl p-8 text-center text-gray-400">
-                <p class="text-lg">No practical questions found for this exam.</p>
+                <p class="text-lg">No open-ended questions (practical, short-answer or essay) found for this exam.</p>
             </div>
         <?php else: ?>
             <?php foreach ($data as $section):
