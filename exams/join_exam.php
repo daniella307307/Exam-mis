@@ -1,12 +1,55 @@
 <?php
 session_start();
 include("../db.php");
+require_once(__DIR__ . '/lib/exam_settings.php');
+ensure_exam_setting_columns($conn);
 
 // Clear old exam session data when entering join_exam
 unset($_SESSION['exam_id']);
 unset($_SESSION['exam_title']);
 unset($_SESSION['player_id']);
 unset($_SESSION['nickname']);
+
+/**
+ * If the teacher has disabled replay AND this browser already submitted
+ * the target exam, send the student to their existing results instead of
+ * letting them start a new attempt. The cookie is a soft identity hint;
+ * the server's is_completed flag is the source of truth, so a teacher who
+ * runs "Reset attempt" on a player flips that flag and the student gets a
+ * clean re-entry on next try.
+ *
+ * Returns true if the request was handled (response sent + exit advised).
+ */
+function maybe_block_replay(mysqli $conn, int $exam_id): bool {
+    $cookie_key = 'exam_done_' . $exam_id;
+    if (!isset($_COOKIE[$cookie_key])) return false;
+
+    $prior_pid = (int)$_COOKIE[$cookie_key];
+    if ($prior_pid <= 0) return false;
+
+    $stmt = $conn->prepare(
+        "SELECT e.allow_replay, p.is_completed
+           FROM exams e
+           LEFT JOIN players p
+                  ON p.player_id = ? AND p.exam_id = e.exam_id
+          WHERE e.exam_id = ? LIMIT 1"
+    );
+    $stmt->bind_param('ii', $prior_pid, $exam_id);
+    $stmt->execute();
+    $row = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+
+    if (!$row) return false;
+    if ((int)$row['allow_replay'] !== 0) return false;  // teacher allows replay
+    if ((int)$row['is_completed'] !== 1) return false;  // never submitted (or teacher reset them)
+
+    // Block: rehydrate session to the prior player and redirect to results.
+    $_SESSION['exam_id']   = $exam_id;
+    $_SESSION['player_id'] = $prior_pid;
+    $conn->close();
+    header('Location: ' . APP_BASE_URL . '/exams/results.php');
+    return true;
+}
 
 $error = '';
 $exam_code = '';
@@ -31,13 +74,16 @@ $sess_result = $sess_stmt->get_result();
 
 if ($sess_result->num_rows > 0) {
     $session = $sess_result->fetch_assoc();
+    $exam_id_val = (int) $session['exam_id'];
+
+    if (maybe_block_replay($conn, $exam_id_val)) exit();
+
     $_SESSION['exam_id'] = $session['exam_id'];
     $_SESSION['session_id'] = $session['session_id'];
     $_SESSION['session_label'] = $session['session_label'];
     $_SESSION['exam_title'] = $session['title'];
 
     $placeholder = '';
-    $exam_id_val = (int) $session['exam_id'];
     $session_id_val = (int) $session['session_id'];
     $ins = $conn->prepare("INSERT INTO players (exam_id, nickname, session_id) VALUES (?, ?, ?)");
     $ins->bind_param("isi", $exam_id_val, $placeholder, $session_id_val);
@@ -70,12 +116,15 @@ if ($result->num_rows === 0) {
     if ($exam['status'] !== 'active') {
         $error = 'This exam is not currently available.';
     } else {
+        $exam_id_val = (int) $exam['exam_id'];
+
+        if (maybe_block_replay($conn, $exam_id_val)) exit();
+
         $_SESSION['exam_id'] = $exam['exam_id'];
         $_SESSION['session_id'] = null;
         $_SESSION['exam_title'] = $exam['title'];
 
         $placeholder = '';
-        $exam_id_val = (int) $exam['exam_id'];
         $ins = $conn->prepare("INSERT INTO players (exam_id, nickname) VALUES (?, ?)");
         $ins->bind_param("is", $exam_id_val, $placeholder);
         $ins->execute();

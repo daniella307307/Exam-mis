@@ -23,6 +23,13 @@ $_SESSION['player_id'] = $player_id;
 
 $exam = $conn->query("SELECT title FROM exams WHERE exam_id=$exam_id")->fetch_assoc();
 
+// Teacher-controlled visibility: when the per-exam "Show answers to student"
+// permission is off, students see their score and rank but not the
+// per-question breakdown. Stops the first finishers from leaking answers
+// to classmates still mid-exam.
+require_once(__DIR__ . '/lib/exam_settings.php');
+$show_answers_to_student = (int)exam_get_setting($conn, $exam_id, 'show_answers_to_student', 1);
+
 $res = $conn->query(
     "SELECT nickname, score, player_id FROM players
      WHERE exam_id=$exam_id ORDER BY score DESC LIMIT 50"
@@ -216,7 +223,7 @@ h1.page-title{font-size:clamp(20px,4vw,28px);font-weight:900;text-align:center;m
 <?php endforeach; ?>
 </div>
 
-<?php if ($answers): ?>
+<?php if ($answers && $show_answers_to_student): ?>
 <div class="section-title">Your answers</div>
 <div class="breakdown">
 <?php foreach ($answers as $a):
@@ -230,6 +237,11 @@ h1.page-title{font-size:clamp(20px,4vw,28px);font-weight:900;text-align:center;m
     </div>
   </div>
 <?php endforeach; ?>
+</div>
+<?php elseif ($answers && !$show_answers_to_student): ?>
+<div class="section-title">Your answers</div>
+<div class="breakdown" style="padding:24px;background:rgba(124,58,237,.08);border:1px solid rgba(168,85,247,.3);border-radius:12px;text-align:center;color:#cbd5e1;">
+    🔒 Your teacher has hidden the per-question breakdown for this exam.
 </div>
 <?php endif; ?>
 

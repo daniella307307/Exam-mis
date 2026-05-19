@@ -227,10 +227,29 @@ foreach ($questions as $q) {
     }
 }
 
-// Update player score
-$upd = $conn->prepare("UPDATE players SET score = ? WHERE player_id = ?");
+// Update player score + completion flag (used by join_exam.php to enforce
+// the per-exam "Allow replay" permission). Lazy-migrate the column first.
+require_once(__DIR__ . '/lib/exam_settings.php');
+ensure_exam_setting_columns($conn);
+
+$upd = $conn->prepare("UPDATE players SET score = ?, is_completed = 1 WHERE player_id = ?");
 $upd->bind_param("ii", $total_score, $player_id);
 $upd->execute();
+
+// Drop a long-lived cookie linking this browser to the player record so a
+// later re-entry attempt can be matched up server-side. The server checks
+// `is_completed` on that player to decide whether to honor the replay
+// block — teacher's "Reset attempt" flips the flag back to 0, so the
+// cookie itself is just an identity hint, not the source of truth.
+setcookie(
+    'exam_done_' . (int)$exam_id,
+    (string)(int)$player_id,
+    time() + 30 * 86400,   // 30 days
+    '/',
+    '',
+    !empty($_SERVER['HTTPS']),  // Secure on prod (HTTPS), permissive locally
+    true                         // HttpOnly — JS can't read it
+);
 
 // Group propagation: in group mode, only the placeholder (the row whose
 // player_id sits in the session) actually answered questions; the other group

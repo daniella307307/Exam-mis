@@ -1,6 +1,7 @@
 <?php
 require_once('../db_connection.php');
 require_once(__DIR__ . '/lib/exam_acl.php');
+require_once(__DIR__ . '/lib/exam_settings.php');
 
 $acl = exam_acl_context($conn);
 if (!$acl['user_id']) {
@@ -304,6 +305,102 @@ $distinct_streams = $streams_stmt->get_result()->fetch_all(MYSQLI_ASSOC);
             <?php endif; ?>
         </div>
 
+        <!-- Per-exam permission toggles. Click to flip; saved via AJAX. -->
+        <?php
+            $perm_allow_replay   = (int)exam_get_setting($conn, $exam_id, 'allow_replay', 1);
+            $perm_show_answers   = (int)exam_get_setting($conn, $exam_id, 'show_answers_to_student', 1);
+        ?>
+        <div class="exam-perms mb-6" style="background:rgba(255,255,255,.05);border:1px solid rgba(168,85,247,.3);border-radius:12px;padding:14px 18px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;">
+            <span style="color:#cbd5e1;font-size:12px;font-weight:800;letter-spacing:1px;text-transform:uppercase;">🛡️ Permissions</span>
+
+            <button type="button"
+                    class="perm-pill <?= $perm_allow_replay ? 'on' : 'off' ?>"
+                    data-key="allow_replay"
+                    data-exam="<?= (int)$exam_id ?>"
+                    data-value="<?= $perm_allow_replay ?>"
+                    title="When OFF, a student who has already submitted this exam is redirected to their existing results instead of getting a fresh attempt."
+                    style="cursor:pointer;border:none;padding:7px 14px;border-radius:99px;font-weight:700;font-size:13px;letter-spacing:.3px;">
+                🔁 Allow retake:
+                <strong class="perm-state"><?= $perm_allow_replay ? 'ON' : 'OFF' ?></strong>
+            </button>
+
+            <button type="button"
+                    class="perm-pill <?= $perm_show_answers ? 'on' : 'off' ?>"
+                    data-key="show_answers_to_student"
+                    data-exam="<?= (int)$exam_id ?>"
+                    data-value="<?= $perm_show_answers ?>"
+                    title="When OFF, students only see their score and rank — not the per-question breakdown. Useful so the first finishers can't share answers with classmates still in the exam."
+                    style="cursor:pointer;border:none;padding:7px 14px;border-radius:99px;font-weight:700;font-size:13px;letter-spacing:.3px;">
+                👁️ Show answers to student:
+                <strong class="perm-state"><?= $perm_show_answers ? 'ON' : 'OFF' ?></strong>
+            </button>
+
+            <span style="color:#94a3b8;font-size:12px;margin-left:auto;">Click a pill to toggle. Saved instantly.</span>
+        </div>
+
+        <style>
+            .perm-pill.on  { background:rgba(34,197,94,.18); color:#86efac; border:1px solid rgba(34,197,94,.45) !important; }
+            .perm-pill.off { background:rgba(239,68,68,.18); color:#fca5a5; border:1px solid rgba(239,68,68,.45) !important; }
+            .perm-pill:hover { transform:translateY(-1px); box-shadow:0 4px 12px rgba(0,0,0,.2); }
+            .perm-pill:disabled { opacity:.5; cursor:wait; }
+        </style>
+
+        <script>
+        // Toggle a per-exam permission via AJAX. Falls back to a full reload
+        // if the server reports trouble, so the user is never confused about
+        // the current state.
+        document.querySelectorAll('.perm-pill').forEach((btn) => {
+            btn.addEventListener('click', async () => {
+                if (btn.disabled) return;
+                const examId  = parseInt(btn.dataset.exam, 10);
+                const key     = btn.dataset.key;
+                const current = parseInt(btn.dataset.value, 10) ? 1 : 0;
+                const next    = current ? 0 : 1;
+
+                btn.disabled = true;
+                btn.querySelector('.perm-state').textContent = '…';
+                try {
+                    const fd = new FormData();
+                    fd.append('exam_id', examId);
+                    fd.append('key', key);
+                    fd.append('value', next);
+                    const r = await fetch('exam_settings_save.php', { method: 'POST', body: fd });
+                    const j = await r.json();
+                    if (!j.success) throw new Error(j.error || 'save failed');
+                    btn.dataset.value = next;
+                    btn.classList.toggle('on',  next === 1);
+                    btn.classList.toggle('off', next === 0);
+                    btn.querySelector('.perm-state').textContent = next ? 'ON' : 'OFF';
+                } catch (err) {
+                    alert('Could not save: ' + err.message);
+                    btn.querySelector('.perm-state').textContent = current ? 'ON' : 'OFF';
+                } finally {
+                    btn.disabled = false;
+                }
+            });
+        });
+
+        // Per-row Reset attempt (clears a player's answers + score so they can retake).
+        async function resetPlayer(examId, playerId, studentName) {
+            if (!confirm(`Reset ${studentName || 'this student'}'s attempt?\n\nTheir answers will be deleted and score zeroed. They will be able to retake this exam even if "Allow retake" is OFF.`)) return;
+            try {
+                const fd = new FormData();
+                fd.append('exam_id', examId);
+                fd.append('player_id', playerId);
+                const r = await fetch('reset_player.php', { method: 'POST', body: fd });
+                const j = await r.json();
+                if (j.success) {
+                    alert(j.message || 'Attempt cleared.');
+                    location.reload();
+                } else {
+                    alert('Reset failed: ' + (j.error || 'unknown'));
+                }
+            } catch (err) {
+                alert('Reset error: ' + err.message);
+            }
+        }
+        </script>
+
         <!-- Filters -->
         <form method="GET" class="flex flex-wrap gap-3 items-center mb-5">
             <input type="hidden" name="exam_id" value="<?= $exam_id ?>">
@@ -397,6 +494,7 @@ $distinct_streams = $streams_stmt->get_result()->fetch_all(MYSQLI_ASSOC);
                             <th class="px-6 py-3">Stream</th>
                             <th class="px-6 py-3">School</th>
                             <th class="px-6 py-3">Result</th>
+                            <th class="px-6 py-3">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -434,6 +532,15 @@ $distinct_streams = $streams_stmt->get_result()->fetch_all(MYSQLI_ASSOC);
                                         ✗ Fail
                                     </span>
                                 <?php endif; ?>
+                            </td>
+                            <td class="px-6 py-3">
+                                <button type="button"
+                                        onclick="resetPlayer(<?= (int)$exam_id ?>, <?= (int)$row['player_id'] ?>, <?= json_encode($row['nickname'] ?: 'this student') ?>)"
+                                        class="text-xs font-bold px-3 py-1 rounded"
+                                        style="background:rgba(245,158,11,.18);color:#fde68a;border:1px solid rgba(245,158,11,.45);"
+                                        title="Clear this student's answers + score so they can retake (overrides the Allow-Retake setting)">
+                                    🔄 Reset
+                                </button>
                             </td>
                         </tr>
                     <?php endforeach; ?>
