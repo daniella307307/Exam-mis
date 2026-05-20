@@ -51,6 +51,71 @@ function maybe_block_replay(mysqli $conn, int $exam_id): bool {
     return true;
 }
 
+/**
+ * When the same browser comes back to the join page with an `exam_attempt_<id>`
+ * cookie from a previous *un-submitted* attempt, delete that abandoned
+ * placeholder (and any group teammates linked by group_nbr). This is what
+ * eliminates the duplicated-with-0% noise on Grade 7C-style reports: every
+ * time the student bailed mid-setup and re-entered, a fresh ghost set was
+ * accumulating. With this, only the latest attempt survives until they
+ * actually submit.
+ *
+ * Safety rails:
+ *   - Only acts if the previous attempt has ZERO rows in `answers` (so we
+ *     never wipe a real submission or a mid-exam attempt with partial saves).
+ *   - Scoped strictly to (exam_id, prior player_id from cookie).
+ *   - Group cleanup uses group_nbr to also remove orphaned teammate rows.
+ */
+function cleanup_abandoned_attempt(mysqli $conn, int $exam_id): void {
+    $cookie_key = 'exam_attempt_' . $exam_id;
+    if (!isset($_COOKIE[$cookie_key])) return;
+
+    $prev_pid = (int)$_COOKIE[$cookie_key];
+    if ($prev_pid <= 0) return;
+
+    // If they have any saved answer, they're mid-exam or done. Hands off.
+    $ans_chk = $conn->prepare("SELECT 1 FROM answers WHERE player_id = ? AND exam_id = ? LIMIT 1");
+    $ans_chk->bind_param('ii', $prev_pid, $exam_id);
+    $ans_chk->execute();
+    $has_answers = (bool)$ans_chk->get_result()->fetch_row();
+    $ans_chk->close();
+    if ($has_answers) return;
+
+    // Find the group teammates (if any) so the whole abandoned set goes.
+    $gn_stmt = $conn->prepare("SELECT group_nbr FROM players WHERE player_id = ? AND exam_id = ? LIMIT 1");
+    $gn_stmt->bind_param('ii', $prev_pid, $exam_id);
+    $gn_stmt->execute();
+    $gn_row = $gn_stmt->get_result()->fetch_assoc();
+    $gn_stmt->close();
+    $gn = (int)($gn_row['group_nbr'] ?? 0);
+
+    if ($gn > 0) {
+        $del = $conn->prepare("DELETE FROM players WHERE exam_id = ? AND group_nbr = ?");
+        $del->bind_param('ii', $exam_id, $gn);
+    } else {
+        $del = $conn->prepare("DELETE FROM players WHERE player_id = ? AND exam_id = ?");
+        $del->bind_param('ii', $prev_pid, $exam_id);
+    }
+    $del->execute();
+    $del->close();
+}
+
+/** Drop a cookie that ties this browser to the freshly-created attempt so the
+ *  next re-entry can detect and clean it up if it gets abandoned. Lives 24h
+ *  — long enough to span any plausible exam session, short enough to fade
+ *  on its own if a student moves on. */
+function mark_attempt_cookie(int $exam_id, int $player_id): void {
+    setcookie(
+        'exam_attempt_' . $exam_id,
+        (string)$player_id,
+        time() + 24 * 3600,
+        '/',
+        '',
+        !empty($_SERVER['HTTPS']),
+        true
+    );
+}
+
 $error = '';
 $exam_code = '';
 
@@ -77,6 +142,7 @@ if ($sess_result->num_rows > 0) {
     $exam_id_val = (int) $session['exam_id'];
 
     if (maybe_block_replay($conn, $exam_id_val)) exit();
+    cleanup_abandoned_attempt($conn, $exam_id_val);
 
     $_SESSION['exam_id'] = $session['exam_id'];
     $_SESSION['session_id'] = $session['session_id'];
@@ -89,6 +155,7 @@ if ($sess_result->num_rows > 0) {
     $ins->bind_param("isi", $exam_id_val, $placeholder, $session_id_val);
     $ins->execute();
     $_SESSION['player_id'] = $conn->insert_id;
+    mark_attempt_cookie($exam_id_val, $_SESSION['player_id']);
 
     $conn->close();
     // Original flow (preserved from exams/index.php):
@@ -119,6 +186,7 @@ if ($result->num_rows === 0) {
         $exam_id_val = (int) $exam['exam_id'];
 
         if (maybe_block_replay($conn, $exam_id_val)) exit();
+        cleanup_abandoned_attempt($conn, $exam_id_val);
 
         $_SESSION['exam_id'] = $exam['exam_id'];
         $_SESSION['session_id'] = null;
@@ -129,6 +197,7 @@ if ($result->num_rows === 0) {
         $ins->bind_param("is", $exam_id_val, $placeholder);
         $ins->execute();
         $_SESSION['player_id'] = $conn->insert_id;
+        mark_attempt_cookie($exam_id_val, $_SESSION['player_id']);
 
         $conn->close();
         header("Location: " . APP_BASE_URL . "/exams/select_mode.php");

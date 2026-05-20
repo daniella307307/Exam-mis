@@ -27,49 +27,61 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_group'])) {
     $membersArray = array_map('trim', $membersArray); // clean each name
     $membersArray = array_filter($membersArray); // remove empty ones
 
-$members = implode(", ", $membersArray); // convert to string
+$members = implode(", ", $membersArray); // legacy string (kept untouched)
     // Make sure your players table has: mode VARCHAR(20), school VARCHAR(255),
     // grade VARCHAR(100), group_nbr int
     //generate a unique group number
     $group_nbr = mt_rand(1000,9999);
 
-    // Link the placeholder player (created by join_exam.php when the code was
-    // entered) to this group, and finally save the grade/stream that were
-    // sitting only in $_SESSION. Without this link, submit_exam.php would
-    // score only the placeholder and leave the named member rows at 0.
-    if (!empty($_SESSION['player_id'])) {
-        $linkStmt = $conn->prepare(
-            "UPDATE players SET group_nbr = ?, grade = ?, stream = ?, school = ?
-              WHERE player_id = ?"
-        );
-        $linkStmt->bind_param("isssi", $group_nbr, $grade, $stream, $school, $_SESSION['player_id']);
-        $linkStmt->execute();
-        $linkStmt->close();
+    // Promote the FIRST typed name onto the placeholder row (the row that
+    // join_exam.php created when the code was entered). Without this the
+    // placeholder stays with nickname='' and shows on every leaderboard as
+    // an empty "ghost" entry alongside the named teammates. With this, the
+    // first person literally becomes the lead row — no ghost.
+    $first_member = '';
+    if (!empty($membersArray)) {
+        $first_member = (string)array_shift($membersArray);  // pop first; modifies array in place
     }
 
-   //save each group memeber as a separate player with the same group number
-   foreach($membersArray as $m){
-    $session_id_val = $_SESSION['session_id'] ?? null;
-$stmt = $conn->prepare("
-    INSERT INTO players 
-    (nickname, mode, school, group_nbr, exam_id, grade, stream, session_id) 
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-");
+    if (!empty($_SESSION['player_id']) && $first_member !== '') {
+        // Normal path: placeholder exists from join_exam.php — give it the
+        // first member's name + all the group context that previously only
+        // lived in $_SESSION.
+        $linkStmt = $conn->prepare(
+            "UPDATE players SET nickname = ?, group_nbr = ?, grade = ?, stream = ?, school = ?
+              WHERE player_id = ?"
+        );
+        $linkStmt->bind_param("sisssi", $first_member, $group_nbr, $grade, $stream, $school, $_SESSION['player_id']);
+        $linkStmt->execute();
+        $linkStmt->close();
+    } elseif ($first_member !== '') {
+        // Edge case: no placeholder in session (shouldn't normally happen).
+        // Insert the first member as a brand-new row instead of dropping them.
+        $session_id_val = $_SESSION['session_id'] ?? null;
+        $ins = $conn->prepare("
+            INSERT INTO players
+            (nickname, mode, school, group_nbr, exam_id, grade, stream, session_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        ");
+        $ins->bind_param("ssssissi", $first_member, $mode, $school, $group_nbr, $exam_id, $grade, $stream, $session_id_val);
+        $ins->execute();
+        $ins->close();
+    }
 
-$stmt->bind_param(
-"ssssissi",
-$m,
-$mode,
-$school,
-$group_nbr,
-$exam_id,
-$grade,
-$stream,
-$session_id_val
-);
-
-    $stmt->execute();
-}
+    // Remaining members (everyone after the first) get their own rows, all
+    // linked to the same group_nbr so submit_exam.php's group propagation
+    // mirrors the team's score across every name.
+    foreach ($membersArray as $m) {
+        $session_id_val = $_SESSION['session_id'] ?? null;
+        $stmt = $conn->prepare("
+            INSERT INTO players
+            (nickname, mode, school, group_nbr, exam_id, grade, stream, session_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        ");
+        $stmt->bind_param("ssssissi", $m, $mode, $school, $group_nbr, $exam_id, $grade, $stream, $session_id_val);
+        $stmt->execute();
+        $stmt->close();
+    }
     $groupSaved = true;
     if($groupSaved){
       header("Location: waiting.php");
