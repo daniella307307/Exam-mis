@@ -52,52 +52,68 @@ function maybe_block_replay(mysqli $conn, int $exam_id): bool {
 }
 
 /**
- * When the same browser comes back to the join page with an `exam_attempt_<id>`
- * cookie from a previous *un-submitted* attempt, delete that abandoned
- * placeholder (and any group teammates linked by group_nbr). This is what
- * eliminates the duplicated-with-0% noise on Grade 7C-style reports: every
- * time the student bailed mid-setup and re-entered, a fresh ghost set was
- * accumulating. With this, only the latest attempt survives until they
- * actually submit.
+ * Look up the prior attempt this browser left behind (via the
+ * `exam_attempt_<id>` cookie). If it exists, belongs to this exam, and
+ * hasn't been submitted yet, return its player row — caller will REUSE
+ * that player_id rather than insert a duplicate placeholder.
  *
- * Safety rails:
- *   - Only acts if the previous attempt has ZERO rows in `answers` (so we
- *     never wipe a real submission or a mid-exam attempt with partial saves).
- *   - Scoped strictly to (exam_id, prior player_id from cookie).
- *   - Group cleanup uses group_nbr to also remove orphaned teammate rows.
+ * This is the real fix for the "duplicated names with 0% score" pile-up:
+ * the previous fix only deleted abandoned attempts with ZERO answers,
+ * which let through students who answered a question or two before
+ * bailing. Reuse-instead-of-create means there is no way to accumulate
+ * duplicates for a given browser × exam combo, regardless of how far
+ * into the flow they got before disappearing.
  */
-function cleanup_abandoned_attempt(mysqli $conn, int $exam_id): void {
+function find_resumable_player(mysqli $conn, int $exam_id): ?array {
     $cookie_key = 'exam_attempt_' . $exam_id;
-    if (!isset($_COOKIE[$cookie_key])) return;
+    if (!isset($_COOKIE[$cookie_key])) return null;
 
     $prev_pid = (int)$_COOKIE[$cookie_key];
-    if ($prev_pid <= 0) return;
+    if ($prev_pid <= 0) return null;
 
-    // If they have any saved answer, they're mid-exam or done. Hands off.
-    $ans_chk = $conn->prepare("SELECT 1 FROM answers WHERE player_id = ? AND exam_id = ? LIMIT 1");
-    $ans_chk->bind_param('ii', $prev_pid, $exam_id);
-    $ans_chk->execute();
-    $has_answers = (bool)$ans_chk->get_result()->fetch_row();
-    $ans_chk->close();
-    if ($has_answers) return;
+    $stmt = $conn->prepare(
+        "SELECT player_id, mode, group_nbr, nickname, is_completed
+           FROM players
+          WHERE player_id = ? AND exam_id = ? LIMIT 1"
+    );
+    $stmt->bind_param('ii', $prev_pid, $exam_id);
+    $stmt->execute();
+    $row = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
 
-    // Find the group teammates (if any) so the whole abandoned set goes.
-    $gn_stmt = $conn->prepare("SELECT group_nbr FROM players WHERE player_id = ? AND exam_id = ? LIMIT 1");
-    $gn_stmt->bind_param('ii', $prev_pid, $exam_id);
-    $gn_stmt->execute();
-    $gn_row = $gn_stmt->get_result()->fetch_assoc();
-    $gn_stmt->close();
-    $gn = (int)($gn_row['group_nbr'] ?? 0);
+    if (!$row) return null;                          // player record gone — start fresh
+    if ((int)$row['is_completed'] === 1) return null; // already submitted — let replay logic handle
+    return $row;
+}
 
-    if ($gn > 0) {
-        $del = $conn->prepare("DELETE FROM players WHERE exam_id = ? AND group_nbr = ?");
-        $del->bind_param('ii', $exam_id, $gn);
-    } else {
-        $del = $conn->prepare("DELETE FROM players WHERE player_id = ? AND exam_id = ?");
-        $del->bind_param('ii', $prev_pid, $exam_id);
-    }
-    $del->execute();
-    $del->close();
+/**
+ * Given a player row we're resuming, decide which page in the join flow
+ * they should land on so they pick up where they left off instead of
+ * having to redo earlier steps.
+ */
+function resume_target(mysqli $conn, array $player, int $exam_id): string {
+    $pid = (int)$player['player_id'];
+
+    // Already answering questions? Drop them straight into the exam — the
+    // answers table is the source of truth for their progress; start_exam.php
+    // re-renders questions and submit_exam.php only writes points/score on
+    // the FINAL submit, so resuming is loss-free.
+    $ans_stmt = $conn->prepare("SELECT 1 FROM answers WHERE player_id = ? AND exam_id = ? LIMIT 1");
+    $ans_stmt->bind_param('ii', $pid, $exam_id);
+    $ans_stmt->execute();
+    $has_answers = (bool)$ans_stmt->get_result()->fetch_row();
+    $ans_stmt->close();
+    if ($has_answers) return '/exams/start_exam.php';
+
+    $mode      = strtolower((string)($player['mode'] ?? ''));
+    $group_nbr = (int)($player['group_nbr'] ?? 0);
+    $nickname  = (string)($player['nickname'] ?? '');
+
+    if ($group_nbr > 0)                              return '/exams/waiting.php';      // group set up, just waiting
+    if ($mode === 'group')                            return '/exams/waiting_room.php'; // group mode chosen, need names
+    if ($mode === 'individual' && $nickname !== '')   return '/exams/waiting.php';      // individual w/ name
+    if ($mode === 'individual')                       return '/exams/add_name.php';     // individual, no name yet
+    return '/exams/select_mode.php';                                                   // never picked mode
 }
 
 /** Drop a cookie that ties this browser to the freshly-created attempt so the
@@ -142,8 +158,24 @@ if ($sess_result->num_rows > 0) {
     $exam_id_val = (int) $session['exam_id'];
 
     if (maybe_block_replay($conn, $exam_id_val)) exit();
-    cleanup_abandoned_attempt($conn, $exam_id_val);
 
+    // RESUME: if this browser has an unfinished attempt at this exam,
+    // pick up that player_id instead of inserting a duplicate placeholder.
+    $resumable = find_resumable_player($conn, $exam_id_val);
+    if ($resumable) {
+        $_SESSION['exam_id']       = $exam_id_val;
+        $_SESSION['player_id']     = (int)$resumable['player_id'];
+        $_SESSION['session_id']    = $session['session_id'];
+        $_SESSION['session_label'] = $session['session_label'];
+        $_SESSION['exam_title']    = $session['title'];
+
+        $target = resume_target($conn, $resumable, $exam_id_val);
+        $conn->close();
+        header("Location: " . APP_BASE_URL . $target);
+        exit();
+    }
+
+    // No resumable attempt — create a fresh placeholder.
     $_SESSION['exam_id'] = $session['exam_id'];
     $_SESSION['session_id'] = $session['session_id'];
     $_SESSION['session_label'] = $session['session_label'];
@@ -186,7 +218,21 @@ if ($result->num_rows === 0) {
         $exam_id_val = (int) $exam['exam_id'];
 
         if (maybe_block_replay($conn, $exam_id_val)) exit();
-        cleanup_abandoned_attempt($conn, $exam_id_val);
+
+        // RESUME: if this browser has an unfinished attempt at this exam,
+        // pick up that player_id instead of inserting a duplicate placeholder.
+        $resumable = find_resumable_player($conn, $exam_id_val);
+        if ($resumable) {
+            $_SESSION['exam_id']    = $exam_id_val;
+            $_SESSION['player_id']  = (int)$resumable['player_id'];
+            $_SESSION['session_id'] = null;
+            $_SESSION['exam_title'] = $exam['title'];
+
+            $target = resume_target($conn, $resumable, $exam_id_val);
+            $conn->close();
+            header("Location: " . APP_BASE_URL . $target);
+            exit();
+        }
 
         $_SESSION['exam_id'] = $exam['exam_id'];
         $_SESSION['session_id'] = null;

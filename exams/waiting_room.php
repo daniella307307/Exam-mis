@@ -30,6 +30,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_group'])) {
 $members = implode(", ", $membersArray); // legacy string (kept untouched)
     // Make sure your players table has: mode VARCHAR(20), school VARCHAR(255),
     // grade VARCHAR(100), group_nbr int
+
+    // Defensive: if this placeholder already belongs to a group (e.g. the
+    // student navigated back and re-submitted the names form), drop the old
+    // teammate rows so we don't leave them as orphan 0-score entries on
+    // the leaderboard. Scoped to (this exam, that group_nbr, NOT the
+    // placeholder itself) — the placeholder gets its own UPDATE below.
+    if (!empty($_SESSION['player_id'])) {
+        $prev_gn_stmt = $conn->prepare("SELECT group_nbr FROM players WHERE player_id = ? LIMIT 1");
+        $prev_gn_stmt->bind_param('i', $_SESSION['player_id']);
+        $prev_gn_stmt->execute();
+        $prev_gn = (int)($prev_gn_stmt->get_result()->fetch_assoc()['group_nbr'] ?? 0);
+        $prev_gn_stmt->close();
+        if ($prev_gn > 0) {
+            $sweep = $conn->prepare("DELETE FROM players WHERE exam_id = ? AND group_nbr = ? AND player_id <> ?");
+            $sweep->bind_param('iii', $exam_id, $prev_gn, $_SESSION['player_id']);
+            $sweep->execute();
+            $sweep->close();
+        }
+    }
+
     //generate a unique group number
     $group_nbr = mt_rand(1000,9999);
 
