@@ -307,7 +307,8 @@ $has_filter = ($filter_grade || $filter_stream || $filter_school || $filter_stat
                 $ungraded = $total_answers - count($graded);
             ?>
                 <!-- Question Section -->
-                <div class="bg-white rounded-xl border p-6 mb-6">
+                <div class="bg-white rounded-xl border p-6 mb-6 question-section"
+                     data-question-id="<?= (int)$q['question_id'] ?>">
                     <h2 class="font-bold mb-2" style="color:#fff">
                         📋 <?= htmlspecialchars($q['question_text']) ?>
                     </h2>
@@ -318,15 +319,15 @@ $has_filter = ($filter_grade || $filter_stream || $filter_school || $filter_stat
                     <!-- Stats -->
                     <div class="stat-bar">
                         <div class="stat">
-                            <div class="stat-val"><?= $total_answers ?></div>
+                            <div class="stat-val" data-stat="submissions"><?= $total_answers ?></div>
                             <div class="stat-lbl">Submissions</div>
                         </div>
                         <div class="stat">
-                            <div class="stat-val" style="color:#22c55e"><?= count($graded) ?></div>
+                            <div class="stat-val" data-stat="graded" style="color:#22c55e"><?= count($graded) ?></div>
                             <div class="stat-lbl">Graded</div>
                         </div>
                         <div class="stat">
-                            <div class="stat-val" style="color:#f59e0b"><?= $ungraded ?></div>
+                            <div class="stat-val" data-stat="pending" style="color:#f59e0b"><?= $ungraded ?></div>
                             <div class="stat-lbl">Pending</div>
                         </div>
                     </div>
@@ -437,16 +438,47 @@ async function saveGrade(answerId, playerId, examId, maxPoints) {
         const data = await res.json();
 
         if (data.success) {
-            // Show saved badge
+            const card = document.getElementById('card-' + answerId);
+
+            // Saved-badge flash (existing UX)
             const badge = document.getElementById('badge-' + answerId);
             badge.style.display = 'inline-block';
             badge.textContent = `✅ Saved! (${data.points} pts)`;
             setTimeout(() => badge.style.display = 'none', 3000);
 
-            // Update card style to graded
-            const card = document.getElementById('card-' + answerId);
-            card.classList.remove('ungraded');
-            card.classList.add('graded');
+            // Decide "graded vs pending" with the SAME rule the PHP uses
+            // (points > 0 = graded, points == 0 = pending). This keeps the
+            // card, the pill in the corner, and the stats bar in agreement,
+            // so a refresh shows the same state the AJAX just produced.
+            const isGraded = (data.points | 0) > 0;
+
+            // 1. Card left-border colour
+            card.classList.toggle('graded',   isGraded);
+            card.classList.toggle('ungraded', !isGraded);
+
+            // 2. Status pill in the top-right (the bit that previously stayed
+            //    saying "⏳ Pending" until a refresh — this is the user's bug)
+            const pill = card.querySelector('.pending-pill, .graded-pill');
+            if (pill) {
+                pill.classList.remove('pending-pill', 'graded-pill');
+                pill.classList.add(isGraded ? 'graded-pill' : 'pending-pill');
+                pill.textContent = isGraded ? '✅ Graded' : '⏳ Pending';
+            }
+
+            // 3. Recompute the parent question's stat bar by counting how many
+            //    of its cards are currently graded vs pending. Recount > delta
+            //    update because it handles "I just demoted a graded to 0
+            //    points" cleanly without bookkeeping.
+            const section = card.closest('.question-section');
+            if (section) {
+                const total   = section.querySelectorAll('.grade-card').length;
+                const graded  = section.querySelectorAll('.grade-card.graded').length;
+                const pending = total - graded;
+                const gEl = section.querySelector('[data-stat="graded"]');
+                const pEl = section.querySelector('[data-stat="pending"]');
+                if (gEl) gEl.textContent = graded;
+                if (pEl) pEl.textContent = pending;
+            }
         } else {
             alert('Error saving grade: ' + data.error);
         }
