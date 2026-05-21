@@ -144,10 +144,13 @@ function build_answer_query(mysqli $conn, int $exam_id, int $qid,
         $types .= "s";
         $params[] = '%' . $search . '%';
     }
+    // "Pending" = teacher has not yet acknowledged this answer (is_correct=0).
+    // "Graded"  = teacher (or auto-grader) marked it (is_correct=1), even
+    //             if the awarded points are zero.
     if ($status === 'pending') {
-        $sql .= " AND COALESCE(a.points_earned, 0) = 0";
+        $sql .= " AND COALESCE(a.is_correct, 0) = 0";
     } elseif ($status === 'graded') {
-        $sql .= " AND COALESCE(a.points_earned, 0) > 0";
+        $sql .= " AND COALESCE(a.is_correct, 0) = 1";
     }
     $sql .= " ORDER BY p.grade, p.stream, p.nickname ASC";
 
@@ -303,7 +306,12 @@ $has_filter = ($filter_grade || $filter_stream || $filter_school || $filter_stat
                 $q = $section['question'];
                 $answers = $section['answers'];
                 $total_answers = count($answers);
-                $graded = array_filter($answers, fn($a) => $a['points_earned'] > 0);
+                // "Graded" now means a teacher has actually looked at it (is_correct=1),
+                // not "earned positive points". So a zero-score save still counts as
+                // graded — the teacher saw it and made a decision. is_correct gets set
+                // by both the auto-grader (correct short_answer hits) and the manual
+                // POST handler in this file, which is exactly what we want.
+                $graded = array_filter($answers, fn($a) => (int)$a['is_correct'] === 1);
                 $ungraded = $total_answers - count($graded);
             ?>
                 <!-- Question Section -->
@@ -341,7 +349,11 @@ $has_filter = ($filter_grade || $filter_stream || $filter_school || $filter_stat
                         </p>
                     <?php else: ?>
                         <?php foreach ($answers as $a):
-                            $is_graded = $a['points_earned'] > 0;
+                            // Same rule as the stats above: a row is "graded"
+                            // once is_correct = 1, regardless of how many
+                            // points were awarded. A zero-mark essay that
+                            // the teacher has reviewed counts as done.
+                            $is_graded = (int)$a['is_correct'] === 1;
                             $card_class = $is_graded ? 'graded' : 'ungraded';
                             $answer = trim($a['chosen_answer']);
                             $is_url = filter_var($answer, FILTER_VALIDATE_URL);
@@ -446,11 +458,11 @@ async function saveGrade(answerId, playerId, examId, maxPoints) {
             badge.textContent = `✅ Saved! (${data.points} pts)`;
             setTimeout(() => badge.style.display = 'none', 3000);
 
-            // Decide "graded vs pending" with the SAME rule the PHP uses
-            // (points > 0 = graded, points == 0 = pending). This keeps the
-            // card, the pill in the corner, and the stats bar in agreement,
-            // so a refresh shows the same state the AJAX just produced.
-            const isGraded = (data.points | 0) > 0;
+            // Any successful save means the teacher has acknowledged this
+            // answer — is_correct=1 on the server, "graded" in the UI —
+            // even if the points awarded are zero. Matches the new PHP
+            // rule on initial render so refresh and AJAX agree.
+            const isGraded = true;
 
             // 1. Card left-border colour
             card.classList.toggle('graded',   isGraded);
