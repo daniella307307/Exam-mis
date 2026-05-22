@@ -29,9 +29,13 @@ while ($row = $result->fetch_assoc()) {
 }
 
 // Get search parameter
-$search = $_GET['search'] ?? '';
-if (!empty($search)) {
-    $students = array_filter($students, fn($s) => stripos($s['nickname'], $search) !== false || stripos($s['grade'], $search) !== false);
+$search = trim($_GET['search'] ?? '');
+if ($search !== '') {
+    // Case-insensitive student-name match (also keeps the historical grade fallback).
+    $students = array_filter($students, function ($s) use ($search) {
+        return stripos((string)($s['nickname'] ?? ''), $search) !== false
+            || stripos((string)($s['grade']    ?? ''), $search) !== false;
+    });
 }
 ?>
 

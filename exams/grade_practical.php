@@ -140,9 +140,12 @@ function build_answer_query(mysqli $conn, int $exam_id, int $qid,
     if ($s !== '')  { $sql .= " AND p.stream = ?"; $types .= "s"; $params[] = $s; }
     if ($sc !== '') { $sql .= " AND p.school = ?"; $types .= "s"; $params[] = $sc; }
     if ($search !== '') {
-        $sql   .= " AND p.nickname LIKE ?";
-        $types .= "s";
-        $params[] = '%' . $search . '%';
+        // Match the student name in nickname OR in the group leader's group_members list.
+        $sql   .= " AND (p.nickname LIKE ? OR COALESCE(p.group_members,'') LIKE ?)";
+        $types .= "ss";
+        $like_s   = '%' . $search . '%';
+        $params[] = $like_s;
+        $params[] = $like_s;
     }
     // "Pending" = teacher has not yet acknowledged this answer (is_correct=0).
     // "Graded"  = teacher (or auto-grader) marked it (is_correct=1), even

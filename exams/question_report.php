@@ -65,7 +65,7 @@ $exam_code   = $exam['exam_code'] ?? '';
 $filter_grade   = $_GET['grade']   ?? '';
 $filter_stream  = $_GET['stream']  ?? '';
 $filter_school  = $_GET['school']  ?? '';
-$filter_search  = $_GET['search']  ?? '';
+$filter_search  = trim($_GET['search']  ?? '');
 $filter_session = isset($_GET['session_id']) ? (int)$_GET['session_id'] : 0;
 $view           = $_GET['view']    ?? 'summary';
 $drill_player   = isset($_GET['player_id']) ? (int)$_GET['player_id'] : 0;
@@ -125,7 +125,14 @@ if ($filter_session > 0) { $psql .= " AND session_id = ?"; $ptypes .= 'i'; $ppar
 if ($filter_grade)       { $psql .= " AND grade = ?";      $ptypes .= 's'; $pparams[] = $filter_grade; }
 if ($filter_stream)      { $psql .= " AND stream = ?";     $ptypes .= 's'; $pparams[] = $filter_stream; }
 if ($filter_school)      { $psql .= " AND school = ?";     $ptypes .= 's'; $pparams[] = $filter_school; }
-if ($filter_search)      { $psql .= " AND nickname LIKE ?"; $ptypes .= 's'; $pparams[] = '%' . $filter_search . '%'; }
+if ($filter_search !== '') {
+    // Match the student name in nickname OR in the group leader's group_members list.
+    $psql   .= " AND (nickname LIKE ? OR COALESCE(group_members,'') LIKE ?)";
+    $ptypes .= 'ss';
+    $like_q  = '%' . $filter_search . '%';
+    $pparams[] = $like_q;
+    $pparams[] = $like_q;
+}
 $psql .= " ORDER BY score DESC, player_id ASC";
 
 $pstmt = $conn->prepare($psql);
@@ -474,7 +481,7 @@ function qr_filters_qs(int $exam_id, string $view = 'summary', array $overrides 
             </select>
 
             <input type="text" name="search" value="<?= htmlspecialchars($filter_search) ?>"
-                   placeholder="Search player..."
+                   placeholder="Search student name..."
                    class="border border-gray-300 rounded px-3 py-1.5 text-sm bg-white">
 
             <button type="submit" class="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded">Filter</button>

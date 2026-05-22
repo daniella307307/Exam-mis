@@ -53,7 +53,7 @@ $filter_stream = $_GET['stream'] ?? '';
 $filter_school = $_GET['school'] ?? '';
 $filter_result = $_GET['result'] ?? '';
 $filter_session = isset($_GET['session_id']) ? (int)$_GET['session_id'] : 0;
-$filter_search = $_GET['search'] ?? '';
+$filter_search = trim($_GET['search'] ?? '');
 
 // ==============================
 // TOTAL MARKS
@@ -103,7 +103,16 @@ if ($filter_session > 0) {
 if ($filter_grade)  { $sql .= " AND grade = ?";   $types .= "s"; $params[] = $filter_grade; }
 if ($filter_stream) { $sql .= " AND stream = ?";  $types .= "s"; $params[] = $filter_stream; }
 if ($filter_school) { $sql .= " AND school = ?";  $types .= "s"; $params[] = $filter_school; }
-if ($filter_search) { $sql .= " AND nickname LIKE ?"; $types .= "s"; $params[] = "%$filter_search%"; }
+if ($filter_search !== '') {
+    // Match the student name in either column:
+    //  - nickname        → solo students + group teammates who got their own row (waiting_room.php path)
+    //  - group_members   → teammates listed only on the group leader's row (waiting.php legacy path)
+    $sql   .= " AND (nickname LIKE ? OR COALESCE(group_members,'') LIKE ?)";
+    $types .= "ss";
+    $like   = "%" . $filter_search . "%";
+    $params[] = $like;
+    $params[] = $like;
+}
 
 $sql .= " ORDER BY score DESC";
 $pstmt = $conn->prepare($sql);
@@ -459,7 +468,7 @@ $distinct_streams = $streams_stmt->get_result()->fetch_all(MYSQLI_ASSOC);
             </select>
 
             <input type="text" name="search" value="<?= htmlspecialchars($filter_search) ?>"
-                   placeholder="Search player..."
+                   placeholder="Search student name..."
                    class="border border-gray-300 rounded px-3 py-1.5 text-sm bg-white">
 
             <button type="submit"
@@ -545,7 +554,7 @@ $distinct_streams = $streams_stmt->get_result()->fetch_all(MYSQLI_ASSOC);
                         </tr>
                     <?php endforeach; ?>
                     </tbody>
-                </table>
+                </table>    
             </div>
             <?php else: ?>
                 <div class="text-center py-12">

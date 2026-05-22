@@ -8,30 +8,78 @@ if (!$acl['user_id']) {
     exit;
 }
 
-// Teachers see their own exams + any exam tagged for their school. Developers see everything.
-if ($acl['is_developer']) {
-    $stmt = $conn->prepare(
-        "SELECT e.exam_id, e.exam_code, e.title, e.topic, e.grade, e.status, e.created_at, e.start_time,
+// ----------------------------------------------------------------------
+// View routing: "mine" (default, only your own) vs "public" (a library of
+// exams from other teachers — same-school colleagues + anything explicitly
+// flagged is_public=1). Each card in Public credits the original creator.
+// ----------------------------------------------------------------------
+$view          = ($_GET['view'] ?? 'mine') === 'public' ? 'public' : 'mine';
+$search        = trim((string)($_GET['q'] ?? ''));
+$user_id       = (int)$acl['user_id'];
+$school_id     = (int)($acl['school_id'] ?? 0);
+
+$select_cols = "e.exam_id, e.exam_code, e.title, e.topic, e.grade, e.status, e.created_at, e.start_time,
                 e.is_active, e.is_public, e.created_by, e.school_id,
-                COALESCE(CONCAT(u.firstname,' ',u.lastname), '') AS owner_name
-           FROM exams e
-           LEFT JOIN users u ON u.user_id = e.created_by
-          ORDER BY e.created_at DESC LIMIT 100"
-    );
+                COALESCE(CONCAT(u.firstname,' ',u.lastname), '') AS owner_name";
+
+if ($view === 'mine') {
+    // Strictly your own creations — what you said you wanted by default.
+    // Developers also use this branch so they can manage their own without
+    // drowning in every other exam in the system.
+    $sql = "SELECT $select_cols
+              FROM exams e
+              LEFT JOIN users u ON u.user_id = e.created_by
+             WHERE e.created_by = ?
+             ORDER BY e.created_at DESC LIMIT 200";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param('i', $user_id);
 } else {
-    $stmt = $conn->prepare(
-        "SELECT e.exam_id, e.exam_code, e.title, e.topic, e.grade, e.status, e.created_at, e.start_time,
-                e.is_active, e.is_public, e.created_by, e.school_id,
-                COALESCE(CONCAT(u.firstname,' ',u.lastname), '') AS owner_name
-           FROM exams e
-           LEFT JOIN users u ON u.user_id = e.created_by
-          WHERE e.created_by = ?
-             OR (? > 0 AND e.school_id = ?)
-          ORDER BY e.created_at DESC LIMIT 100"
-    );
-    $school_id = (int)($acl['school_id'] ?? 0);
-    $stmt->bind_param('iii', $acl['user_id'], $school_id, $school_id);
+    // Public library:
+    //   - Anything explicitly published with is_public = 1, OR
+    //   - Same-school colleagues' exams (preserves the existing collab
+    //     workflow without forcing every co-teacher to re-toggle).
+    //   - Excludes your own creations (those live under "Mine").
+    // Developers see *everyone else's* exams in this tab.
+    $params = [];
+    $types  = '';
+
+    if ($acl['is_developer']) {
+        $sql = "SELECT $select_cols
+                  FROM exams e
+                  LEFT JOIN users u ON u.user_id = e.created_by
+                 WHERE e.created_by <> ?";
+        $types  .= 'i';
+        $params[] = $user_id;
+    } else {
+        $sql = "SELECT $select_cols
+                  FROM exams e
+                  LEFT JOIN users u ON u.user_id = e.created_by
+                 WHERE e.created_by <> ?
+                   AND (e.is_public = 1
+                        OR (? > 0 AND e.school_id = ?))";
+        $types  .= 'iii';
+        $params[] = $user_id;
+        $params[] = $school_id;
+        $params[] = $school_id;
+    }
+
+    if ($search !== '') {
+        // Search title / topic / grade / creator name — same spirit as
+        // the student-name search fix on the report page.
+        $sql .= " AND (e.title LIKE ?
+                     OR e.topic LIKE ?
+                     OR e.grade LIKE ?
+                     OR COALESCE(CONCAT(u.firstname,' ',u.lastname),'') LIKE ?)";
+        $types .= 'ssss';
+        $like = '%' . $search . '%';
+        $params[] = $like; $params[] = $like; $params[] = $like; $params[] = $like;
+    }
+
+    $sql .= " ORDER BY e.created_at DESC LIMIT 200";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param($types, ...$params);
 }
+
 $stmt->execute();
 $result = $stmt->get_result();
 $exams = [];
@@ -288,9 +336,87 @@ $stmt->close();
             ← Back to LMS Home
         </a>
         <div class="header">
-            <h1 style="color:#fff">📚 Exam Management Dashboard</h1>
+            <h1 style="color:#fff">
+                📚 <?= $view === 'public' ? 'Public Library' : 'My Exams' ?>
+            </h1>
             <a href="exam_creator_working.php" class="create-btn" style="color:#fff;font-weight:800;background:linear-gradient(135deg,#7c3aed,#a855f7);padding:12px 24px;border-radius:8px;text-decoration:none;box-shadow:0 8px 24px rgba(124,58,237,.4)">+ Create New Exam</a>
         </div>
+
+        <!-- Tab switcher: My Exams (default) vs Public Library.
+             Public lists same-school + globally-public exams so you can
+             discover exams from other teachers without losing same-school
+             collab visibility. -->
+        <div class="tab-bar" style="display:flex;gap:10px;margin-bottom:22px;flex-wrap:wrap;align-items:center;">
+            <a href="?view=mine"
+               class="tab-pill <?= $view === 'mine' ? 'tab-active' : '' ?>">
+                📂 My Exams
+            </a>
+            <a href="?view=public"
+               class="tab-pill <?= $view === 'public' ? 'tab-active' : '' ?>">
+                🌐 Public Library
+            </a>
+
+            <?php if ($view === 'public'): ?>
+                <form method="GET" style="margin-left:auto;display:flex;gap:8px;align-items:center;">
+                    <input type="hidden" name="view" value="public">
+                    <input type="text" name="q" value="<?= htmlspecialchars($search) ?>"
+                           placeholder="Search title, topic, grade, or teacher…"
+                           style="padding:9px 14px;border-radius:8px;border:1.5px solid rgba(168,85,247,.35);background:rgba(15,15,40,.55);color:#f1f5f9;font-weight:600;font-size:13px;min-width:280px;">
+                    <button type="submit"
+                            style="padding:9px 16px;border-radius:8px;border:none;background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;font-weight:800;font-size:13px;cursor:pointer;">
+                        Search
+                    </button>
+                    <?php if ($search !== ''): ?>
+                        <a href="?view=public" style="color:#fca5a5;font-size:12px;font-weight:700;text-decoration:underline;">Clear</a>
+                    <?php endif; ?>
+                </form>
+            <?php endif; ?>
+        </div>
+
+        <style>
+            .tab-pill {
+                display:inline-flex; align-items:center; gap:8px;
+                padding:10px 20px; border-radius:99px;
+                background:rgba(255,255,255,.06);
+                color:#cbd5e1; font-weight:700; font-size:14px;
+                text-decoration:none;
+                border:1px solid rgba(168,85,247,.25);
+                transition:transform .15s ease, background .15s ease, color .15s ease;
+            }
+            .tab-pill:hover { background:rgba(168,85,247,.18); color:#fff; transform:translateY(-1px); }
+            .tab-pill.tab-active {
+                background:linear-gradient(135deg,#7c3aed,#a855f7);
+                color:#fff;
+                border-color:rgba(168,85,247,.6);
+                box-shadow:0 8px 22px rgba(124,58,237,.35);
+            }
+            .credit-chip {
+                display:inline-flex; align-items:center; gap:6px;
+                padding:4px 10px; border-radius:999px;
+                background:rgba(124,58,237,.18);
+                color:#c4b5fd; font-size:12px; font-weight:700;
+                border:1px solid rgba(168,85,247,.35);
+                margin-left:8px;
+            }
+            .origin-badge {
+                display:inline-block;
+                padding:3px 9px; border-radius:999px;
+                font-size:11px; font-weight:800; letter-spacing:.4px;
+                text-transform:uppercase;
+            }
+            .origin-school { background:rgba(59,130,246,.18); color:#93c5fd; border:1px solid rgba(59,130,246,.4); }
+            .origin-public { background:rgba(16,185,129,.18); color:#6ee7b7; border:1px solid rgba(16,185,129,.4); }
+            .pub-toggle {
+                cursor:pointer; border:none;
+                padding:6px 12px; border-radius:999px;
+                font-weight:800; font-size:11px; letter-spacing:.4px;
+                text-transform:uppercase;
+            }
+            .pub-toggle.on  { background:rgba(16,185,129,.18); color:#6ee7b7; border:1px solid rgba(16,185,129,.4); }
+            .pub-toggle.off { background:rgba(148,163,184,.18); color:#cbd5e1; border:1px solid rgba(148,163,184,.4); }
+            .pub-toggle:hover { transform:translateY(-1px); }
+            .pub-toggle:disabled { opacity:.55; cursor:wait; }
+        </style>
 
         <div class="stats">
             <?php
@@ -320,8 +446,18 @@ $stmt->close();
         <div class="exams-list">
             <?php if (empty($exams)): ?>
                 <div class="empty">
-                    <h2>No Exams Yet</h2>
-                    <p>Create your first exam to get started</p>
+                    <?php if ($view === 'public'): ?>
+                        <h2>Nothing in the Public Library yet</h2>
+                        <p>
+                            <?= $search !== ''
+                                ? 'No public exam matches "' . htmlspecialchars($search) . '". Try a different keyword.'
+                                : 'When a teacher marks their exam Public, it will show up here.' ?>
+                        </p>
+                    <?php else: ?>
+                        <h2>No Exams Yet</h2>
+                        <p>Create your first exam to get started, or
+                           <a href="?view=public" style="color:#a78bfa;font-weight:700;text-decoration:underline;">browse the Public Library</a>.</p>
+                    <?php endif; ?>
                 </div>
             <?php else: ?>
                 <?php foreach ($exams as $exam):
@@ -334,19 +470,55 @@ $stmt->close();
                     $exam_school   = (int)($exam['school_id'] ?? 0);
                     $is_collab = $is_owner
                               || ($viewer_school > 0 && $exam_school > 0 && $viewer_school === $exam_school);
+
+                    // Strict "is this literally my row?" — used for the credit chip so
+                    // Developers still see "By: [teacher]" on other teachers' exams
+                    // (the $is_owner shortcut above treats devs as owners-of-everything
+                    // for button visibility, which is the wrong test for crediting).
+                    $is_actual_creator = ((int)$exam['created_by'] === (int)$acl['user_id']);
+
+                    // Did the original creator opt this exam into the global library?
+                    $is_pub        = (int)($exam['is_public'] ?? 0) === 1;
+                    // Same-school surfacing distinct from globally-public.
+                    $is_same_school = $viewer_school > 0 && $exam_school > 0 && $viewer_school === $exam_school;
+                    $creator_name   = trim($exam['owner_name'] ?? '') ?: 'colleague';
                 ?>
                     <div class="exam-item">
                         <div class="exam-info">
                             <h3>
                                 <?= htmlspecialchars($exam['title']) ?>
-                                <?php if (!$is_owner): ?>
-                                    <span style="font-size:12px;background:rgba(124,58,237,.2);color:#a78bfa;padding:2px 8px;border-radius:6px;margin-left:6px;font-weight:600">by <?= htmlspecialchars(trim($exam['owner_name'] ?: 'colleague')) ?></span>
+                                <?php if (!$is_actual_creator): ?>
+                                    <!-- Credit the teacher who prepared the exam. -->
+                                    <span class="credit-chip">
+                                        🧑‍🏫 By: <?= htmlspecialchars($creator_name) ?>
+                                    </span>
+                                    <?php if ($is_pub): ?>
+                                        <span class="origin-badge origin-public">🌐 Public</span>
+                                    <?php elseif ($is_same_school): ?>
+                                        <span class="origin-badge origin-school">🏫 Same school</span>
+                                    <?php endif; ?>
+                                <?php elseif ($is_pub): ?>
+                                    <!-- Creator sees a small green tag when their own exam is in the public library. -->
+                                    <span class="origin-badge origin-public">🌐 In public library</span>
                                 <?php endif; ?>
                             </h3>
                             <p>📝 Topic: <strong><?= htmlspecialchars($exam['topic']) ?></strong> | 👥 Grade: <strong><?= htmlspecialchars($exam['grade']) ?></strong></p>
                             <p>📅 Created: <?= date('M d, Y H:i', strtotime($exam['created_at'])) ?></p>
                             <?php if ($exam['status'] === 'active'): ?>
                                 <div class="time-info">⏱️ Start Time: <?= date('M d, Y H:i', strtotime($exam['start_time'])) ?></div>
+                            <?php endif; ?>
+
+                            <?php if ($is_owner): ?>
+                                <!-- Owner can opt this exam in/out of the global Public Library. -->
+                                <p style="margin-top:10px;">
+                                    <button type="button"
+                                            class="pub-toggle <?= $is_pub ? 'on' : 'off' ?>"
+                                            data-exam="<?= (int)$exam['exam_id'] ?>"
+                                            data-value="<?= $is_pub ? 1 : 0 ?>"
+                                            title="When ON, any teacher can find this exam in the Public Library. Your name appears as the credited author.">
+                                        🌐 Public: <strong class="pub-state"><?= $is_pub ? 'ON' : 'OFF' ?></strong>
+                                    </button>
+                                </p>
                             <?php endif; ?>
                         </div>
                         <div class="exam-meta">
@@ -476,6 +648,40 @@ $stmt->close();
         alert('❌ Error: ' + err.message);
     }
 }
+
+// Per-exam Public toggle. Mirrors the perm-pill flow from exam_report.php so
+// owners get instant feedback and a clear ON/OFF state, with a graceful
+// fallback to the previous state on error.
+document.querySelectorAll('.pub-toggle').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+        if (btn.disabled) return;
+        const examId  = parseInt(btn.dataset.exam, 10);
+        const current = parseInt(btn.dataset.value, 10) ? 1 : 0;
+        const next    = current ? 0 : 1;
+
+        btn.disabled = true;
+        const stateEl = btn.querySelector('.pub-state');
+        if (stateEl) stateEl.textContent = '…';
+        try {
+            const fd = new FormData();
+            fd.append('exam_id', examId);
+            fd.append('value', next);
+            const r = await fetch('exam_public_toggle.php', { method: 'POST', body: fd });
+            const j = await r.json();
+            if (!j.success) throw new Error(j.error || 'save failed');
+            btn.dataset.value = next;
+            btn.classList.toggle('on',  next === 1);
+            btn.classList.toggle('off', next === 0);
+            if (stateEl) stateEl.textContent = next ? 'ON' : 'OFF';
+            showToast(next ? '🌐 Now visible in Public Library' : '🔒 Removed from Public Library', 'success');
+        } catch (err) {
+            showToast('❌ ' + err.message, 'error');
+            if (stateEl) stateEl.textContent = current ? 'ON' : 'OFF';
+        } finally {
+            btn.disabled = false;
+        }
+    });
+});
     </script>
 </body>
 </html>
