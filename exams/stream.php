@@ -72,13 +72,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             required
         >
 
-        <!-- Stream Dropdown -->
+        <!-- Stream Dropdown — A through E. Previous options had broken value
+             attributes (A had value="", B/C were labelled "Science"/"Arts");
+             cleaned up so the recorded stream matches what the student picked. -->
         <label class="block mb-2 font-semibold">Stream</label>
         <select name="stream" class="w-full p-2 border rounded mb-4" required>
             <option value="">Select Stream</option>
-            <option value="">A</option>
-            <option value="Science">B</option>
-            <option value="Arts">C</option>
+            <option value="A">A</option>
+            <option value="B">B</option>
+            <option value="C">C</option>
+            <option value="D">D</option>
+            <option value="E">E</option>
         </select>
 
         <!-- Grade Dropdown -->

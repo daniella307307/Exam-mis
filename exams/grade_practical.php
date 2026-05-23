@@ -254,12 +254,11 @@ $has_filter = ($filter_grade || $filter_stream || $filter_school || $filter_stat
                 <?php endforeach; ?>
             </select>
 
+            <!-- Streams are fixed A–E across the whole platform. -->
             <select name="stream" style="padding:7px 10px;border-radius:8px;border:1.5px solid rgba(168,85,247,.3);background:rgba(15,15,40,.6);color:#f1f5f9;font-weight:700;font-size:13px;">
                 <option value="">All streams</option>
-                <?php foreach ($distinct_streams as $s): ?>
-                    <option value="<?= htmlspecialchars($s['stream']) ?>" <?= $filter_stream === $s['stream'] ? 'selected' : '' ?>>
-                        <?= htmlspecialchars($s['stream']) ?>
-                    </option>
+                <?php foreach (['A','B','C','D','E'] as $s): ?>
+                    <option value="<?= $s ?>" <?= $filter_stream === $s ? 'selected' : '' ?>><?= $s ?></option>
                 <?php endforeach; ?>
             </select>
 

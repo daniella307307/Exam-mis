@@ -462,12 +462,11 @@ function qr_filters_qs(int $exam_id, string $view = 'summary', array $overrides 
                 <?php endforeach; ?>
             </select>
 
+            <!-- Streams are fixed A–E across the whole platform. -->
             <select name="stream" class="border border-gray-300 rounded px-3 py-1.5 text-sm bg-white">
                 <option value="">All streams</option>
-                <?php foreach ($distinct_streams as $s): ?>
-                    <option value="<?= htmlspecialchars($s['stream']) ?>" <?= $filter_stream === $s['stream'] ? 'selected' : '' ?>>
-                        <?= htmlspecialchars($s['stream']) ?>
-                    </option>
+                <?php foreach (['A','B','C','D','E'] as $s): ?>
+                    <option value="<?= $s ?>" <?= $filter_stream === $s ? 'selected' : '' ?>><?= $s ?></option>
                 <?php endforeach; ?>
             </select>
 

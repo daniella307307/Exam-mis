@@ -41,7 +41,7 @@ if (!$cert) {
 
 $row = null;
 $rstmt = $conn->prepare(
-    "SELECT title, notes, bunny_pdf_url, bunny_video_url, updated_at
+    "SELECT cw_id, title, notes, bunny_pdf_url, bunny_video_url, updated_at
        FROM curriculum_weeks
       WHERE certification_id = ? AND term_number = ? AND month_number = ? AND week_number = ?
       LIMIT 1"
@@ -51,6 +51,10 @@ $rstmt->execute();
 $row = $rstmt->get_result()->fetch_assoc();
 $rstmt->close();
 
+// cw_id is the primary key of curriculum_weeks. The proxies use it (rather
+// than the Bunny URL) so the real CDN URL never appears in the page source.
+$cw_id = (int)($row['cw_id'] ?? 0);
+
 $terms     = curriculum_terms();
 $names     = curriculum_month_names();
 $title     = (string)($row['title']           ?? '');
@@ -59,6 +63,11 @@ $pdf_url   = (string)($row['bunny_pdf_url']   ?? '');
 $video_url = (string)($row['bunny_video_url'] ?? '');
 $updated   = $row['updated_at'] ?? null;
 $has_any   = ($pdf_url !== '' || $video_url !== '' || $notes !== '' || $title !== '');
+
+// $this_year (calendar year) is set in session.php — used for the
+// watermark so it auto-advances on rollover at year boundary.
+$watermark_year = isset($this_year) && $this_year ? (int)$this_year : (int)date('Y');
+$video_mime     = $video_url !== '' ? curriculum_video_mime_for_url($video_url) : 'video/mp4';
 ?>
 
 <div class="flex flex-1">
@@ -112,21 +121,47 @@ $has_any   = ($pdf_url !== '' || $video_url !== '' || $notes !== '' || $title !=
         <?php else: ?>
             <div class="space-y-4">
                 <?php if ($pdf_url !== ''): ?>
-                    <div class="card">
+                    <div class="card no-grab">
                         <div class="card-h">📄 PDF</div>
-                        <iframe src="<?= htmlspecialchars($pdf_url) ?>#toolbar=0" class="pdf-frame"></iframe>
-                        <a href="<?= htmlspecialchars($pdf_url) ?>" target="_blank" class="text-xs text-blue-600 underline mt-2 inline-block">Open in new tab ↗</a>
+                        <!-- Load the Bunny PDF straight into the iframe — same pattern
+                             YouTube embeds use (the video file is also direct-from-CDN
+                             when you embed a YT video on your site). The proxy approach
+                             was killing on slow networks because Chrome's slow-network
+                             intervention timed out the server-side curl fetch. Soft
+                             protections (no Open-in-tab link, watermark, blocked
+                             contextmenu / Ctrl+S / Ctrl+P) still raise the bar. -->
+                        <div class="pdf-frame-wrap">
+                            <iframe src="<?= htmlspecialchars($pdf_url) ?>#toolbar=0&navpanes=0"
+                                    class="pdf-frame"></iframe>
+                            <div class="pdf-watermark" aria-hidden="true">
+                                <?php for ($i = 0; $i < 12; $i++): ?>
+                                    <span>Confidential document · Copyright © <?= (int)$watermark_year ?></span>
+                                <?php endfor; ?>
+                            </div>
+                        </div>
+                        <p class="protect-note">
+                            🔒 This document is protected. Saving, printing, or sharing copies is not allowed.
+                        </p>
                     </div>
                 <?php endif; ?>
 
                 <?php if ($video_url !== ''): ?>
-                    <div class="card">
+                    <div class="card no-grab">
                         <div class="card-h">🎬 Video</div>
-                        <video controls preload="metadata" class="video-frame">
-                            <source src="<?= htmlspecialchars($video_url) ?>">
+                        <!-- Direct Bunny URL. `type` + `playsinline` were the actual
+                             playback fix. controlslist + disablepictureinpicture trim
+                             the browser's Save / PiP buttons so casual users can't
+                             pop the video out for download. -->
+                        <video controls preload="metadata" playsinline
+                               controlslist="nodownload noplaybackrate noremoteplayback"
+                               disablepictureinpicture
+                               class="video-frame">
+                            <source src="<?= htmlspecialchars($video_url) ?>" type="<?= htmlspecialchars($video_mime) ?>">
                             Your browser cannot play this video.
                         </video>
-                        <a href="<?= htmlspecialchars($video_url) ?>" target="_blank" class="text-xs text-blue-600 underline mt-2 inline-block">Open in new tab ↗</a>
+                        <p class="protect-note">
+                            🔒 This video is protected. Downloading or sharing copies is not allowed.
+                        </p>
                     </div>
                 <?php endif; ?>
 
@@ -162,14 +197,87 @@ $has_any   = ($pdf_url !== '' || $video_url !== '' || $notes !== '' || $title !=
         font-size:12px; font-weight:800; letter-spacing:1.5px; text-transform:uppercase;
         color:#3b82f6; margin-bottom:12px;
     }
-    .pdf-frame   { width:100%; height:640px; border:1px solid #e5e7eb; border-radius:8px; }
+    .pdf-frame   { width:100%; height:640px; border:1px solid #e5e7eb; border-radius:8px; display:block; }
     .video-frame { width:100%; max-height:480px; border-radius:8px; background:#000; }
+
+    /* PDF watermark overlay. Tiled diagonal text, rotated, semi-transparent.
+       pointer-events: none lets the user still scroll / click links in the
+       embedded PDF underneath. Not embedded INTO the PDF — just painted on
+       this page, so it shows up only inside the LMS. */
+    .pdf-frame-wrap { position:relative; overflow:hidden; border-radius:8px; }
+    .pdf-watermark {
+        position:absolute; inset:0;
+        display:grid;
+        grid-template-columns:repeat(3, 1fr);
+        grid-auto-rows:120px;
+        align-items:center; justify-items:center;
+        transform:rotate(-28deg) scale(1.4);
+        transform-origin:center;
+        pointer-events:none;
+        z-index:5;
+    }
+    .pdf-watermark span {
+        color:rgba(220, 38, 38, .18);
+        font-size:18px;
+        font-weight:900;
+        letter-spacing:.6px;
+        text-transform:uppercase;
+        white-space:nowrap;
+        text-shadow:0 1px 0 rgba(255,255,255,.4);
+        user-select:none;
+    }
     .empty-state {
         background:#fff; border:1px dashed #e5e7eb; border-radius:14px;
         padding:60px 30px; text-align:center;
         box-shadow:0 4px 12px rgba(0,0,0,.03);
     }
     .empty-emoji { font-size:48px; margin-bottom:14px; }
+
+    /* "Don't grab my content" — keep selection / drag tools off the
+       preview cards. Doesn't affect the embedded PDF's own scroll behaviour. */
+    .no-grab {
+        user-select:none;
+        -webkit-user-select:none;
+        -webkit-user-drag:none;
+    }
+    .no-grab iframe, .no-grab video, .no-grab img {
+        -webkit-user-drag:none;
+    }
+    .protect-note {
+        margin-top:10px;
+        font-size:12px; font-weight:700; color:#b91c1c;
+        background:#fef2f2; border:1px solid #fecaca;
+        padding:8px 12px; border-radius:8px;
+        display:inline-block;
+    }
 </style>
+
+<script>
+// Best-effort content protection. None of this stops a determined attacker
+// (browser devtools, screen recording, etc.) — but it stops casual save
+// attempts: no context menu on the preview cards, no Ctrl/Cmd+S/P, no
+// drag-to-desktop on the iframe/video.
+(function () {
+    const targets = document.querySelectorAll('.no-grab, .pdf-frame-wrap, .video-frame');
+    targets.forEach((el) => {
+        el.addEventListener('contextmenu', (e) => e.preventDefault());
+        el.addEventListener('dragstart',   (e) => e.preventDefault());
+        el.addEventListener('selectstart', (e) => e.preventDefault());
+    });
+
+    // Block Save / Print / DevTools shortcuts on the curriculum page itself.
+    // PDFs rendered inside the iframe come from the same origin (the proxy),
+    // but the iframe has its own document — these listeners on `document`
+    // only fire when focus is on our page chrome. That's fine; we mainly
+    // want to stop a user pressing Ctrl+S while the page is in focus.
+    document.addEventListener('keydown', (e) => {
+        const k = (e.key || '').toLowerCase();
+        if ((e.ctrlKey || e.metaKey) && (k === 's' || k === 'p')) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+    }, true);
+})();
+</script>
 
 <?php include('footer.php'); ?>

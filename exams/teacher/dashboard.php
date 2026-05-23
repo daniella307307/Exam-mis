@@ -118,32 +118,13 @@ if ($view === 'mine') {
     $stmt = $conn->prepare($sql);
     $stmt->bind_param($types, ...$params);
 } else {
-    // Public Library = exams from OTHER schools that the original teacher
-    // marked is_public = 1. Same-school exams are NOT here — they're under
-    // "My Exams" because co-teachers share full ownership.
+    // Public Library = every exam flagged is_public = 1, regardless of who
+    // owns it. Owners explicitly asked to see their own public exams here
+    // too (visible confirmation that the toggle worked). Same-school exams
+    // that aren't flagged Public still live under My Exams only.
     $params = [];
     $types  = '';
-
-    if ($acl['is_developer']) {
-        // Developers can browse every cross-school public exam.
-        $where = "WHERE e.is_public = 1
-                    AND e.created_by <> ?
-                    AND (? = 0 OR COALESCE(e.school_id, 0) <> ?)";
-        $types   .= 'iii';
-        $params[] = $user_id;
-        $params[] = $school_id;
-        $params[] = $school_id;
-    } else {
-        // Standard teacher: see public exams from any school other than mine.
-        // If I have no school (school_id = 0), every public exam is "other".
-        $where = "WHERE e.is_public = 1
-                    AND e.created_by <> ?
-                    AND (? = 0 OR COALESCE(e.school_id, 0) <> ?)";
-        $types   .= 'iii';
-        $params[] = $user_id;
-        $params[] = $school_id;
-        $params[] = $school_id;
-    }
+    $where  = "WHERE e.is_public = 1";
 
     if ($search !== '') {
         $where  .= " AND (e.title LIKE ?
@@ -162,7 +143,10 @@ if ($view === 'mine') {
              $where
              $group_by";
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param($types, ...$params);
+    // bind_param errors on empty types; with no search active we have no params.
+    if ($types !== '') {
+        $stmt->bind_param($types, ...$params);
+    }
 }
 
 $stmt->execute();
@@ -582,12 +566,11 @@ if (!empty($status_filter) || !empty($grade_filter) || !empty($stream_filter)) {
         </div>
         <div class="filter-group">
             <label>Stream</label>
+            <!-- Streams are fixed A–E across the whole platform. -->
             <select name="stream">
                 <option value="">All Streams</option>
-                <?php foreach ($stream_options as $s): ?>
-                    <option value="<?= htmlspecialchars($s) ?>" <?= $stream_filter === $s ? 'selected' : '' ?>>
-                        <?= htmlspecialchars($s) ?>
-                    </option>
+                <?php foreach (['A','B','C','D','E'] as $s): ?>
+                    <option value="<?= $s ?>" <?= $stream_filter === $s ? 'selected' : '' ?>><?= $s ?></option>
                 <?php endforeach; ?>
             </select>
         </div>

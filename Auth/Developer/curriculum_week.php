@@ -55,6 +55,12 @@ $notes     = (string)($row['notes']           ?? '');
 $pdf_url   = (string)($row['bunny_pdf_url']   ?? '');
 $video_url = (string)($row['bunny_video_url'] ?? '');
 $updated   = $row['updated_at'] ?? null;
+
+// Year for the "Confidential · Copyright © …" watermark. $this_year (set in
+// session.php) follows the calendar year, so it auto-advances when a school
+// rolls into the next year.
+$watermark_year = isset($this_year) && $this_year ? (int)$this_year : (int)date('Y');
+$video_mime     = $video_url !== '' ? curriculum_video_mime_for_url($video_url) : 'video/mp4';
 ?>
 
 <div class="flex flex-1">
@@ -98,7 +104,14 @@ $updated   = $row['updated_at'] ?? null;
                     <div class="card-h">📄 PDF preview</div>
                     <div id="pdf-preview-wrap">
                         <?php if ($pdf_url !== ''): ?>
-                            <iframe src="<?= htmlspecialchars($pdf_url) ?>#toolbar=0" class="pdf-frame"></iframe>
+                            <div class="pdf-frame-wrap">
+                                <iframe src="<?= htmlspecialchars($pdf_url) ?>#toolbar=0" class="pdf-frame"></iframe>
+                                <div class="pdf-watermark" aria-hidden="true">
+                                    <?php for ($i = 0; $i < 12; $i++): ?>
+                                        <span>Confidential document · Copyright © <?= (int)$watermark_year ?></span>
+                                    <?php endfor; ?>
+                                </div>
+                            </div>
                             <a href="<?= htmlspecialchars($pdf_url) ?>" target="_blank" class="text-xs text-purple-600 underline mt-2 inline-block">Open in new tab ↗</a>
                         <?php else: ?>
                             <div class="empty">No PDF yet. Upload one on the right or paste a Bunny URL.</div>
@@ -110,8 +123,11 @@ $updated   = $row['updated_at'] ?? null;
                     <div class="card-h">🎬 Video preview</div>
                     <div id="video-preview-wrap">
                         <?php if ($video_url !== ''): ?>
-                            <video controls preload="metadata" class="video-frame">
-                                <source src="<?= htmlspecialchars($video_url) ?>">
+                            <!-- `type` + `playsinline` — without the type hint Safari refuses
+                                 to initialise the media engine, which was the "click play
+                                 and nothing happens" bug. -->
+                            <video controls preload="metadata" playsinline class="video-frame">
+                                <source src="<?= htmlspecialchars($video_url) ?>" type="<?= htmlspecialchars($video_mime) ?>">
                                 Your browser cannot play this video.
                             </video>
                             <a href="<?= htmlspecialchars($video_url) ?>" target="_blank" class="text-xs text-purple-600 underline mt-2 inline-block">Open in new tab ↗</a>
@@ -191,8 +207,24 @@ $updated   = $row['updated_at'] ?? null;
         font-size:12px; font-weight:800; letter-spacing:1.5px; text-transform:uppercase;
         color:#7c3aed; margin-bottom:12px;
     }
-    .pdf-frame   { width:100%; height:560px; border:1px solid #e5e7eb; border-radius:8px; }
+    .pdf-frame   { width:100%; height:560px; border:1px solid #e5e7eb; border-radius:8px; display:block; }
     .video-frame { width:100%; max-height:420px; border-radius:8px; background:#000; }
+
+    .pdf-frame-wrap { position:relative; overflow:hidden; border-radius:8px; }
+    .pdf-watermark {
+        position:absolute; inset:0;
+        display:grid; grid-template-columns:repeat(3,1fr); grid-auto-rows:120px;
+        align-items:center; justify-items:center;
+        transform:rotate(-28deg) scale(1.4); transform-origin:center;
+        pointer-events:none; z-index:5;
+    }
+    .pdf-watermark span {
+        color:rgba(220, 38, 38, .18);
+        font-size:18px; font-weight:900; letter-spacing:.6px;
+        text-transform:uppercase; white-space:nowrap;
+        text-shadow:0 1px 0 rgba(255,255,255,.4);
+        user-select:none;
+    }
     .empty {
         padding:30px; text-align:center; color:#9ca3af;
         background:#f9fafb; border:1px dashed #e5e7eb; border-radius:8px;
@@ -286,14 +318,28 @@ function bindUploader(kind, fileInputId, urlInputId, statusId, previewWrapId) {
             stat.textContent = '✅ Uploaded — remember to click Save week.';
 
             // Refresh the matching preview pane inline (no full reload yet).
+            // Mirror the PHP-rendered markup so the watermark, type hint and
+            // playsinline behaviour are identical to a fresh page load.
             if (kind === 'pdf') {
+                let watermark = '';
+                for (let i = 0; i < 12; i++) {
+                    watermark += `<span>Confidential document · Copyright © <?= (int)$watermark_year ?></span>`;
+                }
                 preview.innerHTML =
-                    `<iframe src="${j.url}#toolbar=0" class="pdf-frame"></iframe>` +
+                    `<div class="pdf-frame-wrap">` +
+                        `<iframe src="${j.url}#toolbar=0" class="pdf-frame"></iframe>` +
+                        `<div class="pdf-watermark" aria-hidden="true">${watermark}</div>` +
+                    `</div>` +
                     `<a href="${j.url}" target="_blank" class="text-xs text-purple-600 underline mt-2 inline-block">Open in new tab ↗</a>`;
             } else {
+                // Detect MIME from the uploaded file's extension (we already
+                // know it's mp4/webm/mov from the upload validation).
+                const ext = (j.url.split('.').pop() || 'mp4').toLowerCase();
+                const mime = { mp4:'video/mp4', m4v:'video/mp4', webm:'video/webm', mov:'video/quicktime' }[ext] || 'video/mp4';
                 preview.innerHTML =
-                    `<video controls preload="metadata" class="video-frame">` +
-                    `<source src="${j.url}"></video>` +
+                    `<video controls preload="metadata" playsinline class="video-frame">` +
+                        `<source src="${j.url}" type="${mime}">` +
+                    `</video>` +
                     `<a href="${j.url}" target="_blank" class="text-xs text-purple-600 underline mt-2 inline-block">Open in new tab ↗</a>`;
             }
         } catch (err) {

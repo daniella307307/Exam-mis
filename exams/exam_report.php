@@ -441,13 +441,12 @@ $distinct_streams = $streams_stmt->get_result()->fetch_all(MYSQLI_ASSOC);
                 <?php endforeach; ?>
             </select>
 
+            <!-- Streams are fixed A–E across the whole platform (student picker
+                 in exams/stream.php + exams/select_mode.php only offers A–E). -->
             <select name="stream" class="border border-gray-300 rounded px-3 py-1.5 text-sm bg-white">
                 <option value="">All streams</option>
-                <?php foreach ($distinct_streams as $s): ?>
-                    <option value="<?= htmlspecialchars($s['stream']) ?>"
-                        <?= $filter_stream === $s['stream'] ? 'selected' : '' ?>>
-                        <?= htmlspecialchars($s['stream']) ?>
-                    </option>
+                <?php foreach (['A','B','C','D','E'] as $s): ?>
+                    <option value="<?= $s ?>" <?= $filter_stream === $s ? 'selected' : '' ?>><?= $s ?></option>
                 <?php endforeach; ?>
             </select>
 

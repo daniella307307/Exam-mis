@@ -79,18 +79,14 @@ if ($view === 'mine') {
     $stmt = $conn->prepare($sql);
     $stmt->bind_param($types, ...$params);
 } else {
-    // Public = is_public = 1 AND from a different school (and not mine).
-    // Same-school exams live in My Exams now.
+    // Public = is_public = 1, regardless of who the creator is. The owner
+    // SEES their own exam in Public the moment they toggle is_public=ON —
+    // they explicitly asked for that confirmation. Same-school exams that
+    // aren't flagged Public still live exclusively under "My Exams".
     $params = [];
     $types  = '';
 
-    $where = "WHERE e.is_public = 1
-                AND e.created_by <> ?
-                AND (? = 0 OR COALESCE(e.school_id, 0) <> ?)";
-    $types   .= 'iii';
-    $params[] = $user_id;
-    $params[] = $school_id;
-    $params[] = $school_id;
+    $where = "WHERE e.is_public = 1";
 
     if ($search !== '') {
         // Search title / topic / grade / creator name / school name.
@@ -110,7 +106,11 @@ if ($view === 'mine') {
               $where
              ORDER BY e.created_at DESC LIMIT 200";
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param($types, ...$params);
+    // bind_param errors on empty types — only call it when we actually have
+    // parameters (i.e. the search is non-empty).
+    if ($types !== '') {
+        $stmt->bind_param($types, ...$params);
+    }
 }
 
 $stmt->execute();

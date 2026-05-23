@@ -106,3 +106,42 @@ if (!function_exists('curriculum_valid_slot')) {
         return true;
     }
 }
+
+if (!function_exists('curriculum_safe_path_segment')) {
+    /**
+     * Sanitize a free-form name (e.g. "Nursery I" or "Cambridge Year 1") into
+     * a Bunny-storage-safe folder segment. Strips anything outside
+     * A-Z/a-z/0-9/._- and collapses runs of underscores so the path stays tidy
+     * even with messy input.
+     */
+    function curriculum_safe_path_segment(string $name): string {
+        $name = trim($name);
+        if ($name === '') return 'untitled';
+        $name = preg_replace('/[^A-Za-z0-9._-]+/', '_', $name);
+        $name = preg_replace('/_+/', '_', (string)$name);
+        $name = trim((string)$name, '_-.');
+        return $name === '' ? 'untitled' : $name;
+    }
+}
+
+if (!function_exists('curriculum_video_mime_for_url')) {
+    /**
+     * Pick a sensible MIME for a <source type="…"> attribute given a Bunny
+     * URL. Without this, some browsers (Safari especially) refuse to load
+     * the media because they don't bother sniffing — they need the type
+     * hint up front. That was the "click play and nothing happens" bug.
+     */
+    function curriculum_video_mime_for_url(string $url): string {
+        $path = parse_url($url, PHP_URL_PATH) ?: '';
+        $ext  = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+        $map  = [
+            'mp4'  => 'video/mp4',
+            'm4v'  => 'video/mp4',
+            'webm' => 'video/webm',
+            'ogg'  => 'video/ogg',
+            'ogv'  => 'video/ogg',
+            'mov'  => 'video/quicktime',
+        ];
+        return $map[$ext] ?? 'video/mp4';
+    }
+}

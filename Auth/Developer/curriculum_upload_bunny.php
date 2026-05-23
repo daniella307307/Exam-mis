@@ -93,14 +93,32 @@ try {
     if ($size <= 0)        { throw new Exception('Empty file'); }
     if ($size > $max)      { throw new Exception('File too large: ' . number_format($size / 1024 / 1024, 1) . 'MB > limit ' . ($max / 1024 / 1024) . 'MB'); }
 
-    // Tidy, predictable Bunny path so the Developer can find / replace files.
-    $timestamp     = date('Ymd_His');
-    $safe_orig     = preg_replace('/[^a-zA-Z0-9._-]/', '_', pathinfo($orig, PATHINFO_FILENAME));
-    $safe_orig     = substr($safe_orig, 0, 60);
-    $filename      = $kind . '-' . $timestamp . '-' . $safe_orig . '.' . $ext;
-    $bunny_path    = sprintf(
-        'curriculum/cert%d/term%d/m%02d/w%d/%s',
-        $cert, $term, $month, $week, $filename
+    // Human-readable Bunny path so the Developer can navigate the storage
+    // bucket without decoding cert IDs / month numbers:
+    //     curriculum/Nursery_I/Term_1/January/Week_1/pdf-2026...-counting.pdf
+    //
+    // Cert NAME comes from the certifications row; sanitized to A-Z/0-9/_-.
+    // If the row is missing (shouldn't happen — earlier slot check passed),
+    // fall back to cert{ID} so the upload still goes through.
+    $cstmt = $conn->prepare("SELECT certification_name FROM certifications WHERE certification_id = ? LIMIT 1");
+    $cstmt->bind_param('i', $cert);
+    $cstmt->execute();
+    $cert_row = $cstmt->get_result()->fetch_assoc();
+    $cstmt->close();
+    $cert_label  = $cert_row && !empty($cert_row['certification_name'])
+                     ? curriculum_safe_path_segment((string)$cert_row['certification_name'])
+                     : 'cert' . $cert;
+
+    $month_names = curriculum_month_names();
+    $month_label = curriculum_safe_path_segment($month_names[$month] ?? ('Month_' . $month));
+
+    $timestamp = date('Ymd_His');
+    $safe_orig = preg_replace('/[^a-zA-Z0-9._-]/', '_', pathinfo($orig, PATHINFO_FILENAME));
+    $safe_orig = substr((string)$safe_orig, 0, 60);
+    $filename  = $kind . '-' . $timestamp . '-' . $safe_orig . '.' . $ext;
+    $bunny_path = sprintf(
+        'curriculum/%s/Term_%d/%s/Week_%d/%s',
+        $cert_label, $term, $month_label, $week, $filename
     );
 
     // Stream the file binary up. file_get_contents into memory is fine for
