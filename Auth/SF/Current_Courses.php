@@ -49,7 +49,8 @@ $select_promotions = mysqli_query($conn,"
 
 <div class="flex flex-1">
     <!--Sidebar-->
-    <?php include('side_bar_courses.php'); ?>
+    <?php /* Unified sidebar across SF — same nav menu as the rest of the area. */ ?>
+    <?php include('dynamic_side_bar.php'); ?>
     <!--/Sidebar-->
 
     <!--Main-->

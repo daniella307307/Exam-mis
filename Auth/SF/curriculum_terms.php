@@ -49,7 +49,7 @@ $tstmt->close();
 ?>
 
 <div class="flex flex-1">
-    <?php include('side_bar_courses.php'); ?>
+    <?php include('dynamic_side_bar.php'); ?>
 
     <main class="bg-gray-50 flex-1 p-6 overflow-y-auto">
         <!-- Back button + crumbs. Breadcrumb stays for quick deep-jumps;

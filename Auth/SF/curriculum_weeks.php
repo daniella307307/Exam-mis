@@ -56,7 +56,7 @@ $is_proj    = curriculum_is_projects_month($MONTH);
 ?>
 
 <div class="flex flex-1">
-    <?php include('side_bar_courses.php'); ?>
+    <?php include('dynamic_side_bar.php'); ?>
 
     <main class="bg-gray-50 flex-1 p-6 overflow-y-auto">
         <div class="flex items-center gap-3 mb-3">

@@ -71,7 +71,7 @@ $video_mime     = $video_url !== '' ? curriculum_video_mime_for_url($video_url) 
 ?>
 
 <div class="flex flex-1">
-    <?php include('side_bar_courses.php'); ?>
+    <?php include('dynamic_side_bar.php'); ?>
 
     <main class="bg-gray-50 flex-1 p-6 overflow-y-auto">
         <div class="flex items-center gap-3 mb-3">
@@ -148,19 +148,37 @@ $video_mime     = $video_url !== '' ? curriculum_video_mime_for_url($video_url) 
                 <?php if ($video_url !== ''): ?>
                     <div class="card no-grab">
                         <div class="card-h">🎬 Video</div>
-                        <!-- Direct Bunny URL. `type` + `playsinline` were the actual
-                             playback fix. controlslist + disablepictureinpicture trim
-                             the browser's Save / PiP buttons so casual users can't
-                             pop the video out for download. -->
-                        <video controls preload="metadata" playsinline
+                        <!-- Try inline first. If the codec / container isn't supported
+                             (most often .mov in Chrome) the <video> stays dead — that's
+                             when the fallback button below kicks in. We also listen for
+                             the `error` event so we surface a clear message instead of
+                             just a silent broken player. -->
+                        <video id="lesson-video" controls preload="metadata" playsinline
                                controlslist="nodownload noplaybackrate noremoteplayback"
                                disablepictureinpicture
                                class="video-frame">
                             <source src="<?= htmlspecialchars($video_url) ?>" type="<?= htmlspecialchars($video_mime) ?>">
-                            Your browser cannot play this video.
+                            Your browser cannot play this video inline. Use the
+                            "Open video" button below.
                         </video>
+
+                        <!-- Fallback access — the user explicitly asked: "if we cannot
+                             stream on the site, let it direct us to the source". For
+                             .mov files (and any other codec the browser refuses), this
+                             button is the only way to view. Same model as embedded
+                             YouTube falling back to youtube.com. -->
+                        <div class="video-fallback">
+                            <a href="<?= htmlspecialchars($video_url) ?>" target="_blank" rel="noopener"
+                               class="video-open-btn">
+                                ▶ Open video in a new window
+                            </a>
+                            <span id="video-hint" class="video-hint">
+                                If the player above doesn&rsquo;t respond, use this button.
+                            </span>
+                        </div>
+
                         <p class="protect-note">
-                            🔒 This video is protected. Downloading or sharing copies is not allowed.
+                            🔒 Please don&rsquo;t download or share copies of this video.
                         </p>
                     </div>
                 <?php endif; ?>
@@ -250,6 +268,32 @@ $video_mime     = $video_url !== '' ? curriculum_video_mime_for_url($video_url) 
         padding:8px 12px; border-radius:8px;
         display:inline-block;
     }
+
+    /* Video fallback row — shows a clear "open the source" button under
+       the inline player. If inline plays, the button is just a backup. */
+    .video-fallback {
+        display:flex; align-items:center; flex-wrap:wrap; gap:12px;
+        margin-top:12px;
+    }
+    .video-open-btn {
+        display:inline-flex; align-items:center; gap:8px;
+        padding:10px 18px; border-radius:8px;
+        background:linear-gradient(135deg,#dc2626,#ef4444);
+        color:#fff; font-weight:800; font-size:13px;
+        text-decoration:none;
+        box-shadow:0 6px 16px rgba(220,38,38,.25);
+        transition:transform .12s ease, box-shadow .12s ease;
+    }
+    .video-open-btn:hover { transform:translateY(-1px); box-shadow:0 10px 22px rgba(220,38,38,.35); }
+    .video-hint {
+        font-size:12px; color:#6b7280; font-weight:600;
+    }
+    .video-hint.warn {
+        color:#b45309;
+        background:#fef3c7; border:1px solid #fde68a;
+        padding:4px 10px; border-radius:6px;
+        font-weight:700;
+    }
 </style>
 
 <script>
@@ -265,11 +309,10 @@ $video_mime     = $video_url !== '' ? curriculum_video_mime_for_url($video_url) 
         el.addEventListener('selectstart', (e) => e.preventDefault());
     });
 
-    // Block Save / Print / DevTools shortcuts on the curriculum page itself.
-    // PDFs rendered inside the iframe come from the same origin (the proxy),
-    // but the iframe has its own document — these listeners on `document`
-    // only fire when focus is on our page chrome. That's fine; we mainly
-    // want to stop a user pressing Ctrl+S while the page is in focus.
+    // Block Save / Print shortcuts on the curriculum page itself. PDFs
+    // rendered inside the iframe have their own document — these listeners
+    // on `document` only fire when focus is on our page chrome. Mainly to
+    // stop a user pressing Ctrl+S while the page is in focus.
     document.addEventListener('keydown', (e) => {
         const k = (e.key || '').toLowerCase();
         if ((e.ctrlKey || e.metaKey) && (k === 's' || k === 'p')) {
@@ -277,6 +320,24 @@ $video_mime     = $video_url !== '' ? curriculum_video_mime_for_url($video_url) 
             e.stopPropagation();
         }
     }, true);
+
+    // Surface a clearer message when the browser refuses the video codec
+    // (most common: .mov in Chrome → silent dead player). Listen for the
+    // <video> error event and highlight the fallback button.
+    const vid = document.getElementById('lesson-video');
+    if (vid) {
+        const showFallback = () => {
+            const hint = document.getElementById('video-hint');
+            if (hint) {
+                hint.textContent = '⚠️ This video can’t play inline here — click the button to open it.';
+                hint.classList.add('warn');
+            }
+        };
+        vid.addEventListener('error', showFallback, true);
+        // <source> error doesn't bubble to <video>, listen separately:
+        const src = vid.querySelector('source');
+        if (src) src.addEventListener('error', showFallback);
+    }
 })();
 </script>
 
