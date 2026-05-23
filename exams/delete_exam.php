@@ -11,9 +11,14 @@ if (!$exam_id) {
     exit;
 }
 
-if (!exam_acl_owns($conn, $exam_id)) {
+// Strict creator-only: same-school co-teachers can edit each other's exams,
+// but deleting a teammate's work has to remain the original creator's call.
+if (!exam_acl_is_creator($conn, $exam_id)) {
     http_response_code(403);
-    echo json_encode(['success' => false, 'error' => 'You can only delete your own exams.']);
+    echo json_encode([
+        'success' => false,
+        'error'   => 'Only the teacher who originally created this exam can delete it. Co-teachers at your school can edit but not delete.',
+    ]);
     exit;
 }
 

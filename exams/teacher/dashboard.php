@@ -27,8 +27,26 @@ $status_filter = $_GET['status'] ?? '';
 $grade_filter  = $_GET['grade']  ?? '';
 $stream_filter = $_GET['stream'] ?? '';
 
-// Common SELECT — adds creator first/last name + is_public so the cards
-// can credit the author and show whether the exam is in the public library.
+// Idempotent: make sure the column the "Adapted from" credit relies on
+// exists. The migration in db_backup/cloned_from_migration.sql does the
+// same thing but this lets the dashboard still render before the SQL is
+// applied manually.
+$col_check = $conn->query("SHOW COLUMNS FROM `exams` LIKE 'cloned_from_exam_id'");
+$has_cloned_from = ($col_check && $col_check->num_rows > 0);
+if ($col_check) { $col_check->close(); }
+if (!$has_cloned_from) {
+    @ $conn->query("ALTER TABLE `exams` ADD COLUMN `cloned_from_exam_id` INT NULL DEFAULT NULL");
+    $has_cloned_from = true;
+}
+
+// Common SELECT — credits original author (owner_name) and exposes the
+// "adapted from" provenance for republished exams.
+$cloned_from_select = $has_cloned_from
+    ? "e.cloned_from_exam_id,
+       COALESCE(CONCAT(orig_u.firstname,' ',orig_u.lastname), '') AS adapted_from_name,
+       COALESCE(orig_s.school_name, '') AS adapted_from_school"
+    : "NULL AS cloned_from_exam_id, '' AS adapted_from_name, '' AS adapted_from_school";
+
 $select_cols = "
     e.exam_id,
     e.exam_code,
@@ -41,6 +59,8 @@ $select_cols = "
     e.school_id,
     e.is_public,
     COALESCE(CONCAT(u.firstname,' ',u.lastname), '') AS owner_name,
+    COALESCE(s.school_name, '') AS school_name,
+    $cloned_from_select,
     COUNT(DISTINCT p.player_id) AS student_count,
     AVG(p.score) AS avg_score,
     GROUP_CONCAT(DISTINCT NULLIF(p.stream, '')) AS streams,
@@ -49,36 +69,76 @@ $select_cols = "
 
 $group_by = "
     GROUP BY e.exam_id, e.exam_code, e.title, e.topic, e.grade, e.status, e.created_at,
-             e.created_by, e.school_id, e.is_public, u.firstname, u.lastname
+             e.created_by, e.school_id, e.is_public,
+             u.firstname, u.lastname, s.school_name"
+    . ($has_cloned_from
+        ? ", e.cloned_from_exam_id, orig_u.firstname, orig_u.lastname, orig_s.school_name"
+        : "")
+    . "
     ORDER BY e.created_at DESC
     LIMIT 200
 ";
 
+// JOIN block — original-creator JOINs only added when the cloned_from
+// column exists (otherwise the orig_* aliases would crash the parser).
+$base_joins = "
+    LEFT JOIN users   u ON u.user_id   = e.created_by
+    LEFT JOIN schools s ON s.school_id = e.school_id
+    LEFT JOIN players p ON p.exam_id   = e.exam_id"
+    . ($has_cloned_from ? "
+    LEFT JOIN exams   orig_e ON orig_e.exam_id   = e.cloned_from_exam_id
+    LEFT JOIN users   orig_u ON orig_u.user_id   = orig_e.created_by
+    LEFT JOIN schools orig_s ON orig_s.school_id = orig_e.school_id" : "");
+
 if ($view === 'mine') {
-    // Strictly the current teacher's own exams.
-    $sql = "SELECT $select_cols
-              FROM exams e
-              LEFT JOIN users u   ON u.user_id   = e.created_by
-              LEFT JOIN players p ON p.exam_id   = e.exam_id
-             WHERE e.created_by = ?
-             $group_by";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param('i', $user_id);
-} else {
-    // Public library — other teachers' exams that are either explicitly
-    // marked is_public=1 or belong to the same school (so existing co-teacher
-    // collab keeps working). Developers see every other teacher's exam.
+    // "My Exams" now = mine OR my school's. Same-school co-teachers are
+    // treated as joint authors (per the user's request) so Daniella sees
+    // Shafii's exams under her own "My Exams" tab too.
     $params = [];
     $types  = '';
 
     if ($acl['is_developer']) {
-        $where = "WHERE e.created_by <> ?";
+        $where = "WHERE e.created_by = ?";
         $types   .= 'i';
         $params[] = $user_id;
     } else {
-        $where = "WHERE e.created_by <> ?
-                    AND (e.is_public = 1
-                         OR (? > 0 AND e.school_id = ?))";
+        $where = "WHERE e.created_by = ?
+                     OR (? > 0 AND e.school_id = ?)";
+        $types   .= 'iii';
+        $params[] = $user_id;
+        $params[] = $school_id;
+        $params[] = $school_id;
+    }
+
+    $sql = "SELECT $select_cols
+              FROM exams e
+              $base_joins
+             $where
+             $group_by";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param($types, ...$params);
+} else {
+    // Public Library = exams from OTHER schools that the original teacher
+    // marked is_public = 1. Same-school exams are NOT here — they're under
+    // "My Exams" because co-teachers share full ownership.
+    $params = [];
+    $types  = '';
+
+    if ($acl['is_developer']) {
+        // Developers can browse every cross-school public exam.
+        $where = "WHERE e.is_public = 1
+                    AND e.created_by <> ?
+                    AND (? = 0 OR COALESCE(e.school_id, 0) <> ?)";
+        $types   .= 'iii';
+        $params[] = $user_id;
+        $params[] = $school_id;
+        $params[] = $school_id;
+    } else {
+        // Standard teacher: see public exams from any school other than mine.
+        // If I have no school (school_id = 0), every public exam is "other".
+        $where = "WHERE e.is_public = 1
+                    AND e.created_by <> ?
+                    AND (? = 0 OR COALESCE(e.school_id, 0) <> ?)";
         $types   .= 'iii';
         $params[] = $user_id;
         $params[] = $school_id;
@@ -89,16 +149,16 @@ if ($view === 'mine') {
         $where  .= " AND (e.title LIKE ?
                        OR e.topic LIKE ?
                        OR e.grade LIKE ?
-                       OR COALESCE(CONCAT(u.firstname,' ',u.lastname),'') LIKE ?)";
-        $types  .= 'ssss';
+                       OR COALESCE(CONCAT(u.firstname,' ',u.lastname),'') LIKE ?
+                       OR COALESCE(s.school_name,'') LIKE ?)";
+        $types  .= 'sssss';
         $like = '%' . $search . '%';
-        $params[] = $like; $params[] = $like; $params[] = $like; $params[] = $like;
+        $params[] = $like; $params[] = $like; $params[] = $like; $params[] = $like; $params[] = $like;
     }
 
     $sql = "SELECT $select_cols
               FROM exams e
-              LEFT JOIN users u   ON u.user_id   = e.created_by
-              LEFT JOIN players p ON p.exam_id   = e.exam_id
+              $base_joins
              $where
              $group_by";
     $stmt = $conn->prepare($sql);
@@ -468,6 +528,29 @@ if (!empty($status_filter) || !empty($grade_filter) || !empty($stream_filter)) {
     .pub-toggle.off { background:rgba(148,163,184,.18); color:#cbd5e1; border:1px solid rgba(148,163,184,.4); }
     .pub-toggle:hover { transform:translateY(-1px); }
     .pub-toggle:disabled { opacity:.55; cursor:wait; }
+
+    /* Adapted-from chip: cards that are a republish of another teacher's exam. */
+    .adapted-chip {
+        display:inline-flex; align-items:center; gap:6px;
+        padding:3px 10px; border-radius:999px;
+        background:rgba(245,158,11,.16); color:#fde68a;
+        font-size:11px; font-weight:800; letter-spacing:.3px;
+        border:1px solid rgba(245,158,11,.4);
+        margin-top:6px;
+    }
+    .public-action-row {
+        display:flex; gap:8px; margin-top:12px; flex-wrap:wrap;
+    }
+    .preview-btn, .republish-btn-card {
+        flex:1; min-width:120px;
+        padding:10px 12px; border-radius:8px; border:none;
+        font-weight:800; font-size:12px; cursor:pointer;
+        text-decoration:none; text-align:center;
+    }
+    .preview-btn  { background:rgba(59,130,246,.18); color:#93c5fd; border:1px solid rgba(59,130,246,.4); }
+    .preview-btn:hover  { background:rgba(59,130,246,.28); }
+    .republish-btn-card { background:linear-gradient(135deg,#10b981,#22c55e); color:#fff; box-shadow:0 6px 16px rgba(16,185,129,.3); }
+    .republish-btn-card:hover { transform:translateY(-1px); }
 </style>
 
 <div class="filters" style="margin-bottom: 30px;">
@@ -534,28 +617,49 @@ if (!empty($status_filter) || !empty($grade_filter) || !empty($stream_filter)) {
             // Strict author check (used for credit chip / public toggle visibility).
             $is_actual_creator = ((int)$exam['created_by'] === $user_id);
             $exam_school   = (int)($exam['school_id'] ?? 0);
-            $is_same_school = $school_id > 0 && $exam_school > 0 && $school_id === $exam_school;
+            // "Co-owner" — same school, treated as joint owner under the
+            // widened ACL. Gets the full edit/manage UI even on My Exams.
+            $is_co_owner    = !$is_actual_creator && $school_id > 0 && $exam_school > 0 && $school_id === $exam_school;
             $is_pub         = (int)($exam['is_public'] ?? 0) === 1;
             $creator_name   = trim((string)($exam['owner_name'] ?? '')) ?: 'colleague';
+            $school_name    = trim((string)($exam['school_name'] ?? ''));
+
+            // Republished-from-public credit (only set if cloned_from_exam_id is present).
+            $adapted_name   = trim((string)($exam['adapted_from_name'] ?? ''));
+            $adapted_school = trim((string)($exam['adapted_from_school'] ?? ''));
+            $is_adapted     = $adapted_name !== '';
         ?>
             <div class="exam-card <?= strtolower($exam['status']) ?>">
                 <div class="exam-header">
                     <div>
                         <div class="exam-title">
                             <?= htmlspecialchars($exam['title']) ?>
-                            <?php if (!$is_actual_creator && $is_pub): ?>
+                            <?php if ($view === 'public'): ?>
                                 <span class="origin-badge origin-public">🌐 Public</span>
-                            <?php elseif (!$is_actual_creator && $is_same_school): ?>
+                            <?php elseif ($is_co_owner): ?>
                                 <span class="origin-badge origin-school">🏫 Same school</span>
                             <?php elseif ($is_actual_creator && $is_pub): ?>
                                 <span class="origin-badge origin-public">🌐 In public library</span>
                             <?php endif; ?>
                         </div>
                         <div class="exam-code">Code: <?= $exam['exam_code'] ?></div>
-                        <?php if (!$is_actual_creator): ?>
-                            <!-- Credit the teacher who prepared the exam. -->
+
+                        <?php if ($view === 'public'): ?>
+                            <!-- Credit the teacher (and their school) on every public card. -->
+                            <div class="credit-chip">
+                                🧑‍🏫 By: <?= htmlspecialchars($creator_name) ?><?= $school_name !== '' ? ' @ ' . htmlspecialchars($school_name) : '' ?>
+                            </div>
+                        <?php elseif ($is_co_owner): ?>
+                            <!-- Same-school colleague's exam — credit them but full access. -->
                             <div class="credit-chip">
                                 🧑‍🏫 By: <?= htmlspecialchars($creator_name) ?>
+                            </div>
+                        <?php endif; ?>
+
+                        <?php if ($is_adapted): ?>
+                            <!-- This exam was republished from the Public Library. Keep the trail. -->
+                            <div class="adapted-chip">
+                                📝 Adapted from <?= htmlspecialchars($adapted_name) ?><?= $adapted_school !== '' ? ' @ ' . htmlspecialchars($adapted_school) : '' ?>
                             </div>
                         <?php endif; ?>
                     </div>
@@ -579,32 +683,47 @@ if (!empty($status_filter) || !empty($grade_filter) || !empty($stream_filter)) {
                     </div>
                 </div>
 
-                <div class="exam-stats">
-                    <div class="stat">
-                        <div class="stat-label">Students</div>
-                        <div class="stat-value"><?= $exam['student_count'] ?></div>
+                <?php if ($view !== 'public'): ?>
+                    <div class="exam-stats">
+                        <div class="stat">
+                            <div class="stat-label">Students</div>
+                            <div class="stat-value"><?= $exam['student_count'] ?></div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-label">Avg Score</div>
+                            <div class="stat-value"><?= round($exam['avg_score'] ?? 0) ?></div>
+                        </div>
                     </div>
-                    <div class="stat">
-                        <div class="stat-label">Avg Score</div>
-                        <div class="stat-value"><?= round($exam['avg_score'] ?? 0) ?></div>
-                    </div>
-                </div>
+                <?php endif; ?>
 
-                <?php if ($is_actual_creator): ?>
-                    <!-- Owner controls whether this exam is listed in the global Public Library. -->
+                <?php if ($view !== 'public' && ($is_actual_creator || $is_co_owner)): ?>
+                    <!-- Owner / co-owner can flip the global Public flag. -->
                     <button type="button"
                             class="pub-toggle <?= $is_pub ? 'on' : 'off' ?>"
                             data-exam="<?= (int)$exam['exam_id'] ?>"
                             data-value="<?= $is_pub ? 1 : 0 ?>"
-                            title="When ON, any teacher can find this exam in the Public Library. Your name appears as the credited author.">
+                            title="When ON, teachers at other schools can find this exam in the Public Library. The original author's name stays credited.">
                         🌐 Public: <strong class="pub-state"><?= $is_pub ? 'ON' : 'OFF' ?></strong>
                     </button>
                 <?php endif; ?>
 
-                <div class="exam-actions">
-                    <a href="../exams_dashboard.php" class="action-btn">Manage</a>
-                    <a href="../teacher/class_report.php?exam_id=<?= $exam['exam_id'] ?>" class="action-btn">Results</a>
-                </div>
+                <?php if ($view === 'public'): ?>
+                    <!-- Cross-school exam — preview-then-republish flow. -->
+                    <div class="public-action-row">
+                        <a href="../preview_public_exam.php?exam_id=<?= (int)$exam['exam_id'] ?>"
+                           class="preview-btn">👁 Preview</a>
+                        <button type="button"
+                                class="republish-btn-card"
+                                onclick="republishToMySchool(<?= (int)$exam['exam_id'] ?>)">
+                            📥 Republish to my school
+                        </button>
+                    </div>
+                <?php else: ?>
+                    <div class="exam-actions">
+                        <a href="../exams_dashboard.php" class="action-btn">Manage</a>
+                        <a href="../teacher/class_report.php?exam_id=<?= $exam['exam_id'] ?>" class="action-btn">Results</a>
+                    </div>
+                <?php endif; ?>
             </div>
         <?php endforeach; ?>
     </div>
@@ -641,6 +760,24 @@ document.querySelectorAll('.pub-toggle').forEach((btn) => {
         }
     });
 });
+
+// Republish a public exam into the current teacher's school. POST to
+// clone_exam.php which deep-copies questions/options and returns the
+// new exam_id. The new copy has a fresh leaderboard (no players yet).
+async function republishToMySchool(examId) {
+    if (!confirm('📥 Republish this exam to your school?\n\nA brand-new copy will be added to your dashboard. Your students start on a fresh leaderboard.')) return;
+    try {
+        const fd = new FormData();
+        fd.append('exam_id', examId);
+        const r = await fetch('<?= APP_BASE_URL ?>/exams/clone_exam.php', { method: 'POST', body: fd });
+        const j = await r.json();
+        if (!j.success) throw new Error(j.error || 'clone failed');
+        alert(`✅ Republished!\n\nNew exam code: ${j.new_exam_code}\nQuestions copied: ${j.questions}\n\nTaking you to My Exams…`);
+        window.location.href = '?view=mine';
+    } catch (err) {
+        alert('❌ Republish failed: ' + err.message);
+    }
+}
 </script>
 
 <?php include('../layout/footer.php'); ?>

@@ -2,13 +2,22 @@
 /**
  * Multi-tenancy ACL for the exams module.
  *
- * Three tiers:
- *   OWN          — owner only (edit content / delete / answer-key preview)
- *   COLLABORATE  — owner OR same-school facilitator (republish, activate,
- *                  deactivate, grade submissions). Safe state changes that
- *                  don't rewrite the exam content or expose answer keys.
- *   VIEW         — owner OR same-school facilitator (dashboard listings,
- *                  leaderboard, reports, Excel download, per-question report)
+ * Tiers (low → high trust):
+ *   VIEW         — owner OR same-school facilitator. Dashboard listings,
+ *                  leaderboard, reports, Excel download, per-question report.
+ *   COLLABORATE  — owner OR same-school facilitator. Same set as VIEW today,
+ *                  but called out separately so we can tighten one without
+ *                  the other (republish, activate, deactivate, grade).
+ *   OWN          — owner OR same-school co-teacher. Co-teachers at the same
+ *                  school are treated as joint owners: they can edit the
+ *                  exam content, view answer keys, and toggle Public.
+ *                  This was widened on the user's request: "if we teach the
+ *                  same school lets take as my exams so i can have access to
+ *                  edit all access just like the owner."
+ *   CREATOR      — strictly the user_id in exams.created_by (or a Developer).
+ *                  Reserved for irreversible actions (delete). Co-teachers
+ *                  intentionally cannot delete each other's work — same
+ *                  conversation: "Edit yes, delete owner-only."
  *
  *   $acl = exam_acl_context($conn);
  *
@@ -17,15 +26,17 @@
  *   $acl['school_id']     (int)        users.school_ref (0 if none)
  *   $acl['is_developer']  (bool)       bypass all checks
  *
- *   exam_acl_owns($conn, $exam_id)                    (bool) OWN          — non-fatal
+ *   exam_acl_is_creator($conn, $exam_id)              (bool) CREATOR      — non-fatal
+ *   exam_acl_require_creator($conn, $exam_id)                CREATOR      — 403 + exit
+ *   exam_acl_owns($conn, $exam_id)                    (bool) OWN          — non-fatal (creator OR same-school)
  *   exam_acl_require_owner($conn, $exam_id)                  OWN          — 403 + exit
  *   exam_acl_can_collaborate($conn, $exam_id)         (bool) COLLABORATE  — non-fatal
  *   exam_acl_require_collaborate($conn, $exam_id)            COLLABORATE  — 403 + exit
  *   exam_acl_can_view($conn, $exam_id)                (bool) VIEW         — non-fatal
  *   exam_acl_require_view($conn, $exam_id)                   VIEW         — 403 + exit
  *
- * Same-school rule: a user with school_ref > 0 may collaborate on / view any
- * exam whose school_id matches their own school_ref. school_ref = 0
+ * Same-school rule: a user with school_ref > 0 may co-own / collaborate /
+ * view any exam whose school_id matches their own school_ref. school_ref = 0
  * (placeholder accounts) is treated as "no school" and does NOT pool with
  * other 0-school users.
  */
@@ -63,8 +74,12 @@ function exam_acl_context(mysqli $conn): array {
     ];
 }
 
-/** Non-fatal: did $exam_id originate from the current user (or are they dev)? */
-function exam_acl_owns(mysqli $conn, int $exam_id): bool {
+/**
+ * CREATOR — strict: is the current user literally the user_id stored in
+ * exams.created_by? Used only for destructive actions (delete) where
+ * same-school co-ownership is intentionally NOT enough.
+ */
+function exam_acl_is_creator(mysqli $conn, int $exam_id): bool {
     $acl = exam_acl_context($conn);
     if ($acl['is_developer']) return true;
     if (!$acl['user_id'])     return false;
@@ -77,7 +92,51 @@ function exam_acl_owns(mysqli $conn, int $exam_id): bool {
     return $row && (int)$row['created_by'] === (int)$acl['user_id'];
 }
 
-/** Fatal: 403 + exit if the current user has no business touching $exam_id. */
+/** Fatal: 403 + exit if the current user isn't the strict creator. */
+function exam_acl_require_creator(mysqli $conn, int $exam_id): void {
+    if (exam_acl_is_creator($conn, $exam_id)) return;
+    http_response_code(403);
+    if (PHP_SAPI !== 'cli') {
+        header('Content-Type: text/html; charset=utf-8');
+    }
+    echo '<!doctype html><meta charset="utf-8"><title>403 Forbidden</title>'
+       . '<div style="font-family:sans-serif;max-width:560px;margin:80px auto;text-align:center">'
+       . '<h1 style="color:#dc2626">403 &mdash; Creator only</h1>'
+       . '<p style="color:#475569">Only the teacher who originally created this exam can perform this action. Co-teachers at your school can edit but not delete each other&rsquo;s exams.</p>'
+       . '<p><a href="exams_dashboard.php" style="color:#2563eb">&larr; Back to my exams</a></p>'
+       . '</div>';
+    exit;
+}
+
+/**
+ * OWN — non-fatal: may the current user act as an owner of $exam_id?
+ * True if: Developer, the literal creator, OR a same-school co-teacher
+ * (exams.school_id matches viewer's users.school_ref, both > 0).
+ *
+ * Co-teachers at the same school are treated as joint owners by deliberate
+ * design — they can edit content and reveal answer keys for each other's
+ * exams. Strict creator gating (delete) lives in exam_acl_is_creator.
+ */
+function exam_acl_owns(mysqli $conn, int $exam_id): bool {
+    $acl = exam_acl_context($conn);
+    if ($acl['is_developer']) return true;
+    if (!$acl['user_id'])     return false;
+
+    $stmt = $conn->prepare("SELECT created_by, school_id FROM exams WHERE exam_id = ? LIMIT 1");
+    $stmt->bind_param('i', $exam_id);
+    $stmt->execute();
+    $row = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+    if (!$row) return false;
+
+    if ((int)$row['created_by'] === (int)$acl['user_id']) return true;
+
+    $exam_school   = (int)($row['school_id'] ?? 0);
+    $viewer_school = (int)($acl['school_id'] ?? 0);
+    return $exam_school > 0 && $viewer_school > 0 && $exam_school === $viewer_school;
+}
+
+/** Fatal: 403 + exit if the current user can't act as owner of $exam_id. */
 function exam_acl_require_owner(mysqli $conn, int $exam_id): void {
     if (exam_acl_owns($conn, $exam_id)) return;
     http_response_code(403);
@@ -86,8 +145,8 @@ function exam_acl_require_owner(mysqli $conn, int $exam_id): void {
     }
     echo '<!doctype html><meta charset="utf-8"><title>403 Forbidden</title>'
        . '<div style="font-family:sans-serif;max-width:560px;margin:80px auto;text-align:center">'
-       . '<h1 style="color:#dc2626">403 &mdash; Not your exam</h1>'
-       . '<p style="color:#475569">This exam belongs to another teacher. Only the teacher who created it (or a Developer) can edit, delete, republish, or see its results.</p>'
+       . '<h1 style="color:#dc2626">403 &mdash; Not your school</h1>'
+       . '<p style="color:#475569">This exam belongs to a teacher at another school. To use it, find it in the Public Library and republish it into your school.</p>'
        . '<p><a href="exams_dashboard.php" style="color:#2563eb">&larr; Back to my exams</a></p>'
        . '</div>';
     exit;

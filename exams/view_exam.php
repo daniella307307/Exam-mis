@@ -9,6 +9,9 @@ if (!$exam_id) {
 }
 
 exam_acl_require_owner($conn, $exam_id);
+// Used below to hide the Delete button from same-school co-teachers — they
+// can edit answer keys but only the original creator can wipe the exam.
+$can_delete = exam_acl_is_creator($conn, $exam_id);
 
 // Fetch exam
 $stmt = $conn->prepare("SELECT * FROM exams WHERE exam_id = ? LIMIT 1");
@@ -113,7 +116,9 @@ if (count($questions) > 0) {
 
     <div class="actions-top">
         <a href="exam_creator_working.php?exam_id=<?= $exam_id ?>" class="btn btn-edit">✏️ Edit Exam</a>
-        <button class="btn btn-delete" onclick="deleteExam(<?= $exam_id ?>)">🗑️ Delete Exam</button>
+        <?php if ($can_delete): ?>
+            <button class="btn btn-delete" onclick="deleteExam(<?= $exam_id ?>)">🗑️ Delete Exam</button>
+        <?php endif; ?>
         <a href="exams_dashboard.php" class="btn btn-back">← Back to Dashboard</a>
     </div>
 
