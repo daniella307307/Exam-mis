@@ -1,12 +1,7 @@
 <?php
 /**
- * Cambridge-style curriculum browser — Level 2 of 4: Months.
- *
+ * Developer curriculum manager — Month cards in a term.
  * URL: curriculum_months.php?CERT=<id>&TERM=<1|2|3>
- *
- * Four month cards for the chosen term. Apr / Aug / Dec are subtly badged
- * as "Projects month" (lighter teaching, more PBL) per the teacher's note.
- * Each card shows how many weeks already have Bunny content.
  */
 include('header.php');
 require_once(__DIR__ . '/../curriculum_helpers.php');
@@ -18,7 +13,7 @@ $TERM = isset($_GET['TERM']) ? (int)$_GET['TERM'] : 0;
 
 $terms = curriculum_terms();
 if ($CERT <= 0 || !isset($terms[$TERM])) {
-    echo '<p class="p-4">Bad term/cert. <a href="Current_Courses.php" class="text-blue-600 underline">Back to Current Courses</a>.</p>';
+    echo '<p class="p-4">Bad term/cert. <a href="Curriculum.php" class="text-blue-600 underline">Back</a>.</p>';
     include('footer.php'); exit;
 }
 
@@ -27,13 +22,8 @@ $cstmt->bind_param('i', $CERT);
 $cstmt->execute();
 $cert = $cstmt->get_result()->fetch_assoc();
 $cstmt->close();
+if (!$cert) { echo '<p class="p-4">Certification not found.</p>'; include('footer.php'); exit; }
 
-if (!$cert) {
-    echo '<p class="p-4">Certification not found. <a href="Current_Courses.php" class="text-blue-600 underline">Back to Current Courses</a>.</p>';
-    include('footer.php'); exit;
-}
-
-// Weeks-with-content per month for this cert+term.
 $per_month = array_fill_keys($terms[$TERM]['months'], 0);
 $mstmt = $conn->prepare(
     "SELECT month_number, COUNT(*) AS cnt
@@ -45,25 +35,23 @@ $mstmt = $conn->prepare(
 $mstmt->bind_param('ii', $CERT, $TERM);
 $mstmt->execute();
 $mres = $mstmt->get_result();
-while ($r = $mres->fetch_assoc()) {
-    $per_month[(int)$r['month_number']] = (int)$r['cnt'];
-}
+while ($r = $mres->fetch_assoc()) { $per_month[(int)$r['month_number']] = (int)$r['cnt']; }
 $mstmt->close();
 
 $names = curriculum_month_names();
 ?>
 
 <div class="flex flex-1">
-    <?php include('side_bar_courses.php'); ?>
+    <?php include('dynamic_side_bar.php'); ?>
 
     <main class="bg-gray-50 flex-1 p-6 overflow-y-auto">
         <div class="flex items-center gap-3 mb-3">
             <a href="curriculum_terms.php?CERT=<?= (int)$CERT ?>" class="back-btn">← Back to Terms</a>
         </div>
         <div class="text-xs text-gray-500 mb-2 uppercase tracking-wide font-semibold">
-            <a href="Current_Courses.php" class="hover:text-blue-600">Current Courses</a>
+            <a href="Curriculum.php" class="hover:text-purple-600">Curriculum</a>
             <span class="mx-1">›</span>
-            <a href="curriculum_terms.php?CERT=<?= (int)$CERT ?>" class="hover:text-blue-600"><?= htmlspecialchars($cert['certification_name']) ?></a>
+            <a href="curriculum_terms.php?CERT=<?= (int)$CERT ?>" class="hover:text-purple-600"><?= htmlspecialchars($cert['certification_name']) ?></a>
             <span class="mx-1">›</span>
             <span class="text-gray-800"><?= htmlspecialchars($terms[$TERM]['label']) ?></span>
         </div>
@@ -74,7 +62,7 @@ $names = curriculum_month_names();
                     <?= htmlspecialchars($terms[$TERM]['label']) ?>
                     <span class="text-base font-medium text-gray-500">(<?= htmlspecialchars($terms[$TERM]['range']) ?>)</span>
                 </h1>
-                <p class="text-sm text-gray-500">Pick a month to see this week's content.</p>
+                <p class="text-sm text-gray-500">Pick a month to manage its weekly content.</p>
             </div>
         </div>
 
@@ -92,7 +80,7 @@ $names = curriculum_month_names();
                         <?php endif; ?>
                         <div class="month-foot">
                             <?= $count > 0
-                                ? '<span class="text-emerald-600 text-xs font-bold">📚 ' . $count . ' week' . ($count == 1 ? '' : 's') . ' ready</span>'
+                                ? '<span class="text-emerald-600 text-xs font-bold">📚 ' . $count . ' week' . ($count == 1 ? '' : 's') . ' published</span>'
                                 : '<span class="text-gray-400 text-xs">Empty</span>' ?>
                             <span class="arrow">›</span>
                         </div>
@@ -112,8 +100,7 @@ $names = curriculum_month_names();
         font-size:13px; font-weight:700; text-decoration:none;
         transition:transform .12s ease, box-shadow .12s ease, border-color .12s ease;
     }
-    .back-btn:hover { transform:translateX(-2px); border-color:#3b82f6; color:#3b82f6; box-shadow:0 4px 10px rgba(0,0,0,.06); }
-
+    .back-btn:hover { transform:translateX(-2px); border-color:#7c3aed; color:#7c3aed; box-shadow:0 4px 10px rgba(0,0,0,.06); }
     .month-card { display:block; text-decoration:none; color:inherit; }
     .month-card-inner {
         background:#fff;
@@ -127,8 +114,8 @@ $names = curriculum_month_names();
     }
     .month-card:hover .month-card-inner {
         transform:translateY(-3px);
-        box-shadow:0 12px 26px rgba(59,130,246,.18);
-        border-color:#3b82f6;
+        box-shadow:0 12px 26px rgba(124,58,237,.18);
+        border-color:#7c3aed;
     }
     .month-name { font-size:18px; font-weight:800; color:#111827; }
     .proj-badge {
@@ -138,7 +125,7 @@ $names = curriculum_month_names();
         background:#fef3c7; color:#92400e; border:1px solid #fde68a;
     }
     .month-foot { display:flex; justify-content:space-between; align-items:center; margin-top:8px; }
-    .month-foot .arrow { color:#3b82f6; font-weight:900; font-size:18px; transition:transform .15s ease; }
+    .month-foot .arrow { color:#7c3aed; font-weight:900; font-size:18px; transition:transform .15s ease; }
     .month-card:hover .arrow { transform:translateX(3px); }
 </style>
 

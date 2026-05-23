@@ -1,19 +1,20 @@
 <?php
 /**
- * Cambridge-style curriculum browser — Level 4 of 4: Week content.
+ * Cambridge-style curriculum browser — Level 4 of 4: Week content (SF view).
  *
  * URL: curriculum_week.php?CERT=<id>&TERM=<1|2|3>&MONTH=<1-12>&WEEK=<n>
  *
- * Two-panel view:
- *   - left/top:  PDF + video preview from Bunny CDN (when URLs are saved)
- *   - right/bottom: editor form to paste/update Bunny URLs + title + notes
+ * Read-only. School facilitators see whatever the Developer has uploaded:
+ *   - PDF + video embedded for in-page viewing
+ *   - Title + teacher notes if provided
  *
- * The form posts to save_curriculum_week.php which upserts by the
- * (certification, term, month, week) UNIQUE key, so the very first save
- * creates the row and subsequent saves edit it.
+ * Adding / editing / uploading is intentionally NOT available here — it
+ * lives on the Developer side (Auth/Developer/curriculum_week.php). The
+ * `curriculum_weeks` row is keyed by certification_id only, so whatever
+ * the Developer saves automatically appears in every school's SF view.
  */
 include('header.php');
-require_once(__DIR__ . '/curriculum_helpers.php');
+require_once(__DIR__ . '/../curriculum_helpers.php');
 
 curriculum_ensure_table($conn);
 
@@ -38,7 +39,6 @@ if (!$cert) {
     include('footer.php'); exit;
 }
 
-// Load existing row (if any).
 $row = null;
 $rstmt = $conn->prepare(
     "SELECT title, notes, bunny_pdf_url, bunny_video_url, updated_at
@@ -51,19 +51,24 @@ $rstmt->execute();
 $row = $rstmt->get_result()->fetch_assoc();
 $rstmt->close();
 
-$terms      = curriculum_terms();
-$names      = curriculum_month_names();
-$title      = (string)($row['title']           ?? '');
-$notes      = (string)($row['notes']           ?? '');
-$pdf_url    = (string)($row['bunny_pdf_url']   ?? '');
-$video_url  = (string)($row['bunny_video_url'] ?? '');
-$updated    = $row['updated_at'] ?? null;
+$terms     = curriculum_terms();
+$names     = curriculum_month_names();
+$title     = (string)($row['title']           ?? '');
+$notes     = (string)($row['notes']           ?? '');
+$pdf_url   = (string)($row['bunny_pdf_url']   ?? '');
+$video_url = (string)($row['bunny_video_url'] ?? '');
+$updated   = $row['updated_at'] ?? null;
+$has_any   = ($pdf_url !== '' || $video_url !== '' || $notes !== '' || $title !== '');
 ?>
 
 <div class="flex flex-1">
     <?php include('side_bar_courses.php'); ?>
 
     <main class="bg-gray-50 flex-1 p-6 overflow-y-auto">
+        <div class="flex items-center gap-3 mb-3">
+            <a href="curriculum_weeks.php?CERT=<?= (int)$CERT ?>&TERM=<?= (int)$TERM ?>&MONTH=<?= (int)$MONTH ?>"
+               class="back-btn">← Back to weeks in <?= htmlspecialchars($names[$MONTH]) ?></a>
+        </div>
         <div class="text-xs text-gray-500 mb-2 uppercase tracking-wide font-semibold">
             <a href="Current_Courses.php" class="hover:text-blue-600">Current Courses</a>
             <span class="mx-1">›</span>
@@ -79,7 +84,12 @@ $updated    = $row['updated_at'] ?? null;
         <div class="flex justify-between items-end mb-5">
             <div>
                 <h1 class="text-2xl font-bold text-gray-800">
-                    Week <?= (int)$WEEK ?> <span class="text-gray-400">·</span> <?= htmlspecialchars($names[$MONTH]) ?>
+                    <?php if ($title !== ''): ?>
+                        <?= htmlspecialchars($title) ?>
+                        <span class="text-base font-medium text-gray-500">· Week <?= (int)$WEEK ?>, <?= htmlspecialchars($names[$MONTH]) ?></span>
+                    <?php else: ?>
+                        Week <?= (int)$WEEK ?> <span class="text-gray-400">·</span> <?= htmlspecialchars($names[$MONTH]) ?>
+                    <?php endif; ?>
                 </h1>
                 <p class="text-sm text-gray-500">
                     <?= htmlspecialchars($cert['certification_name']) ?> · <?= htmlspecialchars($terms[$TERM]['label']) ?> (<?= htmlspecialchars($terms[$TERM]['range']) ?>)
@@ -88,83 +98,59 @@ $updated    = $row['updated_at'] ?? null;
                     <?php endif; ?>
                 </p>
             </div>
-            <a href="curriculum_weeks.php?CERT=<?= (int)$CERT ?>&TERM=<?= (int)$TERM ?>&MONTH=<?= (int)$MONTH ?>"
-               class="text-xs text-gray-500 hover:text-blue-600 underline">← Back to weeks</a>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-5 gap-5">
-            <!-- LEFT: Preview pane -->
-            <div class="lg:col-span-3 space-y-4">
-                <div class="card">
-                    <div class="card-h">📄 PDF preview</div>
-                    <?php if ($pdf_url !== ''): ?>
+        <?php if (!$has_any): ?>
+            <div class="empty-state">
+                <div class="empty-emoji">📭</div>
+                <h2 class="text-lg font-bold text-gray-700">No content yet</h2>
+                <p class="text-sm text-gray-500 mt-1">
+                    The Developer hasn&rsquo;t uploaded material for this week yet.
+                    Check back later or contact your admin if this seems wrong.
+                </p>
+            </div>
+        <?php else: ?>
+            <div class="space-y-4">
+                <?php if ($pdf_url !== ''): ?>
+                    <div class="card">
+                        <div class="card-h">📄 PDF</div>
                         <iframe src="<?= htmlspecialchars($pdf_url) ?>#toolbar=0" class="pdf-frame"></iframe>
                         <a href="<?= htmlspecialchars($pdf_url) ?>" target="_blank" class="text-xs text-blue-600 underline mt-2 inline-block">Open in new tab ↗</a>
-                    <?php else: ?>
-                        <div class="empty">No PDF yet. Paste a Bunny URL on the right to attach one.</div>
-                    <?php endif; ?>
-                </div>
+                    </div>
+                <?php endif; ?>
 
-                <div class="card">
-                    <div class="card-h">🎬 Video preview</div>
-                    <?php if ($video_url !== ''): ?>
+                <?php if ($video_url !== ''): ?>
+                    <div class="card">
+                        <div class="card-h">🎬 Video</div>
                         <video controls preload="metadata" class="video-frame">
                             <source src="<?= htmlspecialchars($video_url) ?>">
                             Your browser cannot play this video.
                         </video>
                         <a href="<?= htmlspecialchars($video_url) ?>" target="_blank" class="text-xs text-blue-600 underline mt-2 inline-block">Open in new tab ↗</a>
-                    <?php else: ?>
-                        <div class="empty">No video yet. Paste a Bunny URL on the right to attach one.</div>
-                    <?php endif; ?>
-                </div>
+                    </div>
+                <?php endif; ?>
 
                 <?php if ($notes !== ''): ?>
                     <div class="card">
-                        <div class="card-h">📝 Notes</div>
+                        <div class="card-h">📝 Notes for the teacher</div>
                         <div class="whitespace-pre-wrap text-sm text-gray-700"><?= htmlspecialchars($notes) ?></div>
                     </div>
                 <?php endif; ?>
             </div>
-
-            <!-- RIGHT: Editor -->
-            <aside class="lg:col-span-2">
-                <form id="cw-form" class="card sticky-pane">
-                    <div class="card-h">✏️ Manage this week</div>
-
-                    <label class="form-lbl">Week title</label>
-                    <input type="text" name="title" maxlength="255"
-                           value="<?= htmlspecialchars($title) ?>"
-                           placeholder="e.g. Counting 1–10"
-                           class="form-in">
-
-                    <label class="form-lbl">📄 Bunny PDF URL</label>
-                    <input type="url" name="bunny_pdf_url"
-                           value="<?= htmlspecialchars($pdf_url) ?>"
-                           placeholder="https://yourzone.b-cdn.net/.../week1.pdf"
-                           class="form-in">
-
-                    <label class="form-lbl">🎬 Bunny video URL</label>
-                    <input type="url" name="bunny_video_url"
-                           value="<?= htmlspecialchars($video_url) ?>"
-                           placeholder="https://yourzone.b-cdn.net/.../week1.mp4"
-                           class="form-in">
-
-                    <label class="form-lbl">Notes for the teacher (optional)</label>
-                    <textarea name="notes" rows="4"
-                              placeholder="Lesson plan, talking points, prep…"
-                              class="form-in"><?= htmlspecialchars($notes) ?></textarea>
-
-                    <button type="submit" class="save-btn">
-                        💾 Save week content
-                    </button>
-                    <div id="cw-status" class="text-xs mt-2 min-h-[1em]"></div>
-                </form>
-            </aside>
-        </div>
+        <?php endif; ?>
     </main>
 </div>
 
 <style>
+    .back-btn {
+        display:inline-flex; align-items:center; gap:6px;
+        padding:8px 14px; border-radius:8px;
+        background:#fff; color:#1f2937;
+        border:1px solid #d1d5db;
+        font-size:13px; font-weight:700; text-decoration:none;
+        transition:transform .12s ease, box-shadow .12s ease, border-color .12s ease;
+    }
+    .back-btn:hover { transform:translateX(-2px); border-color:#3b82f6; color:#3b82f6; box-shadow:0 4px 10px rgba(0,0,0,.06); }
     .card {
         background:#fff;
         border:1px solid #e5e7eb;
@@ -176,63 +162,14 @@ $updated    = $row['updated_at'] ?? null;
         font-size:12px; font-weight:800; letter-spacing:1.5px; text-transform:uppercase;
         color:#3b82f6; margin-bottom:12px;
     }
-    .pdf-frame   { width:100%; height:520px; border:1px solid #e5e7eb; border-radius:8px; }
-    .video-frame { width:100%; max-height:380px; border-radius:8px; background:#000; }
-    .empty {
-        padding:30px; text-align:center; color:#9ca3af;
-        background:#f9fafb; border:1px dashed #e5e7eb; border-radius:8px;
-        font-size:13px;
+    .pdf-frame   { width:100%; height:640px; border:1px solid #e5e7eb; border-radius:8px; }
+    .video-frame { width:100%; max-height:480px; border-radius:8px; background:#000; }
+    .empty-state {
+        background:#fff; border:1px dashed #e5e7eb; border-radius:14px;
+        padding:60px 30px; text-align:center;
+        box-shadow:0 4px 12px rgba(0,0,0,.03);
     }
-    .sticky-pane { position:sticky; top:14px; }
-    .form-lbl { display:block; font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:1px; color:#6b7280; margin:14px 0 6px; }
-    .form-in {
-        width:100%; padding:10px 12px;
-        border:1.5px solid #e5e7eb; border-radius:8px;
-        font-size:14px; color:#111827; background:#fff;
-        transition:border-color .15s ease, box-shadow .15s ease;
-    }
-    .form-in:focus { outline:none; border-color:#3b82f6; box-shadow:0 0 0 4px rgba(59,130,246,.12); }
-    .save-btn {
-        margin-top:18px; width:100%;
-        padding:12px 16px; border:none; border-radius:8px; cursor:pointer;
-        background:linear-gradient(135deg,#3b82f6,#1d4ed8); color:#fff;
-        font-weight:800; font-size:14px; letter-spacing:.3px;
-        box-shadow:0 8px 22px rgba(59,130,246,.35);
-        transition:transform .15s ease;
-    }
-    .save-btn:hover { transform:translateY(-1px); }
-    .save-btn:disabled { opacity:.6; cursor:wait; }
+    .empty-emoji { font-size:48px; margin-bottom:14px; }
 </style>
-
-<script>
-document.getElementById('cw-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const form  = e.currentTarget;
-    const btn   = form.querySelector('.save-btn');
-    const stat  = document.getElementById('cw-status');
-    const fd    = new FormData(form);
-    fd.append('cert',  '<?= (int)$CERT ?>');
-    fd.append('term',  '<?= (int)$TERM ?>');
-    fd.append('month', '<?= (int)$MONTH ?>');
-    fd.append('week',  '<?= (int)$WEEK ?>');
-
-    btn.disabled = true;
-    stat.textContent = 'Saving…';
-    stat.style.color = '#6b7280';
-    try {
-        const r = await fetch('save_curriculum_week.php', { method: 'POST', body: fd });
-        const j = await r.json();
-        if (!j.success) throw new Error(j.error || 'save failed');
-        stat.textContent = '✅ Saved. Reloading preview…';
-        stat.style.color = '#059669';
-        setTimeout(() => location.reload(), 700);
-    } catch (err) {
-        stat.textContent = '❌ ' + err.message;
-        stat.style.color = '#dc2626';
-    } finally {
-        btn.disabled = false;
-    }
-});
-</script>
 
 <?php include('footer.php'); ?>

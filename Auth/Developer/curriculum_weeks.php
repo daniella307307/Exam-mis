@@ -1,12 +1,7 @@
 <?php
 /**
- * Cambridge-style curriculum browser — Level 3 of 4: Weeks.
- *
- * URL: curriculum_weeks.php?CERT=<id>&TERM=<1|2|3>&MONTH=<1-12>
- *
- * List of Week 1..N cards for the selected month. N defaults to 4 (5 for
- * Apr / Aug / Dec to fit the project wrap-up). Each card shows whether a
- * Bunny PDF and/or video has already been saved for that week.
+ * Developer curriculum manager — Week cards for a month.
+ * URL: curriculum_weeks.php?CERT=<id>&TERM=<1-3>&MONTH=<1-12>
  */
 include('header.php');
 require_once(__DIR__ . '/../curriculum_helpers.php');
@@ -19,7 +14,7 @@ $MONTH = isset($_GET['MONTH']) ? (int)$_GET['MONTH'] : 0;
 
 $terms = curriculum_terms();
 if ($CERT <= 0 || !isset($terms[$TERM]) || !in_array($MONTH, $terms[$TERM]['months'], true)) {
-    echo '<p class="p-4">Bad term/month/cert combo. <a href="Current_Courses.php" class="text-blue-600 underline">Back to Current Courses</a>.</p>';
+    echo '<p class="p-4">Bad term/month/cert combo. <a href="Curriculum.php" class="text-blue-600 underline">Back</a>.</p>';
     include('footer.php'); exit;
 }
 
@@ -28,14 +23,8 @@ $cstmt->bind_param('i', $CERT);
 $cstmt->execute();
 $cert = $cstmt->get_result()->fetch_assoc();
 $cstmt->close();
+if (!$cert) { echo '<p class="p-4">Certification not found.</p>'; include('footer.php'); exit; }
 
-if (!$cert) {
-    echo '<p class="p-4">Certification not found.</p>';
-    include('footer.php'); exit;
-}
-
-// Pull whatever rows already exist for this slot so the cards can light up
-// "has PDF" / "has video" indicators without an extra query per card.
 $rows = [];
 $wstmt = $conn->prepare(
     "SELECT week_number, title, bunny_pdf_url, bunny_video_url
@@ -45,9 +34,7 @@ $wstmt = $conn->prepare(
 $wstmt->bind_param('iii', $CERT, $TERM, $MONTH);
 $wstmt->execute();
 $wres = $wstmt->get_result();
-while ($r = $wres->fetch_assoc()) {
-    $rows[(int)$r['week_number']] = $r;
-}
+while ($r = $wres->fetch_assoc()) { $rows[(int)$r['week_number']] = $r; }
 $wstmt->close();
 
 $names      = curriculum_month_names();
@@ -56,18 +43,18 @@ $is_proj    = curriculum_is_projects_month($MONTH);
 ?>
 
 <div class="flex flex-1">
-    <?php include('side_bar_courses.php'); ?>
+    <?php include('dynamic_side_bar.php'); ?>
 
     <main class="bg-gray-50 flex-1 p-6 overflow-y-auto">
         <div class="flex items-center gap-3 mb-3">
             <a href="curriculum_months.php?CERT=<?= (int)$CERT ?>&TERM=<?= (int)$TERM ?>" class="back-btn">← Back to <?= htmlspecialchars($terms[$TERM]['label']) ?> months</a>
         </div>
         <div class="text-xs text-gray-500 mb-2 uppercase tracking-wide font-semibold">
-            <a href="Current_Courses.php" class="hover:text-blue-600">Current Courses</a>
+            <a href="Curriculum.php" class="hover:text-purple-600">Curriculum</a>
             <span class="mx-1">›</span>
-            <a href="curriculum_terms.php?CERT=<?= (int)$CERT ?>" class="hover:text-blue-600"><?= htmlspecialchars($cert['certification_name']) ?></a>
+            <a href="curriculum_terms.php?CERT=<?= (int)$CERT ?>" class="hover:text-purple-600"><?= htmlspecialchars($cert['certification_name']) ?></a>
             <span class="mx-1">›</span>
-            <a href="curriculum_months.php?CERT=<?= (int)$CERT ?>&TERM=<?= (int)$TERM ?>" class="hover:text-blue-600"><?= htmlspecialchars($terms[$TERM]['label']) ?></a>
+            <a href="curriculum_months.php?CERT=<?= (int)$CERT ?>&TERM=<?= (int)$TERM ?>" class="hover:text-purple-600"><?= htmlspecialchars($terms[$TERM]['label']) ?></a>
             <span class="mx-1">›</span>
             <span class="text-gray-800"><?= htmlspecialchars($names[$MONTH]) ?></span>
         </div>
@@ -103,7 +90,7 @@ $is_proj    = curriculum_is_projects_month($MONTH);
                                 <?php if ($title !== ''): ?>
                                     <div class="week-title"><?= htmlspecialchars($title) ?></div>
                                 <?php else: ?>
-                                    <div class="week-title text-gray-400 italic">(untitled)</div>
+                                    <div class="week-title text-gray-400 italic">(no title yet)</div>
                                 <?php endif; ?>
                             </div>
                             <?php if ($is_proj && $w === $week_count): ?>
@@ -131,8 +118,7 @@ $is_proj    = curriculum_is_projects_month($MONTH);
         font-size:13px; font-weight:700; text-decoration:none;
         transition:transform .12s ease, box-shadow .12s ease, border-color .12s ease;
     }
-    .back-btn:hover { transform:translateX(-2px); border-color:#3b82f6; color:#3b82f6; box-shadow:0 4px 10px rgba(0,0,0,.06); }
-
+    .back-btn:hover { transform:translateX(-2px); border-color:#7c3aed; color:#7c3aed; box-shadow:0 4px 10px rgba(0,0,0,.06); }
     .week-card { display:block; text-decoration:none; color:inherit; }
     .week-card-inner {
         background:#fff;
@@ -144,12 +130,12 @@ $is_proj    = curriculum_is_projects_month($MONTH);
     }
     .week-card:hover .week-card-inner {
         transform:translateY(-2px);
-        box-shadow:0 12px 24px rgba(59,130,246,.16);
-        border-color:#3b82f6;
+        box-shadow:0 12px 24px rgba(124,58,237,.16);
+        border-color:#7c3aed;
     }
     .week-card.ready .week-card-inner { border-left:4px solid #10b981; }
     .week-head { display:flex; justify-content:space-between; align-items:start; }
-    .week-num  { font-size:11px; font-weight:800; letter-spacing:1.5px; text-transform:uppercase; color:#3b82f6; }
+    .week-num  { font-size:11px; font-weight:800; letter-spacing:1.5px; text-transform:uppercase; color:#7c3aed; }
     .week-title { font-size:17px; font-weight:700; color:#111827; margin-top:2px; }
     .week-meta {
         margin-top:14px;
@@ -158,7 +144,7 @@ $is_proj    = curriculum_is_projects_month($MONTH);
     }
     .meta-on  { color:#059669; }
     .meta-off { color:#9ca3af; }
-    .week-meta .arrow { margin-left:auto; color:#3b82f6; font-weight:900; font-size:18px; transition:transform .15s ease; }
+    .week-meta .arrow { margin-left:auto; color:#7c3aed; font-weight:900; font-size:18px; transition:transform .15s ease; }
     .week-card:hover .arrow { transform:translateX(3px); }
     .proj-badge {
         font-size:10px; font-weight:800; letter-spacing:.4px;

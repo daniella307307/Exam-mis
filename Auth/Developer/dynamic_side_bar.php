@@ -68,6 +68,16 @@
                             <span><i class="fa fa-angle-right float-right"></i></span>
                         </a>
                     </li>
+                    <!-- Curriculum manager: Developer-only authoring of the Cambridge-style
+                         3-term content tree. SF teachers see whatever lands here, read-only. -->
+                    <li class="w-full h-full py-3 px-2 border-b border-light-border">
+                        <a href="Curriculum.php"
+                           class="font-sans font-hairline hover:font-normal text-sm text-nav-item no-underline">
+                            <i class="fas fa-book-open float-left mx-2"></i>
+                            Curriculum
+                            <span><i class="fa fa-angle-right float-right"></i></span>
+                        </a>
+                    </li>
 					<li class="w-full h-full py-3 px-2 border-b border-light-border">
                         <a href="Roles_per_User"
                            class="font-sans font-hairline hover:font-normal text-sm text-nav-item no-underline">

@@ -1,17 +1,15 @@
 <?php
 /**
- * AJAX upsert for a single curriculum week.
+ * Developer-only AJAX upsert for a curriculum week.
  *
- * Posted by curriculum_week.php's edit form. The UNIQUE key on
- * (certification_id, term_number, month_number, week_number) lets a single
- * INSERT ... ON DUPLICATE KEY UPDATE handle both "first save" and "edit"
- * with no branching in PHP.
+ * session.php here enforces $permissio_location == 'Developer' (the parent
+ * folder check), so this endpoint refuses anyone who isn't a Developer.
  *
  * POST: cert, term, month, week, title, notes, bunny_pdf_url, bunny_video_url
  * Response: { success: bool, error?: string }
  */
-require_once(__DIR__ . '/session.php');           // bounces non-SF users to login + sets $conn
-require_once(__DIR__ . '/curriculum_helpers.php');
+require_once(__DIR__ . '/session.php');           // bounces non-Developer + sets $conn, $session_id, $permissio_location
+require_once(__DIR__ . '/../curriculum_helpers.php');
 
 header('Content-Type: application/json');
 
@@ -21,9 +19,18 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
+// Belt-and-braces role check — session.php should already have bounced
+// anyone non-Developer to the login page, but if a hot session were
+// somehow reused with a stale role, this stops the write.
+if (strcasecmp((string)($permissio_location ?? ''), 'Developer') !== 0) {
+    http_response_code(403);
+    echo json_encode(['success' => false, 'error' => 'Developer access only']);
+    exit;
+}
+
 curriculum_ensure_table($conn);
 
-$user_id = isset($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : 0;
+$user_id = (int)($session_id ?? 0);
 if ($user_id <= 0) {
     http_response_code(401);
     echo json_encode(['success' => false, 'error' => 'Not logged in']);
@@ -45,8 +52,6 @@ $notes     = trim((string)($_POST['notes']           ?? ''));
 $pdf_url   = trim((string)($_POST['bunny_pdf_url']   ?? ''));
 $video_url = trim((string)($_POST['bunny_video_url'] ?? ''));
 
-// Light URL sanity check — accept empty (clearing a field is legitimate) but
-// reject anything that isn't a plausible http(s) URL.
 foreach (['PDF' => $pdf_url, 'video' => $video_url] as $kind => $u) {
     if ($u !== '' && !preg_match('~^https?://~i', $u)) {
         echo json_encode(['success' => false, 'error' => "The $kind URL must start with http:// or https://"]);
@@ -66,7 +71,6 @@ if (!$ok) {
     exit;
 }
 
-// Upsert. ON DUPLICATE KEY relies on uniq_cw_slot.
 $stmt = $conn->prepare(
     "INSERT INTO curriculum_weeks
         (certification_id, term_number, month_number, week_number,
