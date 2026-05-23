@@ -116,9 +116,15 @@ $select_promotions = mysqli_query($conn,"
                                         </td>
 
                                         <td class="border px-3 py-2 text-sm">
-                                            <a href="Modules_per_Certification?CERTIFICATE=<?php echo $invoice_certificate; ?>"  
-                                               class='bg-blue-500 hover:bg-blue-200 text-blue-800 font-bold py-1 px-2 rounded text-xs' >
-                                                <?php echo $promotion_details['promotion_name']; ?>
+                                            <!-- Click the grade level → new Cambridge-style Terms view (Term 1/2/3 → months → weeks → Bunny content) -->
+                                            <a href="curriculum_terms.php?CERT=<?php echo $invoice_certificate; ?>"
+                                               class='bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded text-xs inline-flex items-center gap-1'>
+                                                📖 <?php echo $promotion_details['promotion_name']; ?>
+                                            </a>
+                                            <!-- Secondary link: legacy Modules view (still available so existing data isn't orphaned). -->
+                                            <a href="Modules_per_Certification?CERTIFICATE=<?php echo $invoice_certificate; ?>"
+                                               class="text-xs text-gray-500 hover:text-blue-600 underline ml-1" title="Open the old Modules / Topics view">
+                                                Modules
                                             </a>
                                         </td>
 
