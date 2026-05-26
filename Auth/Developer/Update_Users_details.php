@@ -74,8 +74,32 @@ lastname = '$lastname',
  user_country ='$user_country',
  user_region='$user_region',
  status ='$status' WHERE user_id =$ID");
+
+// Keep active_user_permission in sync with the new access_level.
+// Login (Administrator_login.php) requires an Active row here matching
+// users.access_level — without this sync the user gets locked out with
+// "you do not have any access in the system".
+mysqli_query($conn,"UPDATE active_user_permission
+    SET permission_status = ''
+    WHERE Active_user_ref = '$ID' AND active_permission != '$access_level'");
+
+$existing_perm = mysqli_fetch_array(mysqli_query($conn,"SELECT active_permission_id
+    FROM active_user_permission
+    WHERE Active_user_ref = '$ID' AND active_permission = '$access_level'
+    LIMIT 1"));
+
+if ($existing_perm) {
+    mysqli_query($conn,"UPDATE active_user_permission
+        SET permission_status = 'Active'
+        WHERE active_permission_id = '".$existing_perm['active_permission_id']."'");
+} else {
+    mysqli_query($conn,"INSERT INTO active_user_permission
+        (active_permission_id, active_permission, Active_user_ref, permission_status)
+        VALUES (NULL, '$access_level', '$ID', 'Active')");
+}
+
  if($update){
- 	header('location:Users'); 
+ 	header('location:Users');
 ?><div class="bg-green-300 mb-2 border border-red-300 text-white px-4 py-3 rounded relative" role="alert">
                                     <strong class="font-bold">User Updated Successfully </strong>
                                     <span class="block sm:inline">Redirecting to Users Page <br><?php echo "Country:".$user_country."/Region:".$user_region;?></span>
