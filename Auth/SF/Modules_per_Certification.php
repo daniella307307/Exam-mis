@@ -104,6 +104,23 @@ $select_modules = mysqli_query(
 
                     <!-- ================= CONTENT ================= -->
                     <div class="p-3">
+
+                        <!-- Back navigation. Parent of this page is curriculum_terms (the
+                             Cambridge-style Terms view) when a CERT was provided; falls back
+                             to Current_Courses otherwise. -->
+                        <div class="flex items-center gap-3 mb-3">
+                            <?php if (!empty($CERTIFICATE)): ?>
+                                <a href="curriculum_terms.php?CERT=<?php echo (int)$CERTIFICATE; ?>"
+                                   class="inline-flex items-center gap-1 px-3 py-2 bg-white border border-gray-300 rounded text-sm font-bold text-gray-700 hover:border-blue-500 hover:text-blue-600 no-underline">
+                                    ← Back to Terms
+                                </a>
+                            <?php endif; ?>
+                            <a href="Current_Courses.php"
+                               class="inline-flex items-center gap-1 px-3 py-2 bg-white border border-gray-300 rounded text-sm font-bold text-gray-700 hover:border-blue-500 hover:text-blue-600 no-underline">
+                                ← Back to Current Courses
+                            </a>
+                        </div>
+
                         <p><strong><big><?php echo $certification_name; ?> Courses</big></strong></p>
                         <p><strong><big>Duration: <?php echo $certification_duration; ?> months</big></strong></p>
                         <br>

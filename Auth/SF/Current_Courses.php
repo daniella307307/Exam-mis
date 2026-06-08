@@ -122,15 +122,25 @@ $select_promotions = mysqli_query($conn,"
                                                class='bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded text-xs inline-flex items-center gap-1'>
                                                 📖 <?php echo $promotion_details['promotion_name']; ?>
                                             </a>
-                                            <!-- Secondary link: legacy Modules view (still available so existing data isn't orphaned). -->
-                                            <a href="Modules_per_Certification?CERTIFICATE=<?php echo $invoice_certificate; ?>"
-                                               class="text-xs text-gray-500 hover:text-blue-600 underline ml-1" title="Open the old Modules / Topics view">
+                                            <!-- "Modules" no longer opens the full curriculum dump. It now opens the
+                                                 user's previously-visited modules for THIS certification only. The
+                                                 full module catalogue is still reachable via Certification / curriculum_terms. -->
+                                            <a href="My_Visited_Modules?CERTIFICATE=<?php echo $invoice_certificate; ?>"
+                                               class="text-xs text-gray-500 hover:text-blue-600 underline ml-1" title="Modules you've opened before for this grade">
                                                 Modules
                                             </a>
                                         </td>
 
                                         <td class="border px-3 py-2 text-sm">
-                                            <?php echo $promotion_details['certification_name']; ?>
+                                            <!-- Certification name is now a clickable entry into the same curriculum_terms
+                                                 view as the Promotion column — user asked for Grade 5 / Grade 6 etc. to be
+                                                 clickable too. Same destination, lighter styling so the primary action
+                                                 (Promotion button) still reads as the main CTA. -->
+                                            <a href="curriculum_terms.php?CERT=<?php echo $invoice_certificate; ?>"
+                                               class="text-blue-600 hover:text-blue-800 hover:underline font-semibold inline-flex items-center gap-1"
+                                               title="Open this certification">
+                                                🎓 <?php echo $promotion_details['certification_name']; ?>
+                                            </a>
                                         </td>
 <!--
 
