@@ -122,11 +122,11 @@ $select_promotions = mysqli_query($conn,"
                                                class='bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded text-xs inline-flex items-center gap-1'>
                                                 📖 <?php echo $promotion_details['promotion_name']; ?>
                                             </a>
-                                            <!-- "Modules" no longer opens the full curriculum dump. It now opens the
-                                                 user's previously-visited modules for THIS certification only. The
-                                                 full module catalogue is still reachable via Certification / curriculum_terms. -->
-                                            <a href="My_Visited_Modules?CERTIFICATE=<?php echo $invoice_certificate; ?>"
-                                               class="text-xs text-gray-500 hover:text-blue-600 underline ml-1" title="Modules you've opened before for this grade">
+                                            <!-- "Modules" opens a flat read-only list of every certification + its
+                                                 modules. To actually launch a course, the user clicks Certification
+                                                 or the Promotion button on this same row. -->
+                                            <a href="Modules_List"
+                                               class="text-xs text-gray-500 hover:text-blue-600 underline ml-1" title="See all modules">
                                                 Modules
                                             </a>
                                         </td>

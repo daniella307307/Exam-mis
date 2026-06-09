@@ -229,6 +229,44 @@ body::after{width:420px;height:420px;background:#06b6d4;bottom:-150px;right:-150
 }
 .feedback.show{display:flex}
 @keyframes pop{from{transform:scale(.5);opacity:0}to{transform:scale(1);opacity:1}}
+
+/* ── Quit confirmation modal ── */
+.quit-overlay{
+  display:none;position:fixed;inset:0;z-index:200;
+  align-items:center;justify-content:center;padding:20px;
+  background:rgba(5,5,20,.65);
+  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+}
+.quit-overlay.show{display:flex;animation:fadeIn .2s ease}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.quit-modal{
+  background:linear-gradient(135deg,rgba(30,27,75,.96),rgba(13,13,43,.96));
+  border:1px solid rgba(168,85,247,.4);
+  border-radius:20px;padding:34px 30px;max-width:420px;width:100%;
+  text-align:center;box-shadow:0 30px 90px rgba(0,0,0,.6);
+  animation:pop .3s ease;
+}
+.quit-icon{font-size:46px;margin-bottom:10px}
+.quit-title{font-size:23px;font-weight:900;margin-bottom:12px;color:#f1f5f9}
+.quit-text{font-size:15px;font-weight:600;color:#a89cc8;line-height:1.5;margin-bottom:26px}
+.quit-actions{display:flex;gap:12px}
+.quit-btn{
+  flex:1;padding:14px;border-radius:12px;cursor:pointer;
+  font-family:'Nunito',sans-serif;font-size:15px;font-weight:900;
+  transition:transform .15s,box-shadow .15s,background .15s;
+}
+.quit-btn:hover{transform:translateY(-2px)}
+.quit-btn:active{transform:translateY(0)}
+.quit-no{
+  border:none;color:#fff;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  box-shadow:0 8px 24px rgba(124,58,237,.4);
+}
+.quit-yes{
+  background:rgba(255,255,255,.05);color:#f87171;
+  border:1px solid rgba(248,113,113,.4);
+}
+.quit-yes:hover{background:rgba(248,113,113,.12)}
 </style>
 </head>
 <body>
@@ -257,6 +295,19 @@ body::after{width:420px;height:420px;background:#06b6d4;bottom:-150px;right:-150
 
 <!-- Brief feedback flash -->
 <div class="feedback" id="feedback"></div>
+
+<!-- Quit confirmation modal (back button / leave attempt) -->
+<div class="quit-overlay" id="quitOverlay">
+  <div class="quit-modal">
+    <div class="quit-icon">⚠️</div>
+    <h2 class="quit-title">Quit the exam?</h2>
+    <p class="quit-text">If you leave now your progress will be lost and you'll exit the exam. Are you sure you want to quit?</p>
+    <div class="quit-actions">
+      <button class="quit-btn quit-no"  id="quitNo"  type="button">No, keep going</button>
+      <button class="quit-btn quit-yes" id="quitYes" type="button">Yes, quit</button>
+    </div>
+  </div>
+</div>
 
 <!-- Hidden form for submission -->
 <form method="POST" id="submitForm" action="submit_exam.php">
@@ -487,6 +538,7 @@ function nextQuestion() {
 
   if (current >= questions.length) {
     clearInterval(timerInt);
+    examFinished = true;   // legitimate finish — don't warn on this navigation
     document.getElementById('submitForm').submit();
     return;
   }
@@ -519,6 +571,36 @@ function tick() {
     : String(timeLeft);
   el.classList.toggle('warning', timeLeft <= 5);
 }
+
+// ── Quit / leave guard ───────────────────────────────────────────
+// `examFinished` disarms every guard the moment we submit legitimately,
+// so finishing the exam never triggers a warning.
+let examFinished = false;
+
+// Refresh / tab-close: browsers only allow their own native confirm here
+// (custom modals aren't permitted on beforeunload), so we trigger that.
+window.addEventListener('beforeunload', (e) => {
+  if (examFinished) return;
+  e.preventDefault();
+  e.returnValue = '';
+});
+
+// Back button: seed a history entry so the first Back press lands back on
+// this page instead of leaving, then show our own confirmation modal.
+history.pushState({ exam: true }, '', location.href);
+window.addEventListener('popstate', () => {
+  if (examFinished) return;
+  history.pushState({ exam: true }, '', location.href); // stay put, ask first
+  document.getElementById('quitOverlay').classList.add('show');
+});
+
+document.getElementById('quitNo').addEventListener('click', () => {
+  document.getElementById('quitOverlay').classList.remove('show'); // proceed
+});
+document.getElementById('quitYes').addEventListener('click', () => {
+  examFinished = true;                       // disarm beforeunload guard
+  window.location.replace('join_exam.php');  // leave to the game-pin page
+});
 
 // ── Kick off ─────────────────────────────────────────────────────
 loadQuestion();

@@ -5,40 +5,6 @@ $LANG = isset($_GET['LANG']) ? $_GET['LANG'] : $school_language;
 
 $CERTIFICATE = $_GET['CERTIFICATE'];
 $COURSE = $_GET['COURSE'];
-
-/* ----- Record this visit so My_Visited_Modules.php can show it later -----
- * Idempotent table create + UPSERT. The unique key (user_id, course_id)
- * means revisits bump last_visited_at + visit_count instead of duplicating.
- */
-mysqli_query($conn, "
-    CREATE TABLE IF NOT EXISTS user_module_visits (
-        visit_id          INT AUTO_INCREMENT PRIMARY KEY,
-        user_id           INT NOT NULL,
-        course_id         INT NOT NULL,
-        certification_id  INT NOT NULL,
-        first_visited_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        last_visited_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        visit_count       INT NOT NULL DEFAULT 1,
-        UNIQUE KEY uniq_user_course (user_id, course_id),
-        KEY idx_user_cert (user_id, certification_id)
-    )
-");
-$_visit_uid = (int)($_SESSION['user_id'] ?? 0);
-$_visit_cid = (int)$COURSE;
-$_visit_ctid = (int)$CERTIFICATE;
-if ($_visit_uid > 0 && $_visit_cid > 0 && $_visit_ctid > 0) {
-    $vstmt = $conn->prepare(
-        "INSERT INTO user_module_visits (user_id, course_id, certification_id)
-         VALUES (?, ?, ?)
-         ON DUPLICATE KEY UPDATE
-            last_visited_at = CURRENT_TIMESTAMP,
-            visit_count     = visit_count + 1"
-    );
-    $vstmt->bind_param('iii', $_visit_uid, $_visit_cid, $_visit_ctid);
-    $vstmt->execute();
-    $vstmt->close();
-}
-
 $selct_cert = mysqli_fetch_array(mysqli_query($conn,"SELECT * FROM certification_courses
 LEFT JOIN certifications ON certification_courses.course_certificate = certifications.certification_id WHERE course_id ='$COURSE'"));
 $course_name = $selct_cert['course_name']; 
