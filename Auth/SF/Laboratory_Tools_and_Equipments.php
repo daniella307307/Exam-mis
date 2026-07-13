@@ -47,7 +47,7 @@ if ($cat > 0) {
 }
 
 $sql = "SELECT e.equipments_id, e.equipments_name, e.equipments_ModelNo,
-               e.equipments_description, e.equipments_category,
+               e.equipments_description, e.equipments_category, e.equipments_datasheet,
                cat.category_name, sub.subcategory_name
           FROM laboratory_equipments e
           LEFT JOIN Equipment_categories cat ON e.equipments_category = cat.category_id
@@ -177,6 +177,21 @@ function lab_icon($name) {
                                     <?php if (!empty($it['equipments_description'])): ?>
                                         <p class="lab-item-desc"><?= htmlspecialchars(mb_strimwidth($it['equipments_description'], 0, 160, '…')) ?></p>
                                     <?php endif; ?>
+                                    <?php
+                                        /* Curated datasheet/guide link if we have one; otherwise a
+                                         * search link so EVERY item still has a working reference. */
+                                        $ds = isset($it['equipments_datasheet']) ? trim($it['equipments_datasheet']) : '';
+                                        $curated = ($ds !== '');
+                                        if (!$curated) {
+                                            $terms = trim($it['equipments_name']) . ' ' . trim($it['equipments_ModelNo']) . ' datasheet';
+                                            $ds = 'https://www.google.com/search?q=' . urlencode($terms);
+                                        }
+                                    ?>
+                                    <a href="<?= htmlspecialchars($ds) ?>" target="_blank" rel="noopener noreferrer"
+                                       class="lab-item-ds <?= $curated ? '' : 'lab-item-ds-search' ?>">
+                                        <i class="fas <?= $curated ? 'fa-file-pdf' : 'fa-search' ?>"></i>
+                                        <?= $curated ? 'Datasheet / Guide' : 'Find datasheet' ?>
+                                    </a>
                                 </div>
                             </div>
                         <?php endforeach; ?>
@@ -267,6 +282,15 @@ function lab_icon($name) {
         background:#ecfdf5; padding:1px 7px; border-radius:99px; margin-top:4px; border:1px solid #a7f3d0;
     }
     .lab-item-desc { font-size:12px; color:#6b7280; margin-top:7px; line-height:1.4; }
+    .lab-item-ds {
+        display:inline-flex; align-items:center; gap:6px; margin-top:10px;
+        padding:6px 11px; border-radius:7px; font-size:12px; font-weight:700;
+        text-decoration:none; background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe;
+        transition:all .12s ease;
+    }
+    .lab-item-ds:hover { background:#1d4ed8; color:#fff; border-color:#1d4ed8; }
+    .lab-item-ds-search { background:#f9fafb; color:#6b7280; border-color:#e5e7eb; }
+    .lab-item-ds-search:hover { background:#374151; color:#fff; border-color:#374151; }
 
     .empty-card {
         background:#fff; border:1px dashed #d1d5db; border-radius:10px;
