@@ -26,8 +26,20 @@ try {
     // Start transaction
     $conn->begin_transaction();
 
+    // Delete students' answers + player records (results) for this exam first,
+    // so deleting an exam doesn't leave orphaned result rows behind.
+    $stmt = $conn->prepare("DELETE FROM answers WHERE exam_id = ?");
+    $stmt->bind_param('i', $exam_id);
+    $stmt->execute();
+    $stmt->close();
+
+    $stmt = $conn->prepare("DELETE FROM players WHERE exam_id = ?");
+    $stmt->bind_param('i', $exam_id);
+    $stmt->execute();
+    $stmt->close();
+
     // Delete options for all questions in this exam
-    $stmt = $conn->prepare("DELETE FROM options WHERE question_id IN 
+    $stmt = $conn->prepare("DELETE FROM options WHERE question_id IN
                             (SELECT question_id FROM questions WHERE exam_id = ?)");
     $stmt->bind_param('i', $exam_id);
     $stmt->execute();

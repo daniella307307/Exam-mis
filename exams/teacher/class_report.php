@@ -319,7 +319,10 @@ $distinct_streams = $streams_stmt->get_result()->fetch_all(MYSQLI_ASSOC);
     }
 
     .status {
-        display: inline-block;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        white-space: nowrap;
         padding: 4px 12px;
         border-radius: 12px;
         font-size: 12px;

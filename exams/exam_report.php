@@ -530,13 +530,13 @@ $distinct_streams = $streams_stmt->get_result()->fetch_all(MYSQLI_ASSOC);
                             <td class="px-6 py-3"><?= htmlspecialchars($row['school']) ?></td>
                             <td class="px-6 py-3">
                                 <?php if ($pass): ?>
-                                    <span class="px-3 py-1 rounded-full text-xs font-bold"
-                                          style="background:rgba(34,197,94,.18);color:#86efac;border:1px solid rgba(34,197,94,.45);text-transform:uppercase;letter-spacing:1px">
+                                    <span class="rounded-full text-xs font-bold"
+                                          style="display:inline-flex;align-items:center;gap:4px;white-space:nowrap;padding:4px 12px;background:rgba(34,197,94,.18);color:#86efac;border:1px solid rgba(34,197,94,.45);text-transform:uppercase;letter-spacing:1px">
                                         ✓ Pass
                                     </span>
                                 <?php else: ?>
-                                    <span class="px-3 py-1 rounded-full text-xs font-bold"
-                                          style="background:rgba(239,68,68,.18);color:#fca5a5;border:1px solid rgba(239,68,68,.45);text-transform:uppercase;letter-spacing:1px">
+                                    <span class="rounded-full text-xs font-bold"
+                                          style="display:inline-flex;align-items:center;gap:4px;white-space:nowrap;padding:4px 12px;background:rgba(239,68,68,.18);color:#fca5a5;border:1px solid rgba(239,68,68,.45);text-transform:uppercase;letter-spacing:1px">
                                         ✗ Fail
                                     </span>
                                 <?php endif; ?>

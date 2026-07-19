@@ -614,6 +614,11 @@ $stmt->close();
                                     <?php endif; ?>
                                     <a href="exam_report.php?exam_id=<?= $exam['exam_id'] ?>" class="btn btn-view" style="background:#2563eb;">📈 Reports</a>
                                     <a href="question_report.php?exam_id=<?= $exam['exam_id'] ?>" class="btn btn-view" style="background:#4f46e5;">📊 Per-question</a>
+                                    <?php if ($is_actual_creator): ?>
+                                        <!-- Delete is the original creator's call only (co-teachers can edit, not delete). -->
+                                        <button class="btn" style="background:#dc3545;color:#fff;"
+                                                onclick="deleteExam(<?= (int)$exam['exam_id'] ?>, '<?= htmlspecialchars(addslashes($exam['title'])) ?>')">🗑️ Delete</button>
+                                    <?php endif; ?>
                                 <?php endif; ?>
                             </div>
                         </div>
@@ -626,6 +631,27 @@ $stmt->close();
     <div class="toast" id="toast"></div>
 
     <script>
+        async function deleteExam(examId, title) {
+            if (!confirm('Delete "' + title + '" and ALL its questions, options and results?\n\nThis cannot be undone.')) return;
+
+            try {
+                const response = await fetch('delete_exam.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ exam_id: examId })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    showToast('🗑️ Exam deleted', 'success');
+                    setTimeout(() => location.reload(), 1200);
+                } else {
+                    showToast('❌ ' + (data.error || 'Could not delete exam'), 'error');
+                }
+            } catch (err) {
+                showToast('❌ Error: ' + err.message, 'error');
+            }
+        }
+
         async function activateExam(examId) {
             if (!confirm('Activate this exam and start it immediately?')) return;
             

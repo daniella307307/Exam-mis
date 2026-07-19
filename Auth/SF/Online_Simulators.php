@@ -47,7 +47,8 @@ function sim_icon($field) {
 
         <!-- Heading -->
         <div class="mb-5">
-            <h1 class="text-2xl font-bold text-gray-800">🔬 Online Simulators &amp; Virtual Labs</h1>
+            <span class="icrp-brand"><i class="fas fa-flask"></i> ICRPplus</span>
+            <h1 class="text-2xl font-bold text-gray-800 mt-2">🔬 Online Simulators &amp; Virtual Labs</h1>
             <p class="text-sm text-gray-500 mt-1">
                 Virtual tools used across the curriculum — circuits, Arduino, coding, robotics, CAD, AI and web.
                 <span class="font-semibold text-gray-700"><?= (int)$total ?> tools available.</span>
@@ -101,6 +102,7 @@ function sim_icon($field) {
 </div>
 
 <style>
+    .icrp-brand { display:inline-flex; align-items:center; gap:7px; font-weight:800; font-size:12px; letter-spacing:.5px; color:#1d4ed8; background:linear-gradient(135deg,#eff6ff,#dbeafe); border:1px solid #bfdbfe; padding:4px 12px; border-radius:99px; text-transform:uppercase; }
     .sim-section { margin-bottom:26px; }
     .sim-section-head {
         display:flex; align-items:center; gap:10px; margin-bottom:12px;

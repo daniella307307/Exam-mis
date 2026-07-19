@@ -11,22 +11,45 @@
                             <?php echo $user_data['Country_name'];?> 
                         </a>
                     </li>
+                    <li class="w-full h-full py-2 px-2 border-b border-light-border">
+                        <span style="display:inline-flex;align-items:center;gap:6px;font-weight:800;font-size:11px;letter-spacing:.5px;color:#93c5fd;text-transform:uppercase;">
+                            <i class="fas fa-flask"></i> ICRPplus Lab
+                        </span>
+                    </li>
                     <li class="w-full h-full py-3 px-2 border-b border-light-border">
                         <a href="Laboratory_Tools_and_Equipments"
                            class="font-sans font-hairline hover:font-normal text-sm text-nav-item no-underline">
                             <i class="fas fa-wrench float-left mx-2"></i>
                             &nbsp;&nbsp; Laboratory Tools
                             <span><i class="fa fa-angle-right float-right"></i></span>
-                        </a> 
+                        </a>
                     </li>
-				 
+
+                    <li class="w-full h-full py-3 px-2 border-b border-light-border">
+                        <a href="Equipment_Store"
+                           class="font-sans font-hairline hover:font-normal text-sm text-nav-item no-underline">
+                            <i class="fas fa-boxes float-left mx-2"></i>
+                            &nbsp;&nbsp; My Equipment Store
+                            <span><i class="fa fa-angle-right float-right"></i></span>
+                        </a>
+                    </li>
+
 					<li class="w-full h-full py-3 px-2 border-b border-light-border">
                         <a href="Online_Simulators"
                            class="font-sans font-hairline hover:font-normal text-sm text-nav-item no-underline">
                             <i class="fa fa-home float-left"></i>
                             &nbsp;&nbsp; Online Simulators
                             <span><i class="fa fa-angle-right float-right"></i></span>
-                        </a> 
+                        </a>
+                    </li>
+
+					<li class="w-full h-full py-3 px-2 border-b border-light-border">
+                        <a href="Software_Resources"
+                           class="font-sans font-hairline hover:font-normal text-sm text-nav-item no-underline">
+                            <i class="fas fa-download float-left mx-2"></i>
+                            &nbsp;&nbsp; Software Resources
+                            <span><i class="fa fa-angle-right float-right"></i></span>
+                        </a>
                     </li>
 					 
 					  

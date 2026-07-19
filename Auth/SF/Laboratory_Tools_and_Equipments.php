@@ -92,7 +92,8 @@ function lab_icon($name) {
 
         <!-- Heading -->
         <div class="mb-5">
-            <h1 class="text-2xl font-bold text-gray-800">🧰 Laboratory Tools &amp; Equipment</h1>
+            <span class="icrp-brand"><i class="fas fa-flask"></i> ICRPplus</span>
+            <h1 class="text-2xl font-bold text-gray-800 mt-2">🧰 Laboratory Tools &amp; Equipment</h1>
             <p class="text-sm text-gray-500 mt-1">
                 All physical tools, boards, sensors and kits used across the robotics &amp; electronics curriculum.
             </p>
@@ -204,6 +205,7 @@ function lab_icon($name) {
 </div>
 
 <style>
+    .icrp-brand { display:inline-flex; align-items:center; gap:7px; font-weight:800; font-size:12px; letter-spacing:.5px; color:#1d4ed8; background:linear-gradient(135deg,#eff6ff,#dbeafe); border:1px solid #bfdbfe; padding:4px 12px; border-radius:99px; text-transform:uppercase; }
     .lab-stats { display:flex; gap:14px; flex-wrap:wrap; margin-bottom:18px; }
     .lab-stat {
         background:#fff; border:1px solid #e5e7eb; border-radius:10px;
